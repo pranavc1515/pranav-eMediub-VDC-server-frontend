@@ -7,7 +7,7 @@ import ShieldDone from "../assets/ShieldDone.svg"
 function OurServicesCardOne() {
   return (
      <section className=" flex justify-center flex-col items-center  mx-auto py-12 px-4 w-[97%]  ">
-          <div className='w-[263px] flex flex-col items-center'>
+          <div className='ourServices w-[263px] flex flex-col items-center'>
              <p className="text-[42px]  font-semibold text-[#011632]">
               Our Services
             </p>
@@ -31,11 +31,11 @@ function OurServicesCardOne() {
           {/* Section: Book Your Appointment */}
           <div className="flex flex-col lg:flex-row justify-between items-center mt-12 mb-[120px]  w-full">
            
-            <div className="lg:w-1/2 text-left">
-              <h3 className="text-[42px] font-semibold text-[#011632]">
+            <div className="lg:w-1/2 text-left bookAppointmentOne">
+              <h3 className="text-[42px] font-semibold leading-1 text-[#011632]">
                 Book Your Appointment
               </h3>
-              <img src={Vector} alt=""className='xl:ml-[245px]'/>
+              <img src={Vector} alt=""className='xl:ml-[245px] mt-[10px]'/>
               <p className="text-[#3C4959] font-normal text-[18px] 2xl:w-[687px]  mt-4">
               Scheduling a consultation with a doctor has never been easier! With our seamless online booking system, you can connect with certified healthcare professionals from the comfort of your home. Choose from a wide range of specialists, select a convenient time, and get expert medical advice through secure video calls or chat. Whether you need a quick consultation, a second opinion, or a follow-up, our platform ensures hassle-free and instant access to quality healthcare.
               </p>

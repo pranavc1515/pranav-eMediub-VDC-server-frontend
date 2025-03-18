@@ -38,8 +38,10 @@ const MainLayout = ({ children }) => {
             >
                 <Navbar />
                 <div className="YourHealthSection  pl-[40px] ">
-                    <h1 className="text-[64px] font-semibold w-[735px] text-[#011632]">
-                        Your Health File, Simplified!!!
+                    <h1 className="text-[64px] font-semibold leading-none
+ w-[735px]  text-[#011632]">
+                        Your Health File, 
+                        Simplified!!!
                     </h1>
                     <img src={vector} className="w-[25%]" alt="" />
                     <p className="text-[18px] w-[531px] font-[400] text-[#3C4959] pt-[30px]">
@@ -62,9 +64,9 @@ const MainLayout = ({ children }) => {
                 </div>
             </header>
             <main className="px-0 py-0">{children}</main>
-            <footer>
+            {/* <footer>
                 <FooterSection />
-            </footer>
+            </footer> */}
         </div>
     )
 }
