@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@media (max-width: 480px) {
+    /* Styles for small smartphones */
+    .headerSection {
+        width: 100% !important;
+    }
+    .navbar {
+        width: 100% !important;
+    }
+    .navbarImage {
+        width: 150px;
+        margin-left: 20px;
+    }
+    .YourHealthSection {
+        /* background:red; */
+
+        padding-left: 20px;
+    }
+    .YourHealthSection > h1 {
+        /* background:rgb(50, 27, 121); */
+        width: 70% !important;
+        font-size: 30px;
+    }
+    .YourHealthSection > img {
+        /* background:rgb(50, 27, 121); */
+        width: 58% !important;
+        font-size: 30px;
+    }
+    .YourHealthSection > p {
+        /* background:rgb(50, 27, 121); */
+        width: 80% !important;
+        font-size: 15px;
+    }
+}
+@media (min-width: 481px) and (max-width: 768px) {
+    /* Styles for landscape phones and small tablets */
+    .headerSection {
+        width: 100% !important;
+    }
+
+    .navbarImage {
+        width: 150px;
+        margin-left: 20px;
+    }
+    .YourHealthSection {
+        /* background:red; */
+
+        padding-left: 20px;
+    }
+    .YourHealthSection > h1 {
+        /* background:rgb(50, 27, 121); */
+        width: 50% !important;
+        font-size: 30px;
+    }
+    .YourHealthSection > img {
+        /* background:rgb(50, 27, 121); */
+        width: 40% !important;
+        font-size: 30px;
+    }
+    .YourHealthSection > p {
+        /* background:rgb(50, 27, 121); */
+        width: 70% !important;
+        font-size: 18px;
+    }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+    /* Styles for tablets */
+    .headerSection {
+        width: 100% !important;
+    }
+
+    .navbarImage {
+        width: 150px;
+        margin-left: 20px;
+    }
+    .YourHealthSection {
+        /* background:red; */
+
+        padding-left: 20px;
+    }
+    .YourHealthSection > h1 {
+        /* background:rgb(50, 27, 121); */
+        width: 48% !important;
+        font-size: 40px;
+    }
+    .YourHealthSection > img {
+        /* background:rgb(50, 27, 121); */
+        width: 34% !important;
+        font-size: 30px;
+    }
+    .YourHealthSection > p {
+        /* background:rgb(50, 27, 121); */
+        width: 70% !important;
+        font-size: 18px;
+    }
+}
+@media (min-width: 1025px) and (max-width: 1440px) {
+    /* Styles for laptops and small desktops */
+    .headerSection {
+        width: 100% !important;
+    }
+
+    .navbarImage {
+        width: 190px;
+    }
+    .YourHealthSection {
+        /* background:red; */
+
+        padding-left: 20px;
+    }
+    .YourHealthSection > h1 {
+        /* background:rgb(50, 27, 121); */
+        width: 45% !important;
+        font-size: 50px;
+    }
+    .YourHealthSection > img {
+        /* background:rgb(50, 27, 121); */
+        width: 35% !important;
+        font-size: 30px;
+    }
+}
