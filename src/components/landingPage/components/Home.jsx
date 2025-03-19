@@ -13,10 +13,10 @@ const Home = () => {
             <SearchBar />
             <UserDoctorCards />
             <OurServices />
-            {/* <DoctorConsultation />
+            <DoctorConsultation />
             <NewsArticles />
             <TestimonialsSlider />
-            <TeamSection /> */}
+            <TeamSection />
         </div>
     )
 }
