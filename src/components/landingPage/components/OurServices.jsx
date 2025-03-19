@@ -7,9 +7,9 @@ const OurServices = () => {
     return (
         <>
             <OurServicesCardOne />
-            {/* <OurServicesCardTwo />
+            <OurServicesCardTwo />
             <OurServicesCardthree />
-            <OurServicesCardForth /> */}
+            <OurServicesCardForth />
         </>
     )
 }
