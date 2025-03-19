@@ -77,6 +77,10 @@
         margin-bottom: 0px;
       
     }
+    .ourServicesImageCardThree>img{
+        height: 223px;
+        width: 280px;
+    }
 }
 @media (min-width: 481px) and (max-width: 768px) {
     /* Styles for landscape phones and small tablets */
@@ -135,6 +139,10 @@
         width: 380px;
         height: 300px;
     }
+    .ourServicesImageCardThree>img{
+        height: 303px;
+        width: 380px;
+    }
    
 }
 @media (min-width: 769px) and (max-width: 1024px) {
@@ -192,6 +200,10 @@
         width: 380px;
         height: 300px;
     }
+    .ourServicesImageCardThree>img{
+        height: 303px;
+        width: 380px;
+    }
    
 }
 @media (min-width: 1025px) and (max-width: 1440px) {
@@ -217,5 +229,9 @@
         /* background:rgb(50, 27, 121); */
         width: 35% !important;
         font-size: 30px;
+    }
+    .ourServicesImageCardThree>img{
+        height: 280px;
+        width: 380px;
     }
 }

@@ -56,7 +56,7 @@ function OurServicesCardTwo() {
         <h3 className="text-[32px] font-semibold text-[#011632]">
         Book Lab Tests Online
         </h3>
-        <img src={Vector2} alt="" className="xl:ml-[140px] xl:mt-[-15px] mt-[-5px]" />  
+        <img src={Vector2} alt="" className="xl:ml-[140px] xl:mt-[-5px] mt-[-5px]" />  
         <p className="text-[#3C4959] text-[18px] font-normal xl:w-[444px] mt-4">
         Schedule diagnostic tests at trusted labs with home sample
   collection, real-time updates, and fast, reliable results. Get
