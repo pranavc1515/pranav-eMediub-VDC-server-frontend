@@ -13,7 +13,7 @@ const TeamSection = () => {
             <img src={Vector2} alt="" className=" w-[334px] mx-auto mb-4" />
 
             {/* Subtitle */}
-            <p className="text-[#3C4959] text-[18px] font-[400] mx-auto w-[800px]">
+            <p className="text-[#3C4959] text-[18px] font-[400] mx-auto w-full  xl:w-[800px]">
                 The visionary leaders guiding our mission, shaping the future,
                 and driving strategic decisions. Their expertise and leadership
                 ensure our growth, innovation, and long-term success.

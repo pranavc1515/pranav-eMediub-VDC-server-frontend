@@ -29,9 +29,9 @@ function OurServicesCardOne() {
          
     
           {/* Section: Book Your Appointment */}
-          <div className="flex flex-col lg:flex-row justify-between items-center mt-12 mb-[120px]  w-full">
+          <div className="ourServicesCardParent flex flex-col lg:flex-row justify-between items-center mt-12 mb-[120px]  w-full ">
            
-            <div className="lg:w-1/2 text-left bookAppointmentOne">
+            <div className=" lg:w-1/2 text-left bookAppointmentOne">
               <h3 className="text-[42px] font-semibold leading-1 text-[#011632]">
                 Book Your Appointment
               </h3>
@@ -46,13 +46,15 @@ function OurServicesCardOne() {
             </div>
     
           
-            <div className=" flex justify-center relative mt-6 lg:mt-0  ">
-              <div className="bg-blue-200  p-2 absolute   w-full  lg:w-[413px] h-[326px] lg:top-[-2px] rounded-[10px] bg-[linear-gradient(52.56deg,_rgba(37,_180,_248,_0)_0%,_rgba(37,_180,_248,_0.473958)_64.42%,_#25B4F8_126.21%)] "></div>
+            <div className="ourServicesCard flex justify-center relative lg:mt-0    mt-6  w-full lg:w-[40%] h-[320px]">
+              <div className="ourServicesGreenCard bg-blue-200  absolute right-0    w-full  lg:w-[350px] h-[280px]  rounded-[10px] bg-[linear-gradient(52.56deg,_rgba(37,_180,_248,_0)_0%,_rgba(37,_180,_248,_0.473958)_64.42%,_#25B4F8_126.21%)] "></div>
+              <div className=' ourServicesImageCard absolute bottom-1 right-[30px] top-[30px] lg:w-[350px]      '>
               <img
                 src={maskGroup}
                 alt="Doctor Writing"
-                className="rounded-lg shadow-md w-[410px] lg:-left-[35px]  h-[326px] object-cover relative lg:top-[35px] "
+                className="rounded-lg shadow-md   object-cover relative  "
               />
+              </div>
             </div>
           </div>
     
@@ -72,7 +74,7 @@ function OurServicesCardOne() {
               <h3 className="text-[32px] font-semibold text-[#011632]">
                 Online Doctor Consultation
               </h3>
-              <img src={Vector2} alt="" className="xl:ml-[140px] mt-[-15px]" />  
+              <img src={Vector2} alt="" className="xl:ml-[140px] xl:mt-[-15px] mt-[-5px]" />  
               <p className="text-[#3C4959] text-[18px] font-normal xl:w-[444px] mt-4">
                 Connect with experienced doctors anytime, anywhere. Get expert 
                 medical advice, prescriptions, and follow-ups from the comfort of your home.
