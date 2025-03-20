@@ -98,7 +98,7 @@
     font-size: 35px;
    }
 }
-@media (min-width: 481px) and (max-width: 768px) {
+@media (min-width: 481px) and (max-width: 769px) {
     /* Styles for landscape phones and small tablets */
     .headerSection {
         width: 100% !important;
@@ -171,6 +171,12 @@
   
    .NewsArticlesText{
     font-size: 35px;
+   }
+   .NewsArticles>button{
+    width:90%
+   }
+   .NewsArticlesPtag{
+    width:80%
    }
 }
 @media (min-width: 769px) and (max-width: 1024px) {

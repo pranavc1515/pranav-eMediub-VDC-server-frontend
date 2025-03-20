@@ -39,7 +39,7 @@ const TestimonialsSlider = () => {
 
   return (
     <section
-      className="flex flex-col items-center justify-center h-[772px] mt-4"
+      className="flex flex-col items-center justify-center h-[772px] mt-4 "
       style={{
         backgroundImage: `url(${testimonial})`,
         backgroundSize: "cover",
@@ -72,17 +72,17 @@ const TestimonialsSlider = () => {
               {/* Testimonial Card */}
               <div className="flex justify-between w-full  h-full p-10 flex-col md:flex-row font-semibold text-[#FFFFFF] rounded-lg" >
                 <div className="flex flex-col">
-                  <h3 className="font-semibold text-[42px] mb-4 transition-all delay-[4000ms] duration-[4000ms] ease-in ">
+                  <h3 className="font-semibold text-[42px] mb-4 transition-all delay-[4000ms] duration-[4000ms] ease-in text-[#FFFFFF] ">
                     {item.name}
                   </h3>
-                  <p className="text-[24px] w-[558px] font-[500] text-[#FFFFFF] italic mb-5 transition-all delay-[3000ms]  duration-[4000ms] ease-in">
+                  <p className="text-[24px] lg:w-[388px] xl:w-[60%] font-[500] text-[#FFFFFF] italic mb-5 transition-all delay-[3000ms]  duration-[4000ms]">
                     “{item.quote}”
                   </p>
-                  <button className="bg-[#0190CA] items-center w-[150px] h-[55px] text-[#FFFFFF] rounded-[5px] transition-all delay-[4000ms]  duration-[3000ms] mb-4 ease-in">
+                  <button className="bg-[#0190CA] items-center w-[150px] h-[55px] text-[#FFFFFF] rounded-[5px] transition-all delay-[4000ms] duration-[3000ms] ">
                     Learn More
                   </button>
                   {/* Dot Indicators */}
-                  <div className="flex ml-[30px] space-x-3">
+                  <div className="flex ml-[30px] space-x-3 ">
                     {testimonials.map((_, dotIndex) => (
                       <span
                         key={dotIndex}
@@ -111,44 +111,50 @@ const TestimonialsSlider = () => {
           ))}
         </div>
       </div>
-      <div className="relative w-full md:w-[80%] h-full lg:hidden mt-[70px] bg-[#011632] rounded-[10px]">
-        {/* Testimonial Card Wrapper */}
+
+      {/* bg-[#011632] */}
+
+      <div className=" w-full md:w-[80%] h-full lg:hidden mt-[70px] bg-[#011632] rounded-[10px]">
         <div className="">
           {testimonials.map((item, index) => (
             <div
               key={index}
-              className="absolute inset-0 flex justify-between w-full h-full bg-[#011632]"  
+              className={`
+                 inset-0 flex justify-between w-full h-full 
+                transition-opacity duration-[2000ms] rounded-[10px]
+                ${index === currentIndex ? " " : "hidden "}
+              `} 
             >
               {/* Testimonial Card */}
-              <div className="flex flex-col md:flex-row w-full   font-semibold text-[#FFFFFF] rounded-lg bg-red-500">
+              <div className="relative flex flex-col   font-semibold text-[#FFFFFF] rounded-lg ">
                
-                <div className="w-full  absolute top-0 mb-6 md:mb-0 flex  items-center">
+                <div className="w-full    mb-6 pt-5 flex justify-center  items-center">
                   <img
                     src={Ellipse}
                     alt="Ellipse"
-                    className="  object-cover w-[80%] h-[70%] rounded-full mb-2"
+                    className="  object-cover absolute  h-[250px]  rounded-full mb-2"
                   />
                   <img
                     src={item.image}
                     alt={item.name}
-                    className=" absolute  w-[80%] h-[70%]  rounded-full"
+                    className="  h-[250px] relative   rounded-full"
                   />
                 </div>
 
               
-                {/* <div className="flex flex-col justify-between w-full md:w-[65%] text-center md:text-left">
-                  <h3 className="font-semibold text-[32px] md:text-[42px] mb-4 text-[#FFFFFF]">
+                <div className="flex flex-col   w-full mb-6  text-center">
+                  <h3 className="font-semibold text-[28px] md:text-[42px] mb-4 text-[#FFFFFF]">
                     {item.name}
                   </h3>
-                  <p className="text-[20px] md:text-[24px] w-[90%] font-[500] text-[#FFFFFF] italic mb-5">
+                  <p className="text-[20px] md:text-[18px] pl-[1rem] pr-[1rem]  font-[500] text-[#FFFFFF] italic mb-5">
                     “{item.quote}”
                   </p>
-                  <button className="bg-[#0190CA] items-center w-[150px] h-[55px] text-[#FFFFFF] rounded-[5px] mb-4">
+                  <button className="bg-[#0190CA] items-center w-[150px] h-[55px]  mx-auto text-[#FFFFFF] rounded-[5px] mb-4">
                     Learn More
                   </button>
 
                 
-                  <div className="flex justify-center md:justify-start space-x-3">
+                  <div className="flex justify-center  space-x-3">
                     {testimonials.map((_, dotIndex) => (
                       <span
                         key={dotIndex}
@@ -158,7 +164,7 @@ const TestimonialsSlider = () => {
                       />
                     ))}
                   </div>
-                </div> */}
+                </div>
               </div>
             </div>
           ))}

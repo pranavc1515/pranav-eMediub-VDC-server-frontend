@@ -9,7 +9,7 @@ import X from '../assets/X.svg'
 import TresImages from '../assets/TreeImages.svg'
 const FooterSection = () => {
     return (
-        <footer className="bg-[#031026] text-white ">
+        <footer className="bg-[#031026] text-white pb-8 ">
             <div className="container mx-auto flex justify-center items-center h-full flex-col md:flex-row  md:items-start">
                 {/* Left Section - Tree Image (Replace 'tree-image.png' with correct path) */}
                 <div className="hidden md:block w-1/4 pt-8">

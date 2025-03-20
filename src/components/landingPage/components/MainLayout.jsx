@@ -64,9 +64,9 @@ const MainLayout = ({ children }) => {
                 </div>
             </header>
             <main className="px-0 py-0">{children}</main>
-            {/* <footer>
+            <footer>
                 <FooterSection />
-            </footer> */}
+            </footer>
         </div>
     )
 }
