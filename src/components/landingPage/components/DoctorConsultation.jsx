@@ -4,9 +4,9 @@ import Marketing from '../assets/Marketing.svg'
 import call from '../assets/call.svg'
 const ConsultationSection = () => {
     return (
-        <div className="bg-white py-16 px-6 md:px-12 lg:px-20  lg:flex-row items-center justify-between ">
-            <div className=" w-full items-center ">
-                <div className="w-full flex flex-col justify-center items-center">
+        <div className="ConsultationsSection bg-red py-16 px-6 md:px-12 lg:px-20  lg:flex-row items-center justify-between ">
+            <div className="  w-full items-center ">
+                <div className=" ConsultationsDiv w-full flex flex-col justify-center items-center mb-3">
                     <h2 className="text-[#011632] text-[42px] font-semibold ">
                         Marketing
                     </h2>
@@ -19,7 +19,7 @@ const ConsultationSection = () => {
                 </div>
             </div>
             <div className="w-full lg:flex justify-between  ">
-                <div>
+                <div className="ConsultationsDivTwo">
                     <h1 className="text-[42px] lg:w-[507px]  font-semibold text-[#011632] ">
                         Consult Top Doctors Anytime, Anywhere!
                     </h1>
@@ -29,7 +29,7 @@ const ConsultationSection = () => {
                         at your fingertips.
                     </p>
                     <div className="flex items-center pl-[30px] h-[55px] border rounded-lg overflow-hidden shadow-sm max-w-md mx-auto lg:mx-0">
-                        <img src={call} alt="" />
+                        <img src={call} className='mr-2' alt="" />
                         <input
                             type="text"
                             placeholder="Enter your Phone Number"
@@ -40,14 +40,17 @@ const ConsultationSection = () => {
                         </button>
                     </div>
                 </div>
-                <div className=" flex justify-center relative mt-6 lg:mt-0  ">
-                    <div className="bg-blue-200  p-2 absolute    w-[413px] h-[326px] top-[-2px] rounded-[10px] bg-[linear-gradient(52.56deg,_rgba(37,_180,_248,_0)_0%,_rgba(37,_180,_248,_0.473958)_64.42%,_#25B4F8_126.21%)] "></div>
-                    <img
-                        src={Marketing}
-                        alt="Doctor Writing"
-                        className="rounded-lg shadow-md w-[410px] -left-[35px]  h-[326px] object-cover relative top-[35px] "
-                    />
-                </div>
+               
+                <div className="ourServicesCard flex justify-center relative lg:mt-0    mt-6  w-full lg:w-[40%] h-[320px]">
+                        <div className="ourServicesGreenCard bg-blue-200  absolute right-0    w-full  lg:w-[350px] h-[280px]  rounded-[10px] bg-[linear-gradient(52.56deg,_rgba(37,_180,_248,_0)_0%,_rgba(37,_180,_248,_0.473958)_64.42%,_#25B4F8_126.21%)] "></div>
+                        <div className=' ourServicesImageCard absolute bottom-1 right-[30px] top-[30px] lg:w-[350px]      '>
+                        <img
+                          src={Marketing}
+                          alt="Doctor Writing"
+                          className="rounded-lg shadow-md   object-cover relative  "
+                        />
+                        </div>
+                      </div>
             </div>
         </div>
     )

@@ -81,6 +81,22 @@
         height: 223px;
         width: 280px;
     }
+    .ConsultationsSection{
+        /* background-color: #000; */
+    }
+    
+
+    .ConsultationsDiv>h2{
+        font-size: 42px;
+        
+    }
+   .ConsultationsDivTwo>h1{
+         font-size: 30px;
+   }
+ 
+   .NewsArticlesText{
+    font-size: 35px;
+   }
 }
 @media (min-width: 481px) and (max-width: 768px) {
     /* Styles for landscape phones and small tablets */
@@ -143,7 +159,19 @@
         height: 303px;
         width: 380px;
     }
-   
+    
+
+    .ConsultationsDiv>h2{
+        font-size: 42px;
+       
+    }
+    .ConsultationsDivTwo>h1{
+        font-size: 30px;
+  }
+  
+   .NewsArticlesText{
+    font-size: 35px;
+   }
 }
 @media (min-width: 769px) and (max-width: 1024px) {
     /* Styles for tablets */
@@ -204,7 +232,25 @@
         height: 303px;
         width: 380px;
     }
-   
+    
+
+    .ConsultationsDiv>h2{
+        font-size: 42px;
+       
+    }
+    .ConsultationsDivTwo>h1{
+        font-size: 30px;
+  }
+  
+   .NewsArticlesText{
+    font-size: 35px;
+   }
+   .NewsArticles>button{
+    width:90%
+   }
+   .NewsArticlesPtag{
+    width:80%
+   }
 }
 @media (min-width: 1025px) and (max-width: 1440px) {
     /* Styles for laptops and small desktops */
@@ -234,4 +280,11 @@
         height: 280px;
         width: 380px;
     }
+   
+       .NewsArticles>button{
+        width:90%
+       }
+       .NewsArticlesPtag{
+        width:90%
+       }
 }

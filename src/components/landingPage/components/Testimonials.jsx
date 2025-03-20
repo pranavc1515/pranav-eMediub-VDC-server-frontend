@@ -51,13 +51,13 @@ const TestimonialsSlider = () => {
       <h2 className="text-[42px] font-semibold text-[#011632] mb-2 z-50">
         Testimonials
       </h2>
-      <p className="text-[#3C4959] w-[450px] text-[18px] font-normal mb-8 text-center">
+      <p className="text-[#3C4959] w-[80%] xl:w-[450px] text-[18px] font-normal xl:mb-8 text-center">
         Hear from our happy clients! Real experiences that inspire trust and
         confidence.
       </p>
 
       {/* Slider Container */}
-      <div className="relative w-[80%] h-[392px]   mt-[70px] bg-[#011632] rounded-[10px]" >
+      <div className="relative w-[80%] h-[392px] hidden lg:block    mt-[70px] bg-[#011632] rounded-[10px]" >
         {/* Testimonial Card Wrapper */}
         <div className="overflow-hidden relative  h-full" >
           {testimonials.map((item, index) => (
@@ -106,6 +106,59 @@ const TestimonialsSlider = () => {
                     className="w-full rounded-full absolute z-50 h-[370px] top-[0px] mb-2"
                   />
                 </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="relative w-full md:w-[80%] h-full lg:hidden mt-[70px] bg-[#011632] rounded-[10px]">
+        {/* Testimonial Card Wrapper */}
+        <div className="">
+          {testimonials.map((item, index) => (
+            <div
+              key={index}
+              className="absolute inset-0 flex justify-between w-full h-full bg-[#011632]"  
+            >
+              {/* Testimonial Card */}
+              <div className="flex flex-col md:flex-row w-full   font-semibold text-[#FFFFFF] rounded-lg bg-red-500">
+               
+                <div className="w-full  absolute top-0 mb-6 md:mb-0 flex  items-center">
+                  <img
+                    src={Ellipse}
+                    alt="Ellipse"
+                    className="  object-cover w-[80%] h-[70%] rounded-full mb-2"
+                  />
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className=" absolute  w-[80%] h-[70%]  rounded-full"
+                  />
+                </div>
+
+              
+                {/* <div className="flex flex-col justify-between w-full md:w-[65%] text-center md:text-left">
+                  <h3 className="font-semibold text-[32px] md:text-[42px] mb-4 text-[#FFFFFF]">
+                    {item.name}
+                  </h3>
+                  <p className="text-[20px] md:text-[24px] w-[90%] font-[500] text-[#FFFFFF] italic mb-5">
+                    “{item.quote}”
+                  </p>
+                  <button className="bg-[#0190CA] items-center w-[150px] h-[55px] text-[#FFFFFF] rounded-[5px] mb-4">
+                    Learn More
+                  </button>
+
+                
+                  <div className="flex justify-center md:justify-start space-x-3">
+                    {testimonials.map((_, dotIndex) => (
+                      <span
+                        key={dotIndex}
+                        onClick={() => setCurrentIndex(dotIndex)}
+                        className={`cursor-pointer bg-[#CFCFCF] mt-3 h-3 w-3 rounded-full transition-colors duration-[3000ms] 
+                          ${currentIndex === dotIndex ? "bg-blue-500" : ""}`}
+                      />
+                    ))}
+                  </div>
+                </div> */}
               </div>
             </div>
           ))}
