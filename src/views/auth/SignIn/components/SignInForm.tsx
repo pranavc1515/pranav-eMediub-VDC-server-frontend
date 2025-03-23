@@ -2,13 +2,8 @@ import { useState } from 'react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { FormItem, Form } from '@/components/ui/Form'
-import PasswordInput from '@/components/shared/PasswordInput'
-import classNames from '@/utils/classNames'
 import { useAuth } from '@/auth'
 import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import type { ZodType } from 'zod'
 import type { CommonProps } from '@/@types/common'
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -24,61 +19,11 @@ interface SignInFormProps extends CommonProps {
 }
 
 type SignInFormSchema = {
-    email: string
-    password: string
-    phone?: string
+    phone: string
 }
 
 type OtpVerificationSchema = {
     otp: string
-}
-
-const validationSchema: ZodType<SignInFormSchema> = z.object({
-    email: z
-        .string({ required_error: 'Please enter your email' })
-        .min(1, { message: 'Please enter your email' }),
-    password: z
-        .string({ required_error: 'Please enter your password' })
-        .min(1, { message: 'Please enter your password' }),
-    phone: z.string().optional(),
-})
-
-const phoneValidationSchema: ZodType<SignInFormSchema> = z.object({
-    phone: z
-        .string({ required_error: 'Please enter your phone number' })
-        .min(10, { message: 'Please enter a valid phone number' }),
-    email: z.string().optional(),
-    password: z.string().optional(),
-})
-
-const otpValidationSchema: ZodType<OtpVerificationSchema> = z.object({
-    otp: z.string().min(6, { message: 'Please enter a valid 6-digit OTP' }),
-})
-
-// Temporary mock data for development
-const MOCK_USERS = {
-    user: {
-        email: 'user@emedihub.com',
-        password: '123Qwe',
-        userData: {
-            userId: '1',
-            userName: 'Test User',
-            authority: ['user'],
-            avatar: '',
-            email: 'user@emedihub.com',
-        },
-    },
-    doctor: {
-        email: 'doctor@emedihub.com',
-        password: '123Qwe',
-        userData: {
-            userId: '2',
-            userName: 'Dr. Test',
-            authority: ['doctor'],
-            avatar: '',
-            email: 'doctor@emedihub.com',
-        },
-    },
 }
 
 const SignInForm = (props: SignInFormProps) => {
@@ -88,140 +33,111 @@ const SignInForm = (props: SignInFormProps) => {
     const [phoneNumber, setPhoneNumber] = useState<string>('')
     const navigate = useNavigate()
 
-    const {
-        disableSubmit = false,
-        className,
-        setMessage,
-        passwordHint,
-        userType,
-    } = props
+    const { disableSubmit = false, className, setMessage, userType } = props
 
-    // Form for email/password or phone number
     const {
         handleSubmit,
         formState: { errors },
         control,
     } = useForm<SignInFormSchema>({
-        defaultValues:
-            userType === 'doctor'
-                ? {
-                      email: MOCK_USERS[userType].email,
-                      password: MOCK_USERS[userType].password,
-                  }
-                : {},
-        resolver: zodResolver(
-            userType === 'doctor' ? validationSchema : phoneValidationSchema,
-        ),
+        defaultValues: {
+            phone: '',
+        },
+        rules: {
+            phone: {
+                required: 'Please enter your phone number',
+                minLength: {
+                    value: 10,
+                    message: 'Please enter a valid phone number',
+                },
+            },
+        },
     })
 
-    // Form for OTP verification
     const {
         handleSubmit: handleOtpSubmit,
         formState: { errors: otpErrors },
         control: otpControl,
         reset: resetOtpForm,
     } = useForm<OtpVerificationSchema>({
-        resolver: zodResolver(otpValidationSchema),
+        defaultValues: {
+            otp: '',
+        },
+        rules: {
+            otp: {
+                required: 'Please enter OTP',
+                minLength: {
+                    value: 6,
+                    message: 'Please enter a valid 6-digit OTP',
+                },
+            },
+        },
     })
 
     const { signIn } = useAuth()
 
     const onSignIn = async (values: SignInFormSchema) => {
-        if (userType === 'doctor') {
-            // Doctor sign-in remains unchanged
-            const { email, password } = values
+        const { phone } = values
 
-            if (!disableSubmit) {
-                setSubmitting(true)
+        if (!disableSubmit) {
+            setSubmitting(true)
 
-                try {
-                    // Temporary mock authentication
-                    const mockUser = MOCK_USERS[userType]
-                    if (
-                        email === mockUser.email &&
-                        password === mockUser.password
-                    ) {
-                        // Simulate successful sign in
-                        const result = await signIn({
-                            email,
-                            password,
-                            userType,
-                        })
+            try {
+                const apiEndpoint =
+                    userType === 'doctor'
+                        ? 'api/doctors/register'
+                        : 'api/user/register-new'
+                // Fix URL construction by ensuring a slash between base URL and endpoint
+                const fullUrl = `/${apiEndpoint}`
 
-                        if (result?.status === 'failed') {
-                            setMessage?.('Invalid credentials')
-                        } else {
-                            navigate(appConfig.authenticatedEntryPath)
-                        }
-                    } else {
-                        setMessage?.('Invalid email or password')
-                    }
-                } catch {
-                    setMessage?.('An error occurred during sign in')
+                console.log('Sending request with data:', {
+                    url: fullUrl,
+                    data:
+                        userType === 'doctor'
+                            ? { phoneNumber: phone }
+                            : { username: phone },
+                })
+
+                const response = await ApiService.fetchDataWithAxios({
+                    url: fullUrl,
+                    method: 'post',
+                    data:
+                        userType === 'doctor'
+                            ? { phoneNumber: phone }
+                            : { username: phone },
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+
+                console.log('API Response:', response)
+
+                if (response?.status === true || response?.success === true) {
+                    setPhoneNumber(phone || '')
+                    setShowOtpVerification(true)
+                    resetOtpForm({ otp: '' })
+                    setMessage?.(response?.message || 'OTP sent successfully')
+                } else {
+                    const errorMessage =
+                        response?.message || 'Failed to send OTP'
+                    console.error('API Response Error:', response)
+                    setMessage?.(errorMessage)
                 }
+            } catch (error: any) {
+                console.error('API Error Details:', {
+                    message: error.message,
+                    response: error.response,
+                    status: error.response?.status,
+                })
 
-                setSubmitting(false)
-            }
-        } else {
-            // User sign-in with phone number
-            const { phone } = values
-            if (!disableSubmit) {
-                setSubmitting(true)
-
-                try {
-                    // First try register-new API
-                    let response = await ApiService.fetchDataWithAxios({
-                        url: 'user/register-new',
-                        method: 'post',
-                        data: { username: phone },
-                    })
-
-                    // If registration is successful, proceed with the flow
-                    if (response?.status === true) {
-                        setPhoneNumber(phone || '')
-                        setShowOtpVerification(true)
-                        resetOtpForm({ otp: '' })
-                        setMessage?.(
-                            response?.message || 'OTP sent successfully',
-                        )
-                    } else {
-                        // Handle specific error messages
-                        const errorMessage =
-                            response?.message || 'Failed to send OTP'
-                        console.error('API Response:', response)
-                        setMessage?.(errorMessage)
-                    }
-                } catch (error) {
-                    console.error('API Error:', error)
-                    // If registration fails, try to login existing user
-                    try {
-                        const loginResponse =
-                            await ApiService.fetchDataWithAxios({
-                                url: 'user/do-login',
-                                method: 'post',
-                                data: { username: phone },
-                            })
-
-                        if (loginResponse?.status === true) {
-                            setPhoneNumber(phone || '')
-                            setShowOtpVerification(true)
-                            resetOtpForm({ otp: '' })
-                            setMessage?.('OTP sent successfully')
-                        } else {
-                            const errorMessage =
-                                loginResponse?.message || 'Failed to login'
-                            setMessage?.(errorMessage)
-                        }
-                    } catch (loginError) {
-                        console.error('Login error:', loginError)
-                        const errorMessage =
-                            loginError?.response?.data?.message ||
-                            'Failed to login. Please try again.'
-                        setMessage?.(errorMessage)
-                    }
-                    setSubmitting(false)
+                if (error.response?.data?.message) {
+                    setMessage?.(error.response.data.message)
+                } else {
+                    setMessage?.('Failed to send OTP. Please try again.')
                 }
             }
+
+            setSubmitting(false)
         }
     }
 
@@ -232,33 +148,28 @@ const SignInForm = (props: SignInFormProps) => {
             setSubmitting(true)
 
             try {
-                // Call the validate-otp API
+                const apiEndpoint =
+                    userType === 'doctor'
+                        ? 'api/doctors/verify-otp'
+                        : 'api/user/validate-otp'
+                const fullUrl = `/${apiEndpoint}`
+
                 const response = await ApiService.fetchDataWithAxios({
-                    url: 'user/validate-otp',
+                    url: fullUrl,
                     method: 'post',
                     data: {
-                        phone: phoneNumber,
-                        email: '',
+                        phoneNumber: phoneNumber,
                         otp,
                     },
                 })
 
-                if (response && response.status === true) {
-                    // Store token in localStorage
+                if (
+                    response &&
+                    (response.status === true || response.success === true)
+                ) {
                     localStorage.setItem('auth_token', response.token)
-
-                    // Use the existing auth context to set the user as authenticated
-                    const result = await signIn({
-                        email: 'user@emedihub.com', // Using mock user data for now
-                        password: '123Qwe',
-                        userType: 'user',
-                    })
-
-                    if (result?.status === 'failed') {
-                        setMessage?.('Authentication failed')
-                    } else {
-                        navigate(appConfig.authenticatedEntryPath)
-                    }
+                    await signIn({ phoneNumber, userType })
+                    navigate(appConfig.authenticatedEntryPath)
                 } else {
                     setMessage?.('Invalid OTP')
                 }
@@ -275,82 +186,32 @@ const SignInForm = (props: SignInFormProps) => {
         <div className={className}>
             {!showOtpVerification ? (
                 <Form onSubmit={handleSubmit(onSignIn)}>
-                    {userType === 'doctor' ? (
-                        // Doctor sign-in form (unchanged)
-                        <>
-                            <FormItem
-                                label="Doctor Email"
-                                invalid={Boolean(errors.email)}
-                                errorMessage={errors.email?.message}
-                            >
-                                <Controller
-                                    name="email"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <Input
-                                            type="email"
-                                            placeholder="Enter your doctor email"
-                                            autoComplete="off"
-                                            {...field}
-                                        />
-                                    )}
+                    <FormItem
+                        label={`${userType === 'doctor' ? 'Doctor ' : ''}Phone Number`}
+                        invalid={Boolean(errors.phone)}
+                        errorMessage={errors.phone?.message}
+                    >
+                        <Controller
+                            name="phone"
+                            control={control}
+                            render={({ field }) => (
+                                <Input
+                                    type="tel"
+                                    autoComplete="off"
+                                    placeholder="Enter your phone number"
+                                    {...field}
                                 />
-                            </FormItem>
-                            <FormItem
-                                label="Password"
-                                invalid={Boolean(errors.password)}
-                                errorMessage={errors.password?.message}
-                                className={classNames(
-                                    passwordHint && 'mb-0',
-                                    errors.password?.message && 'mb-8',
-                                )}
-                            >
-                                <Controller
-                                    name="password"
-                                    control={control}
-                                    rules={{ required: true }}
-                                    render={({ field }) => (
-                                        <PasswordInput
-                                            type="text"
-                                            placeholder="Password"
-                                            autoComplete="off"
-                                            {...field}
-                                        />
-                                    )}
-                                />
-                            </FormItem>
-                            {passwordHint}
-                        </>
-                    ) : (
-                        // User sign-in form with phone number
-                        <>
-                            <FormItem
-                                label="Phone Number"
-                                invalid={Boolean(errors.phone)}
-                                errorMessage={errors.phone?.message}
-                            >
-                                <Controller
-                                    name="phone"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <Input
-                                            type="tel"
-                                            placeholder="Enter your phone number"
-                                            {...field}
-                                        />
-                                    )}
-                                />
-                            </FormItem>
-                            <Button
-                                block
-                                loading={isSubmitting}
-                                variant="solid"
-                                type="submit"
-                            >
-                                {isSubmitting ? 'Sending OTP...' : 'Send OTP'}
-                            </Button>
-                        </>
-                    )}
+                            )}
+                        />
+                    </FormItem>
+                    <Button
+                        block
+                        loading={isSubmitting}
+                        variant="solid"
+                        type="submit"
+                    >
+                        {isSubmitting ? 'Sending OTP...' : 'Send OTP'}
+                    </Button>
                 </Form>
             ) : (
                 <Form onSubmit={handleOtpSubmit(onVerifyOtp)}>
@@ -364,6 +225,7 @@ const SignInForm = (props: SignInFormProps) => {
                             render={({ field }) => (
                                 <OtpInput
                                     placeholder=""
+                                    autoComplete="off"
                                     inputClass="h-[58px]"
                                     length={6}
                                     {...field}
