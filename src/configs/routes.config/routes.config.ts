@@ -1,6 +1,7 @@
 import { lazy } from 'react'
 import authRoute from './authRoute'
 import othersRoute from './othersRoute'
+import doctorRoute from './doctorRoute'
 import type { Routes } from '@/@types/routes'
 
 export const publicRoutes: Routes = [
@@ -62,4 +63,5 @@ export const protectedRoutes: Routes = [
         authority: [],
     },
     ...othersRoute,
+    ...doctorRoute,
 ]

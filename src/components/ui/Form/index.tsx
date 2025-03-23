@@ -7,3 +7,5 @@ export type { FormContainerProps } from './FormContainer'
 export type { FormItemProps } from './FormItem'
 
 export { Form, FormContainer, FormItem }
+
+export default Form
