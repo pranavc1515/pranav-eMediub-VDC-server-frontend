@@ -10,6 +10,8 @@ import { useNavigate } from 'react-router-dom'
 import appConfig from '@/configs/app.config'
 import OtpInput from '@/components/shared/OtpInput'
 import ApiService from '@/services/ApiService'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 
 interface SignInFormProps extends CommonProps {
     disableSubmit?: boolean
@@ -31,6 +33,7 @@ const SignInForm = (props: SignInFormProps) => {
     const [showOtpVerification, setShowOtpVerification] =
         useState<boolean>(false)
     const [phoneNumber, setPhoneNumber] = useState<string>('')
+    const [otpValue, setOtpValue] = useState<string>('')
     const navigate = useNavigate()
 
     const { disableSubmit = false, className, setMessage, userType } = props
@@ -43,35 +46,32 @@ const SignInForm = (props: SignInFormProps) => {
         defaultValues: {
             phone: '',
         },
-        rules: {
-            phone: {
-                required: 'Please enter your phone number',
-                minLength: {
-                    value: 10,
-                    message: 'Please enter a valid phone number',
-                },
-            },
-        },
+        resolver: zodResolver(
+            z.object({
+                phone: z.string()
+                    .min(10, 'Please enter a valid phone number')
+                    .nonempty('Please enter your phone number'),
+            })
+        ),
     })
 
     const {
         handleSubmit: handleOtpSubmit,
         formState: { errors: otpErrors },
         control: otpControl,
+        setValue: setOtpFormValue,
         reset: resetOtpForm,
     } = useForm<OtpVerificationSchema>({
         defaultValues: {
             otp: '',
         },
-        rules: {
-            otp: {
-                required: 'Please enter OTP',
-                minLength: {
-                    value: 6,
-                    message: 'Please enter a valid 6-digit OTP',
-                },
-            },
-        },
+        resolver: zodResolver(
+            z.object({
+                otp: z.string()
+                    .min(6, 'Please enter a valid 6-digit OTP')
+                    .nonempty('Please enter OTP'),
+            })
+        ),
     })
 
     const { signIn } = useAuth()
@@ -90,13 +90,13 @@ const SignInForm = (props: SignInFormProps) => {
                 // Fix URL construction by ensuring a slash between base URL and endpoint
                 const fullUrl = `/${apiEndpoint}`
 
-                console.log('Sending request with data:', {
-                    url: fullUrl,
-                    data:
-                        userType === 'doctor'
-                            ? { phoneNumber: phone }
-                            : { username: phone },
-                })
+                // console.log('Sending request with data:', {
+                //     url: fullUrl,
+                //     data:
+                //         userType === 'doctor'
+                //             ? { phoneNumber: phone }
+                //             : { username: phone },
+                // })
 
                 const response = await ApiService.fetchDataWithAxios({
                     url: fullUrl,
@@ -112,14 +112,15 @@ const SignInForm = (props: SignInFormProps) => {
 
                 console.log('API Response:', response)
 
-                if (response?.status === true || response?.success === true) {
+                if (response && (response as any).status === true || (response as any).success === true) {
                     setPhoneNumber(phone || '')
                     setShowOtpVerification(true)
-                    resetOtpForm({ otp: '' })
-                    setMessage?.(response?.message || 'OTP sent successfully')
+                    resetOtpForm()
+                    setOtpValue('')
+                    setMessage?.((response as any)?.message || 'OTP sent successfully')
                 } else {
                     const errorMessage =
-                        response?.message || 'Failed to send OTP'
+                        (response as any)?.message || 'Failed to send OTP'
                     console.error('API Response Error:', response)
                     setMessage?.(errorMessage)
                 }
@@ -165,10 +166,14 @@ const SignInForm = (props: SignInFormProps) => {
 
                 if (
                     response &&
-                    (response.status === true || response.success === true)
+                    ((response as any).status === true || (response as any).success === true)
                 ) {
-                    localStorage.setItem('auth_token', response.token)
-                    await signIn({ phoneNumber, userType })
+                    localStorage.setItem('auth_token', (response as any).token)
+                    await signIn({
+                        email: phoneNumber,
+                        password: '',
+                        userType: userType
+                    })
                     navigate(appConfig.authenticatedEntryPath)
                 } else {
                     setMessage?.('Invalid OTP')
@@ -222,15 +227,20 @@ const SignInForm = (props: SignInFormProps) => {
                         <Controller
                             name="otp"
                             control={otpControl}
-                            render={({ field }) => (
-                                <OtpInput
-                                    placeholder=""
-                                    autoComplete="off"
-                                    inputClass="h-[58px]"
-                                    length={6}
-                                    {...field}
-                                />
-                            )}
+                            render={({ field }) => {
+                                return (
+                                    <OtpInput
+                                        placeholder=""
+                                        value={otpValue}
+                                        onChange={(value) => {
+                                            setOtpValue(value);
+                                            setOtpFormValue('otp', value);
+                                        }}
+                                        inputClass="h-[58px]"
+                                        length={6}
+                                    />
+                                )
+                            }}
                         />
                     </FormItem>
                     <Button
