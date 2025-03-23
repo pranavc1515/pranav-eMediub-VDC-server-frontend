@@ -18,7 +18,7 @@ type ForgotPasswordFormSchema = {
     otp: string
 }
 
-const OTP_LENGTH = 6
+const OTP_LENGTH = 4
 
 const validationSchema: ZodType<ForgotPasswordFormSchema> = z.object({
     otp: z.string().min(OTP_LENGTH, { message: 'Please enter a valid OTP' }),

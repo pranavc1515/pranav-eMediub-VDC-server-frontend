@@ -78,9 +78,11 @@ function AuthProvider({ children }: AuthProviderProps) {
         const params = new URLSearchParams(search)
         const redirectUrl = params.get(REDIRECT_URL_KEY)
 
-        navigatorRef.current?.navigate(
-            redirectUrl ? redirectUrl : appConfig.authenticatedEntryPath,
-        )
+        if (redirectUrl && redirectUrl.startsWith('/')) {
+            navigatorRef.current?.navigate(redirectUrl)
+        } else {
+            navigatorRef.current?.navigate(appConfig.authenticatedEntryPath)
+        }
     }
 
     const handleSignIn = (tokens: Token, user?: User) => {
@@ -100,7 +102,22 @@ function AuthProvider({ children }: AuthProviderProps) {
 
     const signIn = async (values: SignInCredential): AuthResult => {
         try {
-            // Temporary mock authentication
+            // If the user is authenticating with a profile (from OTP flow)
+            if (values.profile) {
+                // Use the profile directly
+                const accessToken = typeof token === 'string' ? token : '';
+                handleSignIn(
+                    { accessToken },
+                    values.profile
+                )
+                redirect()
+                return {
+                    status: 'success',
+                    message: '',
+                }
+            }
+            
+            // Fallback to mock authentication for development
             const mockUser = MOCK_USERS[values.userType]
             if (
                 values.email === mockUser.email &&
@@ -121,7 +138,8 @@ function AuthProvider({ children }: AuthProviderProps) {
                 status: 'failed',
                 message: 'Invalid email or password',
             }
-        } catch {
+        } catch (error) {
+            console.error('Sign in error:', error);
             return {
                 status: 'failed',
                 message: 'An error occurred during sign in',

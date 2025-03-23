@@ -12,6 +12,7 @@ import OtpInput from '@/components/shared/OtpInput'
 import ApiService from '@/services/ApiService'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useToken } from '@/store/authStore'
 
 interface SignInFormProps extends CommonProps {
     disableSubmit?: boolean
@@ -35,6 +36,7 @@ const SignInForm = (props: SignInFormProps) => {
     const [phoneNumber, setPhoneNumber] = useState<string>('')
     const [otpValue, setOtpValue] = useState<string>('')
     const navigate = useNavigate()
+    const { setToken } = useToken()
 
     const { disableSubmit = false, className, setMessage, userType } = props
 
@@ -48,10 +50,11 @@ const SignInForm = (props: SignInFormProps) => {
         },
         resolver: zodResolver(
             z.object({
-                phone: z.string()
+                phone: z
+                    .string()
                     .min(10, 'Please enter a valid phone number')
                     .nonempty('Please enter your phone number'),
-            })
+            }),
         ),
     })
 
@@ -67,10 +70,11 @@ const SignInForm = (props: SignInFormProps) => {
         },
         resolver: zodResolver(
             z.object({
-                otp: z.string()
-                    .min(6, 'Please enter a valid 6-digit OTP')
+                otp: z
+                    .string()
+                    .min(4, 'Please enter a valid 4-digit OTP')
                     .nonempty('Please enter OTP'),
-            })
+            }),
         ),
     })
 
@@ -112,12 +116,17 @@ const SignInForm = (props: SignInFormProps) => {
 
                 console.log('API Response:', response)
 
-                if (response && (response as any).status === true || (response as any).success === true) {
+                if (
+                    (response && (response as any).status === true) ||
+                    (response as any).success === true
+                ) {
                     setPhoneNumber(phone || '')
                     setShowOtpVerification(true)
                     resetOtpForm()
                     setOtpValue('')
-                    setMessage?.((response as any)?.message || 'OTP sent successfully')
+                    setMessage?.(
+                        (response as any)?.message || 'OTP sent successfully',
+                    )
                 } else {
                     const errorMessage =
                         (response as any)?.message || 'Failed to send OTP'
@@ -145,13 +154,13 @@ const SignInForm = (props: SignInFormProps) => {
     const onVerifyOtp = async (values: OtpVerificationSchema) => {
         const { otp } = values
 
-        if (!disableSubmit && otp.length === 6) {
+        if (!disableSubmit && otp.length === 4) {
             setSubmitting(true)
 
             try {
                 const apiEndpoint =
                     userType === 'doctor'
-                        ? 'api/doctors/verify-otp'
+                        ? 'api/doctors/validate-otp'
                         : 'api/user/validate-otp'
                 const fullUrl = `/${apiEndpoint}`
 
@@ -166,15 +175,53 @@ const SignInForm = (props: SignInFormProps) => {
 
                 if (
                     response &&
-                    ((response as any).status === true || (response as any).success === true)
+                    ((response as any).status === true ||
+                        (response as any).success === true)
                 ) {
-                    localStorage.setItem('auth_token', (response as any).token)
-                    await signIn({
+                    const { token, doctor, user } = (response as any).data
+                    
+                    // Store the profile data for the authenticated user
+                    const profile =
+                        userType === 'doctor'
+                            ? {
+                                  id: doctor.id,
+                                  phoneNumber: doctor.phoneNumber,
+                                  isProfileComplete: doctor.isProfileComplete,
+                                  authority: ['doctor'], // Add authority
+                                  userName: `Dr. ${doctor.phoneNumber}`, // Add a username
+                              }
+                            : {
+                                  id: user.id,
+                                  phoneNumber: user.phoneNumber,
+                                  isProfileComplete: user.isProfileComplete,
+                                  authority: ['user'], // Add authority
+                                  userName: user.phoneNumber, // Add a username
+                              }
+                    
+                    // First store the token using our token management
+                    setToken(token)
+
+                    // Then call the sign in function with the profile
+                    const result = await signIn({
                         email: phoneNumber,
                         password: '',
-                        userType: userType
+                        userType: userType,
+                        profile,
                     })
-                    navigate(appConfig.authenticatedEntryPath)
+
+                    console.log('Sign in result:', result)
+
+                    // Only redirect if sign in was successful
+                    if (result.status === 'success') {
+                        if (profile.isProfileComplete) {
+                            navigate(appConfig.authenticatedEntryPath)
+                        } else {
+                            navigate('/profile-setup')
+                        }
+                    } else {
+                        // If sign in failed despite valid OTP
+                        setMessage?.(result.message || 'Authentication failed')
+                    }
                 } else {
                     setMessage?.('Invalid OTP')
                 }
@@ -233,11 +280,11 @@ const SignInForm = (props: SignInFormProps) => {
                                         placeholder=""
                                         value={otpValue}
                                         onChange={(value) => {
-                                            setOtpValue(value);
-                                            setOtpFormValue('otp', value);
+                                            setOtpValue(value)
+                                            setOtpFormValue('otp', value)
                                         }}
                                         inputClass="h-[58px]"
-                                        length={6}
+                                        length={4}
                                     />
                                 )
                             }}
