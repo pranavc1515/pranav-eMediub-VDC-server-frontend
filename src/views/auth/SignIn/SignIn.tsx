@@ -57,7 +57,15 @@ export const SignInBase = ({
                 </Segment>
             </div>
             {message && (
-                <Alert showIcon className="mb-4" type="danger">
+                <Alert
+                    showIcon
+                    className="mb-4"
+                    type={
+                        message.toLowerCase().includes('success')
+                            ? 'success'
+                            : 'danger'
+                    }
+                >
                     <span className="break-all">{message}</span>
                 </Alert>
             )}

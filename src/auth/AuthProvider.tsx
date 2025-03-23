@@ -104,21 +104,31 @@ function AuthProvider({ children }: AuthProviderProps) {
         try {
             // If the user is authenticating with a profile (from OTP flow)
             if (values.profile) {
-                // Use the profile directly
-                const accessToken = typeof token === 'string' ? token : '';
+                // Use the provided token and profile
+                console.log('Signing in with profile:', values.profile);
+                
+                const accessToken = values.token || (typeof token === 'string' ? token : '');
+                console.log('Using access token:', accessToken);
+                
+                // handleSignIn expects a Token object and User object
                 handleSignIn(
                     { accessToken },
                     values.profile
-                )
-                redirect()
+                );
+                
+                // Force session state update
+                setSessionSignedIn(true);
+                
+                // Redirect after authentication
+                redirect();
                 return {
                     status: 'success',
                     message: '',
-                }
+                };
             }
             
             // Fallback to mock authentication for development
-            const mockUser = MOCK_USERS[values.userType]
+            const mockUser = MOCK_USERS[values.userType];
             if (
                 values.email === mockUser.email &&
                 values.password === mockUser.password
@@ -127,25 +137,25 @@ function AuthProvider({ children }: AuthProviderProps) {
                 handleSignIn(
                     { accessToken: `mock-token-${values.userType}` },
                     mockUser.userData,
-                )
-                redirect()
+                );
+                redirect();
                 return {
                     status: 'success',
                     message: '',
-                }
+                };
             }
             return {
                 status: 'failed',
                 message: 'Invalid email or password',
-            }
+            };
         } catch (error) {
             console.error('Sign in error:', error);
             return {
                 status: 'failed',
                 message: 'An error occurred during sign in',
-            }
+            };
         }
-    }
+    };
 
     const signUp = async (values: SignUpCredential): AuthResult => {
         try {

@@ -3,6 +3,7 @@ export type SignInCredential = {
     password: string
     userType: 'user' | 'doctor'
     profile?: any
+    token?: string
 }
 
 export type SignInResponse = {

@@ -180,46 +180,60 @@ const SignInForm = (props: SignInFormProps) => {
                 ) {
                     const { token, doctor, user } = (response as any).data
                     
-                    // Store the profile data for the authenticated user
+                    // Debug logging
+                    console.log('OTP validation successful:', { token, doctor, user });
+                    
+                    // Store the token in different ways to ensure it's available
+                    localStorage.setItem('token', token);
+                    sessionStorage.setItem('token', token);
+                    setToken(token);
+                    console.log('Token stored in multiple places');
+                    
+                    // Create a profile that matches the User type structure in auth.ts
                     const profile =
                         userType === 'doctor'
                             ? {
-                                  id: doctor.id,
-                                  phoneNumber: doctor.phoneNumber,
-                                  isProfileComplete: doctor.isProfileComplete,
-                                  authority: ['doctor'], // Add authority
-                                  userName: `Dr. ${doctor.phoneNumber}`, // Add a username
+                                  userId: doctor.id.toString(),
+                                  userName: `Dr. ${doctor.phoneNumber}`,
+                                  authority: ['doctor'],
+                                  avatar: '',
+                                  email: doctor.phoneNumber,
                               }
                             : {
-                                  id: user.id,
-                                  phoneNumber: user.phoneNumber,
-                                  isProfileComplete: user.isProfileComplete,
-                                  authority: ['user'], // Add authority
-                                  userName: user.phoneNumber, // Add a username
+                                  userId: user.id.toString(),
+                                  userName: user.phoneNumber,
+                                  authority: ['user'],
+                                  avatar: '',
+                                  email: user.phoneNumber,
                               }
                     
-                    // First store the token using our token management
-                    setToken(token)
-
-                    // Then call the sign in function with the profile
+                    console.log('Created profile for auth:', profile);
+                    
+                    // Then sign in with the correctly structured profile
                     const result = await signIn({
                         email: phoneNumber,
                         password: '',
                         userType: userType,
                         profile,
+                        token
                     })
 
                     console.log('Sign in result:', result)
 
                     // Only redirect if sign in was successful
                     if (result.status === 'success') {
-                        if (profile.isProfileComplete) {
+                        console.log('Sign in successful, redirecting to', 
+                            (userType === 'doctor' ? doctor.isProfileComplete : user.isProfileComplete) 
+                            ? appConfig.authenticatedEntryPath : '/profile-setup');
+                            
+                        if ((userType === 'doctor' ? doctor.isProfileComplete : user.isProfileComplete)) {
                             navigate(appConfig.authenticatedEntryPath)
                         } else {
                             navigate('/profile-setup')
                         }
                     } else {
                         // If sign in failed despite valid OTP
+                        console.error('Sign in failed after OTP validation:', result);
                         setMessage?.(result.message || 'Authentication failed')
                     }
                 } else {
@@ -300,6 +314,24 @@ const SignInForm = (props: SignInFormProps) => {
                     </Button>
                 </Form>
             )}
+            <div className="mt-4 pt-2">
+                <Button 
+                    onClick={() => {
+                        console.log("Auth Debug: localStorage token =", localStorage.getItem('token'));
+                        console.log("Auth Debug: sessionStorage token =", sessionStorage.getItem('token'));
+                        console.log("Auth Debug: Authenticated =", useAuth().authenticated);
+                        console.log("Auth Debug: User =", useAuth().user);
+                        if (!useAuth().authenticated) {
+                            alert("Not authenticated! Will try to redirect to home manually.");
+                            navigate(appConfig.authenticatedEntryPath);
+                        }
+                    }} 
+                    size="sm" 
+                    variant="solid"
+                >
+                    Debug Auth State
+                </Button>
+            </div>
         </div>
     )
 }
