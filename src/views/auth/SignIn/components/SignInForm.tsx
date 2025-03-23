@@ -90,7 +90,7 @@ const SignInForm = (props: SignInFormProps) => {
                 const apiEndpoint =
                     userType === 'doctor'
                         ? 'api/doctors/register'
-                        : 'api/user/register-new'
+                        : 'api/users/register-new'
                 // Fix URL construction by ensuring a slash between base URL and endpoint
                 const fullUrl = `/${apiEndpoint}`
 
@@ -108,7 +108,7 @@ const SignInForm = (props: SignInFormProps) => {
                     data:
                         userType === 'doctor'
                             ? { phoneNumber: phone }
-                            : { username: phone },
+                            : { phone },
                     headers: {
                         'Content-Type': 'application/json',
                     },
@@ -161,16 +161,15 @@ const SignInForm = (props: SignInFormProps) => {
                 const apiEndpoint =
                     userType === 'doctor'
                         ? 'api/doctors/validate-otp'
-                        : 'api/user/validate-otp'
+                        : 'api/users/validate-otp'
                 const fullUrl = `/${apiEndpoint}`
 
                 const response = await ApiService.fetchDataWithAxios({
                     url: fullUrl,
                     method: 'post',
-                    data: {
-                        phoneNumber: phoneNumber,
-                        otp,
-                    },
+                    data: userType === 'doctor' 
+                        ? { phoneNumber: phoneNumber, otp }
+                        : { phone: phoneNumber, otp },
                 })
 
                 if (
@@ -178,16 +177,33 @@ const SignInForm = (props: SignInFormProps) => {
                     ((response as any).status === true ||
                         (response as any).success === true)
                 ) {
-                    const { token, doctor, user } = (response as any).data
+                    // Different APIs might have different response structures
+                    const responseData = (response as any).data;
                     
-                    // Debug logging
-                    console.log('OTP validation successful:', { token, doctor, user });
+                    if (!responseData) {
+                        console.error('Invalid response data:', response);
+                        setMessage?.('Invalid response from server');
+                        setSubmitting(false);
+                        return;
+                    }
+                    
+                    const token = responseData.token;
+                    const doctor = responseData.doctor;
+                    const user = responseData.user;
+                    
+                    if (!token) {
+                        console.error('No token in response:', responseData);
+                        setMessage?.('Authentication failed: No token received');
+                        setSubmitting(false);
+                        return;
+                    }
+                    
+                    console.log('OTP validation successful:', responseData);
                     
                     // Store the token in different ways to ensure it's available
                     localStorage.setItem('token', token);
                     sessionStorage.setItem('token', token);
                     setToken(token);
-                    console.log('Token stored in multiple places');
                     
                     // Create a profile that matches the User type structure in auth.ts
                     const profile =
@@ -200,11 +216,12 @@ const SignInForm = (props: SignInFormProps) => {
                                   email: doctor.phoneNumber,
                               }
                             : {
-                                  userId: user.id.toString(),
-                                  userName: user.phoneNumber,
+                                  userId: user.id ? user.id.toString() : user.userId?.toString(),
+                                  userName: user.fullName || user.phoneNumber || phoneNumber,
                                   authority: ['user'],
-                                  avatar: '',
-                                  email: user.phoneNumber,
+                                  avatar: user.profilePhoto || '',
+                                  email: user.email || phoneNumber,
+                                  phoneNumber: user.phoneNumber || phoneNumber,
                               }
                     
                     console.log('Created profile for auth:', profile);
@@ -222,14 +239,19 @@ const SignInForm = (props: SignInFormProps) => {
 
                     // Only redirect if sign in was successful
                     if (result.status === 'success') {
-                        console.log('Sign in successful, redirecting to', 
-                            (userType === 'doctor' ? doctor.isProfileComplete : user.isProfileComplete) 
-                            ? appConfig.authenticatedEntryPath : '/profile-setup');
+                        console.log('Sign in successful, checking profile completion');
+                        
+                        // Check if profile is complete - handle different response structures
+                        const isProfileComplete = userType === 'doctor' 
+                            ? doctor?.isProfileComplete 
+                            : user?.isProfileComplete;
                             
-                        if ((userType === 'doctor' ? doctor.isProfileComplete : user.isProfileComplete)) {
-                            navigate(appConfig.authenticatedEntryPath)
+                        if (isProfileComplete) {
+                            console.log('Profile is complete, redirecting to home');
+                            navigate(appConfig.authenticatedEntryPath);
                         } else {
-                            navigate('/profile-setup')
+                            console.log('Profile is incomplete, redirecting to profile setup');
+                            navigate('/profile-setup');
                         }
                     } else {
                         // If sign in failed despite valid OTP
