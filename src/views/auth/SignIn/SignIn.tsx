@@ -50,9 +50,9 @@ export const SignInBase = ({
             </div>
             <div className="mb-8">
                 <Segment value={userType} onChange={handleSegmentChange}>
-                    <Segment.Item value="user">I&apos;m a User</Segment.Item>
+                    <Segment.Item value="user">User</Segment.Item>
                     <Segment.Item value="doctor">
-                        I&apos;m a Doctor
+                        Doctor
                     </Segment.Item>
                 </Segment>
             </div>
@@ -85,7 +85,7 @@ export const SignInBase = ({
                     </div>
                 }
             />
-            <div>
+            {/* <div>
                 <div className="mt-6 text-center">
                     <span>{`Don't have an account yet?`} </span>
                     <ActionLink
@@ -96,7 +96,7 @@ export const SignInBase = ({
                         Sign up
                     </ActionLink>
                 </div>
-            </div>
+            </div> */}
         </>
     )
 }

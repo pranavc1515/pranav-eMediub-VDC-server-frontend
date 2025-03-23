@@ -3,10 +3,14 @@ import PublicRoute from './PublicRoute'
 import AuthorityGuard from './AuthorityGuard'
 import AppRoute from './AppRoute'
 import PageContainer from '@/components/template/PageContainer'
-import { protectedRoutes, publicRoutes } from '@/configs/routes.config'
+import { protectedRoutes as appProtectedRoutes, publicRoutes } from '@/configs/routes.config'
 import { useAuth } from '@/auth'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import type { LayoutType } from '@/@types/theme'
+import VideoConsultation from '@/views/doctor/VideoConsultation'
+import Appointments from '@/views/doctor/Appointments'
+import PatientRecords from '@/views/doctor/PatientRecords'
+import Prescriptions from '@/views/doctor/Prescriptions'
 
 interface ViewsProps {
     pageContainerType?: 'default' | 'gutterless' | 'contained'
@@ -17,6 +21,56 @@ type AllRoutesProps = ViewsProps
 
 const AllRoutes = (props: AllRoutesProps) => {
     const { user } = useAuth()
+
+    const doctorRoutes = [
+        {
+            key: 'videoConsultation',
+            path: '/doctor/video-consultation',
+            component: VideoConsultation,
+            authority: ['doctor'],
+            meta: {
+                label: 'Video Consultation',
+                pageTitle: 'Video Consultation',
+                desc: 'Conduct video consultations with patients'
+            }
+        },
+        {
+            key: 'appointments',
+            path: '/doctor/appointments',
+            component: Appointments,
+            authority: ['doctor'],
+            meta: {
+                label: 'Appointments',
+                pageTitle: 'Appointments',
+                desc: 'Manage your appointments'
+            }
+        },
+        {
+            key: 'patientRecords',
+            path: '/doctor/patient-records',
+            component: PatientRecords,
+            authority: ['doctor'],
+            meta: {
+                label: 'Patient Records',
+                pageTitle: 'Patient Records',
+                desc: 'View and manage patient records'
+            }
+        },
+        {
+            key: 'prescriptions',
+            path: '/doctor/prescriptions',
+            component: Prescriptions,
+            authority: ['doctor'],
+            meta: {
+                label: 'Prescriptions',
+                pageTitle: 'Prescriptions',
+                desc: 'Manage prescriptions for patients'
+            }
+        },
+    ]
+
+    // Combine the doctor routes with the existing protected routes
+    const combinedProtectedRoutes = [...appProtectedRoutes, ...doctorRoutes]
 
     return (
         <Routes>
@@ -36,7 +90,7 @@ const AllRoutes = (props: AllRoutesProps) => {
                 ))}
             </Route>
             <Route path="/" element={<ProtectedRoute />}>
-                {protectedRoutes.map((route, index) => (
+                {combinedProtectedRoutes.map((route, index) => (
                     <Route
                         key={route.key + index}
                         path={route.path}

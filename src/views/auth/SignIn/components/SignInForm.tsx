@@ -275,7 +275,7 @@ const SignInForm = (props: SignInFormProps) => {
             {!showOtpVerification ? (
                 <Form onSubmit={handleSubmit(onSignIn)}>
                     <FormItem
-                        label={`${userType === 'doctor' ? 'Doctor ' : ''}Phone Number`}
+                        label={`Phone Number`}
                         invalid={Boolean(errors.phone)}
                         errorMessage={errors.phone?.message}
                     >
@@ -336,24 +336,6 @@ const SignInForm = (props: SignInFormProps) => {
                     </Button>
                 </Form>
             )}
-            <div className="mt-4 pt-2">
-                <Button 
-                    onClick={() => {
-                        console.log("Auth Debug: localStorage token =", localStorage.getItem('token'));
-                        console.log("Auth Debug: sessionStorage token =", sessionStorage.getItem('token'));
-                        console.log("Auth Debug: Authenticated =", useAuth().authenticated);
-                        console.log("Auth Debug: User =", useAuth().user);
-                        if (!useAuth().authenticated) {
-                            alert("Not authenticated! Will try to redirect to home manually.");
-                            navigate(appConfig.authenticatedEntryPath);
-                        }
-                    }} 
-                    size="sm" 
-                    variant="solid"
-                >
-                    Debug Auth State
-                </Button>
-            </div>
         </div>
     )
 }

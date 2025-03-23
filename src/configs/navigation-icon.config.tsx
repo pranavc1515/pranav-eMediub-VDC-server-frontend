@@ -5,6 +5,11 @@ import {
     PiClipboardTextDuotone,
     PiScrollDuotone,
     PiInfoDuotone,
+    PiUserDuotone,
+    PiCalendarDuotone,
+    PiFolderDuotone,
+    PiFileTextDuotone,
+    PiMonitorDuotone,
 } from 'react-icons/pi'
 
 export type NavigationIcons = Record<string, JSX.Element>
@@ -16,6 +21,11 @@ const navigationIcon: NavigationIcons = {
     report: <PiClipboardTextDuotone />,
     document: <PiScrollDuotone />,
     info: <PiInfoDuotone />,
+    user: <PiUserDuotone />,
+    calendar: <PiCalendarDuotone />,
+    folder: <PiFolderDuotone />,
+    'file-text': <PiFileTextDuotone />,
+    monitor: <PiMonitorDuotone />,
 }
 
 export default navigationIcon
