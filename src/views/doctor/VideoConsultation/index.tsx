@@ -40,19 +40,19 @@ const VideoConsultation = () => {
         {
             id: 1,
             sender: 'patient',
-            text: 'Hello doctor, I'm here for my appointment.',
+            text: 'Hello doctor, I\'m here for my appointment.',
             timestamp: '10:01 AM'
         },
         {
             id: 2,
             sender: 'doctor',
-            text: 'Hello! I'll be with you in just a moment. How are you feeling today?',
+            text: 'Hello! I\'ll be with you in just a moment. How are you feeling today?',
             timestamp: '10:02 AM'
         },
         {
             id: 3,
             sender: 'patient',
-            text: 'I've been experiencing headaches for the past week, mainly in the afternoons.',
+            text: 'I\'ve been experiencing headaches for the past week, mainly in the afternoons.',
             timestamp: '10:03 AM'
         }
     ])

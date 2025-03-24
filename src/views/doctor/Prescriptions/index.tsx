@@ -10,25 +10,15 @@ import {
     Table
 } from '@/components/ui'
 import Container from '@/components/shared/Container'
-
-interface Prescription {
-    id: number
-    patientId: number
-    patientName: string
-    patientAge: number
-    patientGender: string
-    medications: {
-        name: string
-        dosage: string
-        frequency: string
-        duration: string
-        instructions: string
-    }[]
-    status: 'active' | 'completed' | 'cancelled'
-    createdDate: string
-    expiryDate: string
-    notes?: string
-}
+import { 
+    prescriptions, 
+    patientRecords,
+    indianMedications,
+    medicationFrequencies,
+    medicationDurations,
+    type Prescription
+} from '@/mock/data'
+import type { SingleValue } from 'react-select'
 
 const Prescriptions = () => {
     const [activeTab, setActiveTab] = useState('all')
@@ -47,145 +37,10 @@ const Prescriptions = () => {
     }])
     const [prescriptionNotes, setPrescriptionNotes] = useState('')
 
-    // Mock prescription data
-    const prescriptions: Prescription[] = [
-        {
-            id: 1,
-            patientId: 1,
-            patientName: 'John Smith',
-            patientAge: 45,
-            patientGender: 'Male',
-            medications: [
-                {
-                    name: 'Lisinopril',
-                    dosage: '10mg',
-                    frequency: 'Once daily',
-                    duration: '30 days',
-                    instructions: 'Take in the morning with food'
-                },
-                {
-                    name: 'Metformin',
-                    dosage: '500mg',
-                    frequency: 'Twice daily',
-                    duration: '30 days',
-                    instructions: 'Take with meals'
-                }
-            ],
-            status: 'active',
-            createdDate: '2023-04-15',
-            expiryDate: '2023-05-15',
-            notes: 'Patient blood pressure was 130/85 during visit'
-        },
-        {
-            id: 2,
-            patientId: 2,
-            patientName: 'Anna Johnson',
-            patientAge: 35,
-            patientGender: 'Female',
-            medications: [
-                {
-                    name: 'Sumatriptan',
-                    dosage: '50mg',
-                    frequency: 'As needed',
-                    duration: '30 days',
-                    instructions: 'Take at onset of migraine symptoms, maximum 2 tablets per 24 hours'
-                }
-            ],
-            status: 'active',
-            createdDate: '2023-04-02',
-            expiryDate: '2023-05-02'
-        },
-        {
-            id: 3,
-            patientId: 3,
-            patientName: 'Michael Brown',
-            patientAge: 60,
-            patientGender: 'Male',
-            medications: [
-                {
-                    name: 'Metformin',
-                    dosage: '1000mg',
-                    frequency: 'Twice daily',
-                    duration: '90 days',
-                    instructions: 'Take with meals'
-                },
-                {
-                    name: 'Lisinopril',
-                    dosage: '20mg',
-                    frequency: 'Once daily',
-                    duration: '90 days',
-                    instructions: 'Take in the morning'
-                },
-                {
-                    name: 'Atorvastatin',
-                    dosage: '10mg',
-                    frequency: 'Once daily',
-                    duration: '90 days',
-                    instructions: 'Take in the evening'
-                }
-            ],
-            status: 'active',
-            createdDate: '2023-03-28',
-            expiryDate: '2023-06-28',
-            notes: 'Follow up for lab work in 3 months'
-        },
-        {
-            id: 4,
-            patientId: 1,
-            patientName: 'John Smith',
-            patientAge: 45,
-            patientGender: 'Male',
-            medications: [
-                {
-                    name: 'Amoxicillin',
-                    dosage: '500mg',
-                    frequency: 'Three times daily',
-                    duration: '10 days',
-                    instructions: 'Take until completed, even if symptoms improve'
-                }
-            ],
-            status: 'completed',
-            createdDate: '2023-02-10',
-            expiryDate: '2023-02-20',
-            notes: 'For sinus infection'
-        }
-    ]
-
-    const patients = [
-        { value: '1', label: 'John Smith (45 yrs, Male)' },
-        { value: '2', label: 'Anna Johnson (35 yrs, Female)' },
-        { value: '3', label: 'Michael Brown (60 yrs, Male)' },
-        { value: '4', label: 'Sarah Williams (28 yrs, Female)' }
-    ]
-
-    const medications_list = [
-        { value: 'lisinopril', label: 'Lisinopril' },
-        { value: 'metformin', label: 'Metformin' },
-        { value: 'atorvastatin', label: 'Atorvastatin' },
-        { value: 'amoxicillin', label: 'Amoxicillin' },
-        { value: 'sumatriptan', label: 'Sumatriptan' },
-        { value: 'sertraline', label: 'Sertraline' },
-        { value: 'cetirizine', label: 'Cetirizine' },
-        { value: 'ibuprofen', label: 'Ibuprofen' }
-    ]
-
-    const frequencies = [
-        { value: 'once_daily', label: 'Once daily' },
-        { value: 'twice_daily', label: 'Twice daily' },
-        { value: 'three_times_daily', label: 'Three times daily' },
-        { value: 'four_times_daily', label: 'Four times daily' },
-        { value: 'as_needed', label: 'As needed (PRN)' },
-        { value: 'weekly', label: 'Weekly' }
-    ]
-
-    const durations = [
-        { value: '7_days', label: '7 days' },
-        { value: '10_days', label: '10 days' },
-        { value: '14_days', label: '14 days' },
-        { value: '30_days', label: '30 days' },
-        { value: '60_days', label: '60 days' },
-        { value: '90_days', label: '90 days' }
-    ]
+    const patients = patientRecords.map(patient => ({
+        value: patient.id.toString(),
+        label: `${patient.name} (${patient.age} yrs, ${patient.gender})`
+    }))
 
     const filteredPrescriptions = prescriptions.filter(prescription => {
         if (activeTab !== 'all' && prescription.status !== activeTab) {
@@ -228,6 +83,12 @@ const Prescriptions = () => {
         setMedications(updatedMedications)
     }
 
+    const handleSelectChange = (value: SingleValue<string>, setter: (value: string) => void) => {
+        if (value) {
+            setter(value)
+        }
+    }
+
     const handleCreatePrescription = () => {
         // In a real app, this would submit the data to the backend
         console.log({
@@ -243,205 +104,122 @@ const Prescriptions = () => {
         setIsCreatingNew(false)
     }
 
-    const columns = [
-        {
-            key: 'patient',
-            title: 'Patient',
-            dataIndex: 'patient',
-            render: (_: any, record: Prescription) => (
-                <div className="flex items-center">
-                    <Avatar shape="circle" size={35} />
-                    <div className="ml-2">
-                        <div className="font-medium">{record.patientName}</div>
-                        <div className="text-xs text-gray-500">
-                            {record.patientAge} yrs, {record.patientGender}
-                        </div>
-                    </div>
-                </div>
-            )
-        },
-        {
-            key: 'medications',
-            title: 'Medications',
-            dataIndex: 'medications',
-            render: (_: any, record: Prescription) => (
-                <div>
-                    {record.medications.map((med, index) => (
-                        <div key={index} className={index !== 0 ? 'mt-1' : ''}>
-                            <span className="font-medium">{med.name}</span> {med.dosage}
-                        </div>
-                    ))}
-                </div>
-            )
-        },
-        {
-            key: 'dates',
-            title: 'Dates',
-            dataIndex: 'dates',
-            render: (_: any, record: Prescription) => (
-                <div>
-                    <div>Created: {record.createdDate}</div>
-                    <div className="text-xs text-gray-500">
-                        Expires: {record.expiryDate}
-                    </div>
-                </div>
-            )
-        },
-        {
-            key: 'status',
-            title: 'Status',
-            dataIndex: 'status',
-            render: (_: any, record: Prescription) => {
-                let color = ''
-                switch(record.status) {
-                    case 'active':
-                        color = 'bg-emerald-100 text-emerald-600'
-                        break
-                    case 'completed':
-                        color = 'bg-gray-100 text-gray-600'
-                        break
-                    case 'cancelled':
-                        color = 'bg-red-100 text-red-600'
-                        break
-                }
-                
-                return (
-                    <Tag className={color}>
-                        {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                    </Tag>
-                )
-            }
-        },
-        {
-            key: 'actions',
-            title: 'Actions',
-            dataIndex: 'actions',
-            render: (_: any, record: Prescription) => (
-                <div className="flex space-x-2 justify-end">
-                    <Button 
-                        size="sm"
-                        onClick={() => handleViewPrescription(record)}
-                    >
-                        View
-                    </Button>
-                    <Button 
-                        size="sm" 
-                        variant="solid"
-                    >
-                        Print
-                    </Button>
-                </div>
-            )
-        }
-    ]
-
     const renderPrescriptionContent = () => {
         if (isCreatingNew) {
             return (
                 <Card>
                     <div className="p-4">
-                        <h4 className="mb-4">Create New Prescription</h4>
-                        <div className="space-y-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h4>Create New Prescription</h4>
+                            <Button 
+                                size="sm" 
+                                onClick={() => setIsCreatingNew(false)}
+                                icon="arrow-left"
+                            >
+                                Back to List
+                            </Button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="font-medium block mb-2">Patient</label>
+                                <label className="form-label">Patient</label>
                                 <Select
-                                    options={patients}
+                                    options={patients as any}
                                     value={selectedPatient}
-                                    onChange={(val: string) => setSelectedPatient(val)}
-                                    placeholder="Select a patient"
+                                    onChange={(val) => handleSelectChange(val as SingleValue<string>, (value) => setSelectedPatient(value))}
+                                    placeholder="Select patient"
                                 />
                             </div>
+                        </div>
+                        
+                        <div className="mt-6">
+                            <div className="flex justify-between items-center mb-2">
+                                <h5>Medications</h5>
+                                <Button 
+                                    size="sm" 
+                                    onClick={handleAddMedication}
+                                >
+                                    Add Medication
+                                </Button>
+                            </div>
                             
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <label className="font-medium">Medications</label>
-                                    <Button 
-                                        size="sm" 
-                                        onClick={handleAddMedication}
-                                        icon="plus"
-                                    >
-                                        Add Medication
-                                    </Button>
-                                </div>
-                                
-                                {medications.map((medication, index) => (
-                                    <div key={index} className="mb-4 p-4 border rounded-lg">
-                                        <div className="flex justify-between mb-3">
-                                            <h5>Medication #{index + 1}</h5>
-                                            {index > 0 && (
-                                                <Button 
-                                                    size="xs" 
-                                                    variant="plain"
-                                                    onClick={() => handleRemoveMedication(index)}
-                                                >
-                                                    Remove
-                                                </Button>
-                                            )}
+                            {medications.map((medication, index) => (
+                                <div key={index} className="bg-gray-50 p-4 rounded-lg mb-4">
+                                    <div className="flex justify-between">
+                                        <h6 className="mb-2">Medication #{index + 1}</h6>
+                                        {index > 0 && (
+                                            <Button 
+                                                size="xs" 
+                                                variant="plain"
+                                                onClick={() => handleRemoveMedication(index)}
+                                            >
+                                                Remove
+                                            </Button>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="form-label">Medication Name</label>
+                                            <Select
+                                                options={indianMedications as any}
+                                                value={medication.name}
+                                                onChange={(val) => handleSelectChange(val as SingleValue<string>, (value) => handleMedicationChange(index, 'name', value))}
+                                                placeholder="Select medication"
+                                            />
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="text-sm text-gray-500 block mb-1">Medication Name</label>
-                                                <Select
-                                                    options={medications_list}
-                                                    value={medication.name}
-                                                    onChange={(val: string) => handleMedicationChange(index, 'name', val)}
-                                                    placeholder="Select medication"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-sm text-gray-500 block mb-1">Dosage</label>
-                                                <Input 
-                                                    value={medication.dosage}
-                                                    onChange={(e) => handleMedicationChange(index, 'dosage', e.target.value)}
-                                                    placeholder="e.g. 10mg"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-sm text-gray-500 block mb-1">Frequency</label>
-                                                <Select
-                                                    options={frequencies}
-                                                    value={medication.frequency}
-                                                    onChange={(val: string) => handleMedicationChange(index, 'frequency', val)}
-                                                    placeholder="Select frequency"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-sm text-gray-500 block mb-1">Duration</label>
-                                                <Select
-                                                    options={durations}
-                                                    value={medication.duration}
-                                                    onChange={(val: string) => handleMedicationChange(index, 'duration', val)}
-                                                    placeholder="Select duration"
-                                                />
-                                            </div>
-                                            <div className="md:col-span-2">
-                                                <label className="text-sm text-gray-500 block mb-1">Special Instructions</label>
-                                                <Input 
-                                                    value={medication.instructions}
-                                                    onChange={(e) => handleMedicationChange(index, 'instructions', e.target.value)}
-                                                    placeholder="e.g. Take with food"
-                                                />
-                                            </div>
+                                        <div>
+                                            <label className="form-label">Dosage</label>
+                                            <Input 
+                                                value={medication.dosage}
+                                                onChange={(e) => handleMedicationChange(index, 'dosage', e.target.value)}
+                                                placeholder="e.g. 10mg"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="form-label">Frequency</label>
+                                            <Select
+                                                options={medicationFrequencies as any}
+                                                value={medication.frequency}
+                                                onChange={(val) => handleSelectChange(val as SingleValue<string>, (value) => handleMedicationChange(index, 'frequency', value))}
+                                                placeholder="Select frequency"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="form-label">Duration</label>
+                                            <Select
+                                                options={medicationDurations as any}
+                                                value={medication.duration}
+                                                onChange={(val) => handleSelectChange(val as SingleValue<string>, (value) => handleMedicationChange(index, 'duration', value))}
+                                                placeholder="Select duration"
+                                            />
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="form-label">Special Instructions</label>
+                                            <Input 
+                                                value={medication.instructions}
+                                                onChange={(e) => handleMedicationChange(index, 'instructions', e.target.value)}
+                                                placeholder="e.g. Take with food"
+                                            />
                                         </div>
                                     </div>
-                                ))}
-                            </div>
+                                </div>
+                            ))}
                             
-                            <div>
-                                <label className="font-medium block mb-2">Notes</label>
-                                <Input 
-                                    textArea
+                            <div className="mt-4">
+                                <label className="form-label">Notes</label>
+                                <Input
                                     value={prescriptionNotes}
-                                    onChange={(e) => setPrescriptionNotes(e.target.value)}
-                                    placeholder="Additional notes for the prescription..."
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrescriptionNotes(e.target.value)}
+                                    placeholder="Additional notes for the prescription"
                                 />
                             </div>
                             
-                            <div className="flex justify-end space-x-3">
-                                <Button onClick={() => setIsCreatingNew(false)}>
-                                    Cancel
-                                </Button>
-                                <Button variant="solid" onClick={handleCreatePrescription}>
+                            <div className="mt-6 flex justify-end">
+                                <Button 
+                                    variant="solid" 
+                                    onClick={handleCreatePrescription}
+                                >
                                     Create Prescription
                                 </Button>
                             </div>
@@ -457,96 +235,112 @@ const Prescriptions = () => {
                     <div className="p-4">
                         <div className="flex justify-between items-start mb-6">
                             <div>
-                                <h4 className="mb-1">Prescription Details</h4>
-                                <p className="text-gray-500">Created on {selectedPrescription.createdDate}</p>
+                                <h4>Prescription Details</h4>
+                                <p className="text-gray-500">
+                                    Created on {selectedPrescription.createdDate} • 
+                                    {selectedPrescription.status === 'active' && 
+                                        <span className="text-green-600"> Active</span>
+                                    }
+                                    {selectedPrescription.status === 'completed' && 
+                                        <span className="text-gray-600"> Completed</span>
+                                    }
+                                    {selectedPrescription.status === 'cancelled' && 
+                                        <span className="text-red-600"> Cancelled</span>
+                                    }
+                                </p>
                             </div>
                             <div className="flex space-x-2">
-                                <Button size="sm" icon="arrow-left" onClick={() => setSelectedPrescription(null)}>
-                                    Back
+                                <Button 
+                                    onClick={() => setSelectedPrescription(null)} 
+                                    icon="arrow-left"
+                                >
+                                    Back to List
                                 </Button>
-                                <Button size="sm" variant="solid" icon="printer">
+                                <Button 
+                                    onClick={() => window.print()}
+                                    icon="printer"
+                                >
                                     Print
                                 </Button>
                             </div>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="md:col-span-1">
-                                <Card>
-                                    <div className="p-4">
-                                        <h5 className="font-semibold mb-3">Patient Information</h5>
-                                        <div className="flex items-center mb-4">
-                                            <Avatar shape="circle" size={50} />
-                                            <div className="ml-3">
-                                                <div className="font-medium">{selectedPrescription.patientName}</div>
-                                                <div className="text-sm text-gray-500">
-                                                    {selectedPrescription.patientAge} yrs, {selectedPrescription.patientGender}
-                                                </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <Card className="md:col-span-1">
+                                <div className="p-4">
+                                    <h5 className="font-semibold mb-3">Patient Information</h5>
+                                    <div className="flex items-center mb-3">
+                                        <Avatar shape="circle" size={50} />
+                                        <div className="ml-3">
+                                            <div className="font-medium">{selectedPrescription.patientName}</div>
+                                            <div className="text-gray-500">
+                                                {selectedPrescription.patientAge} years old • {selectedPrescription.patientGender}
                                             </div>
                                         </div>
-                                        
-                                        <div className="flex justify-between border-t pt-3">
-                                            <div className="text-sm text-gray-500">Status</div>
-                                            <Tag className={
-                                                selectedPrescription.status === 'active' ? 'bg-emerald-100 text-emerald-600' :
-                                                selectedPrescription.status === 'completed' ? 'bg-gray-100 text-gray-600' :
-                                                'bg-red-100 text-red-600'
-                                            }>
-                                                {selectedPrescription.status.charAt(0).toUpperCase() + selectedPrescription.status.slice(1)}
-                                            </Tag>
+                                    </div>
+                                </div>
+                            </Card>
+                            
+                            <Card className="md:col-span-2">
+                                <div className="p-4">
+                                    <h5 className="font-semibold mb-3">Prescription Information</h5>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div>
+                                            <div className="text-gray-500">Prescribing Doctor</div>
+                                            <div>{selectedPrescription.doctorName}</div>
                                         </div>
-                                        <div className="flex justify-between border-t pt-3 mt-3">
-                                            <div className="text-sm text-gray-500">Valid Until</div>
+                                        <div>
+                                            <div className="text-gray-500">Prescription ID</div>
+                                            <div>#{selectedPrescription.id.toString().padStart(6, '0')}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-gray-500">Issue Date</div>
+                                            <div>{selectedPrescription.createdDate}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-gray-500">Valid Until</div>
                                             <div>{selectedPrescription.expiryDate}</div>
                                         </div>
                                     </div>
-                                </Card>
-                            </div>
-                            
-                            <div className="md:col-span-2">
-                                <Card>
-                                    <div className="p-4">
-                                        <h5 className="font-semibold mb-3">Prescribed Medications</h5>
-                                        <div className="space-y-4">
-                                            {selectedPrescription.medications.map((medication, index) => (
-                                                <div key={index} className="p-3 border rounded-lg">
-                                                    <div className="flex justify-between">
-                                                        <div className="font-medium">{medication.name} {medication.dosage}</div>
-                                                        <Tag className="bg-blue-100 text-blue-600">
-                                                            {medication.frequency}
-                                                        </Tag>
-                                                    </div>
-                                                    <div className="mt-2 text-sm">
-                                                        <span className="text-gray-500">Duration:</span> {medication.duration}
-                                                    </div>
-                                                    <div className="mt-1 text-sm">
-                                                        <span className="text-gray-500">Instructions:</span> {medication.instructions}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        
-                                        {selectedPrescription.notes && (
-                                            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                                                <h6 className="font-medium mb-1">Notes</h6>
-                                                <p className="text-sm">{selectedPrescription.notes}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </Card>
-                                
-                                <div className="flex justify-end mt-4 space-x-2">
-                                    {selectedPrescription.status === 'active' && (
-                                        <>
-                                            <Button>Renew Prescription</Button>
-                                            <Button variant="plain" color="red">
-                                                Cancel Prescription
-                                            </Button>
-                                        </>
-                                    )}
                                 </div>
-                            </div>
+                            </Card>
                         </div>
+                        
+                        <Card>
+                            <div className="p-4">
+                                <h5 className="font-semibold mb-4">Prescribed Medications</h5>
+                                
+                                <table className="min-w-full">
+                                    <thead>
+                                        <tr>
+                                            <th className="px-4 py-2 text-left">Medication</th>
+                                            <th className="px-4 py-2 text-left">Dosage</th>
+                                            <th className="px-4 py-2 text-left">Frequency</th>
+                                            <th className="px-4 py-2 text-left">Duration</th>
+                                            <th className="px-4 py-2 text-left">Instructions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {selectedPrescription.medications.map((medication, index) => (
+                                            <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
+                                                <td className="px-4 py-3 font-medium">{medication.name}</td>
+                                                <td className="px-4 py-3">{medication.dosage}</td>
+                                                <td className="px-4 py-3">{medication.frequency}</td>
+                                                <td className="px-4 py-3">{medication.duration}</td>
+                                                <td className="px-4 py-3">{medication.instructions}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                
+                                {selectedPrescription.notes && (
+                                    <div className="mt-4">
+                                        <h6 className="font-medium mb-2">Notes</h6>
+                                        <p className="text-gray-600">{selectedPrescription.notes}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </Card>
                     </div>
                 </Card>
             )
@@ -554,49 +348,125 @@ const Prescriptions = () => {
         
         return (
             <>
-                <div className="flex justify-between items-center mb-4">
-                    <div className="flex">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                    <div>
                         <Tabs value={activeTab} onChange={(val) => setActiveTab(val)}>
                             <Tabs.TabList>
-                                <Tabs.TabNav value="all">All</Tabs.TabNav>
+                                <Tabs.TabNav value="all">All Prescriptions</Tabs.TabNav>
                                 <Tabs.TabNav value="active">Active</Tabs.TabNav>
                                 <Tabs.TabNav value="completed">Completed</Tabs.TabNav>
                                 <Tabs.TabNav value="cancelled">Cancelled</Tabs.TabNav>
                             </Tabs.TabList>
                         </Tabs>
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="mt-4 md:mt-0 flex space-x-4 items-center">
                         <Input 
                             placeholder="Search prescriptions..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            prefix={<span className="text-gray-400">🔍</span>}
+                            prefix={<span>🔍</span>}
+                            className="w-60"
                         />
                         <Button 
-                            variant="solid" 
+                            variant="solid"
                             onClick={() => setIsCreatingNew(true)}
                         >
-                            + New Prescription
+                            Create New
                         </Button>
                     </div>
                 </div>
                 
                 <Card>
-                    <Table dataSource={filteredPrescriptions} columns={columns} />
+                    <div className="p-4">
+                        <table className="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th className="px-4 py-2 text-left">Patient</th>
+                                    <th className="px-4 py-2 text-left">Medications</th>
+                                    <th className="px-4 py-2 text-left">Created</th>
+                                    <th className="px-4 py-2 text-left">Status</th>
+                                    <th className="px-4 py-2 text-left">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredPrescriptions.map((prescription) => (
+                                    <tr key={prescription.id} className="border-b border-gray-200 last:border-0">
+                                        <td className="px-4 py-4">
+                                            <div className="flex items-center">
+                                                <Avatar shape="circle" size={35} />
+                                                <div className="ml-2">
+                                                    <div className="font-medium">{prescription.patientName}</div>
+                                                    <div className="text-xs text-gray-500">
+                                                        {prescription.patientAge} yrs, {prescription.patientGender}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <div className="max-w-xs">
+                                                {prescription.medications.map((med, index) => (
+                                                    <Tag key={index} className="bg-blue-100 text-blue-600 mr-1 mb-1">
+                                                        {med.name}
+                                                    </Tag>
+                                                ))}
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <div>{prescription.createdDate}</div>
+                                            <div className="text-xs text-gray-500">
+                                                Expires: {prescription.expiryDate}
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            {prescription.status === 'active' && 
+                                                <Tag className="bg-green-100 text-green-600">Active</Tag>
+                                            }
+                                            {prescription.status === 'completed' && 
+                                                <Tag className="bg-gray-100 text-gray-600">Completed</Tag>
+                                            }
+                                            {prescription.status === 'cancelled' && 
+                                                <Tag className="bg-red-100 text-red-600">Cancelled</Tag>
+                                            }
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <div className="flex space-x-2">
+                                                <Button 
+                                                    size="sm"
+                                                    onClick={() => handleViewPrescription(prescription)}
+                                                >
+                                                    View
+                                                </Button>
+                                                {prescription.status === 'active' && (
+                                                    <Button size="sm" variant="plain">
+                                                        Renew
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        
+                        {filteredPrescriptions.length === 0 && (
+                            <div className="text-center py-8 text-gray-500">
+                                No prescriptions found.
+                            </div>
+                        )}
+                    </div>
                 </Card>
             </>
         )
     }
 
     return (
-        <Container className="h-full">
-            <div className="flex flex-col space-y-4">
-                <div className="flex justify-between items-center">
-                    <h3>Prescriptions</h3>
-                </div>
-                
-                {renderPrescriptionContent()}
+        <Container>
+            <div className="mb-4">
+                <h3>Prescriptions</h3>
+                <p className="text-gray-500">Manage prescriptions for your patients</p>
             </div>
+            
+            {renderPrescriptionContent()}
         </Container>
     )
 }
