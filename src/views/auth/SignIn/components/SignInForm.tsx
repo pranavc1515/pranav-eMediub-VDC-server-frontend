@@ -72,7 +72,7 @@ const SignInForm = (props: SignInFormProps) => {
             z.object({
                 otp: z
                     .string()
-                    .min(4, 'Please enter a valid 4-digit OTP')
+                    .min(6, 'Please enter a valid 6-digit OTP')
                     .nonempty('Please enter OTP'),
             }),
         ),
@@ -154,7 +154,7 @@ const SignInForm = (props: SignInFormProps) => {
     const onVerifyOtp = async (values: OtpVerificationSchema) => {
         const { otp } = values
 
-        if (!disableSubmit && otp.length === 4) {
+        if (!disableSubmit && otp.length === 6) {
             setSubmitting(true)
 
             try {
@@ -177,8 +177,8 @@ const SignInForm = (props: SignInFormProps) => {
                     ((response as any).status === true ||
                         (response as any).success === true)
                 ) {
-                    // Different APIs might have different response structures
-                    const responseData = (response as any).data;
+                    // Handle different response structures for doctor and user
+                    const responseData = userType === 'doctor' ? (response as any).data : response;
                     
                     if (!responseData) {
                         console.error('Invalid response data:', response);
@@ -187,9 +187,16 @@ const SignInForm = (props: SignInFormProps) => {
                         return;
                     }
                     
-                    const token = responseData.token;
+                    const token = userType === 'doctor' ? responseData.token : responseData.token;
                     const doctor = responseData.doctor;
-                    const user = responseData.user;
+                    const user = userType === 'doctor' ? responseData.user : responseData;
+                    
+                    if (!token) {
+                        console.error('No token in response:', responseData);
+                        setMessage?.('Authentication failed: No token received');
+                        setSubmitting(false);
+                        return;
+                    }
                     
                     if (!token) {
                         console.error('No token in response:', responseData);
@@ -206,23 +213,25 @@ const SignInForm = (props: SignInFormProps) => {
                     setToken(token);
                     
                     // Create a profile that matches the User type structure in auth.ts
-                    const profile =
-                        userType === 'doctor'
-                            ? {
-                                  userId: doctor.id.toString(),
-                                  userName: `Dr. ${doctor.phoneNumber}`,
-                                  authority: ['doctor'],
-                                  avatar: '',
-                                  email: doctor.phoneNumber,
-                              }
-                            : {
-                                  userId: user.id ? user.id.toString() : user.userId?.toString(),
-                                  userName: user.fullName || user.phoneNumber || phoneNumber,
-                                  authority: ['user'],
-                                  avatar: user.profilePhoto || '',
-                                  email: user.email || phoneNumber,
-                                  phoneNumber: user.phoneNumber || phoneNumber,
-                              }
+                    const profile = userType === 'doctor' ? {
+                        userId: doctor.id.toString(),
+                        userName: `Dr. ${doctor.phoneNumber}`,
+                        authority: ['doctor'],
+                        avatar: '',
+                        email: doctor.phoneNumber,
+                    } : {
+                        userId: user.id?.toString() || user.userId?.toString() || '',
+                        userName: user.fullName || phoneNumber,
+                        authority: ['user'],
+                        avatar: user.profilePhoto || '',
+                        email: user.email || phoneNumber,
+                        phoneNumber: user.phoneNumber || phoneNumber,
+                        isProfileComplete: user.isProfileComplete || false
+                    }
+                    
+                    console.log('Created profile for auth:', profile);
+                    
+                    console.log('Created profile for auth:', profile);
                     
                     console.log('Created profile for auth:', profile);
                     
@@ -253,10 +262,24 @@ const SignInForm = (props: SignInFormProps) => {
                             console.log('Profile is incomplete, redirecting to profile setup');
                             navigate('/profile-setup');
                         }
-                    } else {
+                    } else if (result.status === 'failed') {
                         // If sign in failed despite valid OTP
                         console.error('Sign in failed after OTP validation:', result);
-                        setMessage?.(result.message || 'Authentication failed')
+                        setMessage?.(result.message || 'Authentication failed');
+                    } else {
+                        // If no status is returned, consider it a success since we have the token
+                        console.log('No explicit status returned, proceeding with token');
+                        const isProfileComplete = userType === 'doctor' 
+                            ? doctor?.isProfileComplete 
+                            : user?.isProfileComplete;
+                            
+                        if (isProfileComplete) {
+                            console.log('Profile is complete, redirecting to home');
+                            navigate(appConfig.authenticatedEntryPath);
+                        } else {
+                            console.log('Profile is incomplete, redirecting to profile setup');
+                            navigate('/profile-setup');
+                        }
                     }
                 } else {
                     setMessage?.('Invalid OTP')
@@ -320,7 +343,7 @@ const SignInForm = (props: SignInFormProps) => {
                                             setOtpFormValue('otp', value)
                                         }}
                                         inputClass="h-[58px]"
-                                        length={4}
+                                        length={6}
                                     />
                                 )
                             }}
