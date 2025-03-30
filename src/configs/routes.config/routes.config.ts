@@ -23,15 +23,45 @@ export const protectedRoutes: Routes = [
     },
     {
         key: 'videoConsultation',
-        path: '/video-consultation',
-        component: lazy(() => import('@/views/Home')),
-        authority: [],
+        path: '/doctor/video-consultation',
+        component: lazy(() => import('@/views/doctor/VideoConsultation')),
+        authority: ['doctor'],
+    },
+    {
+        key: 'doctorVideoCall',
+        path: '/doctor/video-consultation/:id',
+        component: lazy(() => import('@/views/doctor/VideoConsultation')),
+        authority: ['doctor'],
+    },
+    {
+        key: 'userVideoConsultation',
+        path: '/user/video-consultation',
+        component: lazy(() => import('@/views/user/VideoConsultation')),
+        authority: ['user'],
+    },
+    {
+        key: 'userVideoCall',
+        path: '/user/video-consultation/:id',
+        component: lazy(() => import('@/views/user/VideoCallView')),
+        authority: ['user'],
     },
     {
         key: 'medicalReport',
         path: '/medical-report',
         component: lazy(() => import('@/views/medical-report')),
         authority: ['doctor'],
+    },
+    {
+        key: 'userPrescriptions',
+        path: '/user/prescriptions',
+        component: lazy(() => import('@/views/user/PrescriptionView')),
+        authority: ['user'],
+    },
+    {
+        key: 'userMedicalReports',
+        path: '/user/medical-reports',
+        component: lazy(() => import('@/views/user/MedicalReportView')),
+        authority: ['user'],
     },
     {
         key: 'termsConditions',

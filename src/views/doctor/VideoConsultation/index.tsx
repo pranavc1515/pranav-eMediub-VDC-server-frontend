@@ -1,64 +1,16 @@
 import { useState } from 'react'
-import { 
-    Card, 
-    Button, 
-    Avatar, 
-    Tag, 
-    Badge, 
-    Tabs,
-    Input
-} from '@/components/ui'
-import Container from '@/components/shared/Container'
+import { Card, Button, Tabs, Input } from '@/components/ui'
+import { HiVideoCamera, HiCalendar, HiChat, HiDocumentText } from 'react-icons/hi'
+import { format } from 'date-fns'
+import { useNavigate } from 'react-router-dom'
+import VideoCallInterface from '@/components/shared/VideoCallInterface'
 
-interface Patient {
-    id: number
-    name: string
-    age: number
-    gender: string
-    appointmentTime: string
-    reason: string
-    waitTime: number
-    status: 'waiting' | 'in-progress' | 'completed' | 'cancelled'
-}
+const { TabNav, TabList, TabContent } = Tabs
 
-interface ChatMessage {
-    id: number
-    sender: 'doctor' | 'patient'
-    text: string
-    timestamp: string
-}
-
-const VideoConsultation = () => {
-    const [activeTab, setActiveTab] = useState('queue')
-    const [isCameraOn, setIsCameraOn] = useState(true)
-    const [isMicOn, setIsMicOn] = useState(true)
-    const [isScreenSharing, setIsScreenSharing] = useState(false)
-    const [isSessionActive, setIsSessionActive] = useState(false)
-    const [activeChatTab, setActiveChatTab] = useState('chat')
-    const [message, setMessage] = useState('')
-    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-        {
-            id: 1,
-            sender: 'patient',
-            text: 'Hello doctor, I\'m here for my appointment.',
-            timestamp: '10:01 AM'
-        },
-        {
-            id: 2,
-            sender: 'doctor',
-            text: 'Hello! I\'ll be with you in just a moment. How are you feeling today?',
-            timestamp: '10:02 AM'
-        },
-        {
-            id: 3,
-            sender: 'patient',
-            text: 'I\'ve been experiencing headaches for the past week, mainly in the afternoons.',
-            timestamp: '10:03 AM'
-        }
-    ])
-
-    // Mock patient queue data
-    const patientQueue: Patient[] = [
+// List view component
+const PatientQueueList = () => {
+    const navigate = useNavigate()
+    const [patientQueue] = useState([
         {
             id: 1,
             name: 'John Smith',
@@ -66,8 +18,7 @@ const VideoConsultation = () => {
             gender: 'Male',
             appointmentTime: '10:00 AM',
             reason: 'Follow-up on blood pressure medication',
-            waitTime: 5,
-            status: 'in-progress'
+            status: 'scheduled'
         },
         {
             id: 2,
@@ -76,323 +27,218 @@ const VideoConsultation = () => {
             gender: 'Female',
             appointmentTime: '10:30 AM',
             reason: 'Migraine consultation',
-            waitTime: 0,
-            status: 'waiting'
-        },
+            status: 'scheduled'
+        }
+    ])
+
+    const handleJoinCall = (id: number) => {
+        navigate(`/doctor/video-consultation/${id}`)
+    }
+
+    return (
+        <div className="container mx-auto p-4">
+            <div className="mb-6">
+                <h1 className="text-2xl font-bold">Patient Queue</h1>
+                <p className="text-gray-500">Patients waiting for video consultation</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {patientQueue.map((patient) => (
+                    <Card key={patient.id} className="p-4">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 className="text-lg font-semibold">{patient.name}</h3>
+                                <p className="text-sm text-gray-500">{patient.age} years, {patient.gender}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm font-medium">{patient.appointmentTime}</p>
+                            </div>
+                        </div>
+                        <div className="mb-4">
+                            <p className="text-sm text-gray-600">{patient.reason}</p>
+                        </div>
+                        <div className="mb-4">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                patient.status === 'scheduled' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                                {patient.status.charAt(0).toUpperCase() + patient.status.slice(1)}
+                            </span>
+                        </div>
+                        <Button
+                            size="sm"
+                            variant="solid"
+                            className="w-full flex items-center justify-center gap-2"
+                            onClick={() => handleJoinCall(patient.id)}
+                        >
+                            <HiVideoCamera />
+                            <span>Join Call</span>
+                        </Button>
+                    </Card>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+// Video call view components
+const UpcomingConsultations = () => {
+    const consultations = [
         {
-            id: 3,
-            name: 'Michael Brown',
-            age: 60,
-            gender: 'Male',
-            appointmentTime: '11:00 AM',
-            reason: 'Diabetes management review',
-            waitTime: 0,
-            status: 'waiting'
-        },
-        {
-            id: 4,
+            id: 1,
             name: 'Sarah Williams',
             age: 28,
-            gender: 'Female',
             appointmentTime: '11:30 AM',
-            reason: 'Anxiety follow-up',
-            waitTime: 0,
-            status: 'waiting'
+            reason: 'Anxiety follow-up'
+        },
+        {
+            id: 2,
+            name: 'Michael Brown',
+            age: 60,
+            appointmentTime: '12:00 PM',
+            reason: 'Diabetes management review'
         }
     ]
 
-    const handleSendMessage = () => {
-        if (message.trim() === '') return
+    return (
+        <div className="p-4">
+            {consultations.map(consultation => (
+                <Card key={consultation.id} className="mb-4 p-4">
+                    <h4 className="font-semibold">{consultation.name}</h4>
+                    <p className="text-sm text-gray-500">{consultation.age} years</p>
+                    <p className="text-sm mt-2">{consultation.reason}</p>
+                    <p className="text-sm text-gray-500 mt-2">{consultation.appointmentTime}</p>
+                </Card>
+            ))}
+        </div>
+    )
+}
 
-        const newMessage: ChatMessage = {
-            id: chatMessages.length + 1,
-            sender: 'doctor',
-            text: message,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+const ChatSection = () => {
+    const [messages, setMessages] = useState([
+        { id: 1, sender: 'Patient', message: 'Hello doctor, I\'m here for my appointment.', time: '10:30 AM' },
+        { id: 2, sender: 'Doctor', message: 'Hello! How are you feeling today?', time: '10:31 AM' }
+    ])
+    const [newMessage, setNewMessage] = useState('')
+
+    const handleSendMessage = () => {
+        if (!newMessage.trim()) return
+
+        const message = {
+            id: messages.length + 1,
+            sender: 'Doctor',
+            message: newMessage,
+            time: format(new Date(), 'hh:mm a')
         }
 
-        setChatMessages([...chatMessages, newMessage])
-        setMessage('')
+        setMessages([...messages, message])
+        setNewMessage('')
     }
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
+    const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
             handleSendMessage()
         }
     }
 
-    const handleEndSession = () => {
-        setIsSessionActive(false)
-        // In a real app, you would also end the video call connection
-    }
+    return (
+        <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto p-4">
+                {messages.map(message => (
+                    <div key={message.id} className={`mb-4 ${message.sender === 'Doctor' ? 'text-right' : ''}`}>
+                        <p className="text-sm text-gray-500">{message.sender}</p>
+                        <div className={`inline-block p-3 rounded-lg ${
+                            message.sender === 'Doctor' 
+                                ? 'bg-blue-500 text-white' 
+                                : 'bg-gray-100 dark:bg-gray-700'
+                        }`}>
+                            {message.message}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">{message.time}</p>
+                    </div>
+                ))}
+            </div>
+            <div className="p-4 border-t dark:border-gray-700">
+                <Input
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Type a message..."
+                    suffix={
+                        <Button size="sm" onClick={handleSendMessage}>
+                            Send
+                        </Button>
+                    }
+                />
+            </div>
+        </div>
+    )
+}
 
-    const handleStartSession = () => {
-        setIsSessionActive(true)
-        // In a real app, you would also initiate the video call connection
-    }
-
-    const handleToggleCamera = () => {
-        setIsCameraOn(!isCameraOn)
-        // In a real app, you would also toggle the camera stream
-    }
-
-    const handleToggleMic = () => {
-        setIsMicOn(!isMicOn)
-        // In a real app, you would also toggle the microphone stream
-    }
-
-    const handleToggleScreenShare = () => {
-        setIsScreenSharing(!isScreenSharing)
-        // In a real app, you would also toggle screen sharing
-    }
+const NotesSection = () => {
+    const [notes] = useState([
+        {
+            id: 1,
+            title: 'Patient History',
+            content: 'Previous visits: Hypertension, prescribed Amlodipine 5mg',
+            date: '2024-03-25'
+        }
+    ])
 
     return (
-        <Container className="h-full">
-            <div className="flex flex-col h-full">
-                <div className="flex justify-between items-center mb-4">
-                    <h3>Video Consultation</h3>
-                    <div className="flex space-x-2">
-                        <Button 
-                            color={isSessionActive ? 'red' : 'emerald'} 
-                            variant="solid"
-                            onClick={isSessionActive ? handleEndSession : handleStartSession}
-                        >
-                            {isSessionActive ? 'End Session' : 'Start Session'}
-                        </Button>
-                    </div>
-                </div>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full">
-                    <div className="lg:col-span-3">
-                        <Card className="h-full flex flex-col">
-                            <div className="p-4 flex-grow">
-                                {isSessionActive ? (
-                                    <div className="relative h-full bg-gray-900 rounded-lg overflow-hidden">
-                                        {/* This would be replaced with actual video feeds */}
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <div className="text-white text-center">
-                                                <div className="mb-2">
-                                                    <Avatar shape="circle" size={80} />
-                                                </div>
-                                                <h4 className="text-white">John Smith</h4>
-                                                <p className="text-gray-400">Connected</p>
-                                            </div>
-                                        </div>
-                                        
-                                        {/* Doctor's video (self view) */}
-                                        <div className="absolute bottom-4 right-4 w-1/4 aspect-video bg-gray-800 rounded-lg border-2 border-white shadow-lg">
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <div className="text-white text-center">
-                                                    <div className="mb-1">
-                                                        <Avatar shape="circle" size={30} />
-                                                    </div>
-                                                    <p className="text-xs">You</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="h-full flex items-center justify-center bg-gray-100 rounded-lg">
-                                        <div className="text-center">
-                                            <h4 className="text-gray-500 mb-3">No Active Session</h4>
-                                            <p className="text-gray-400 mb-4">
-                                                Start a session with a patient from the queue to begin a video consultation
-                                            </p>
-                                            <Button 
-                                                variant="solid" 
-                                                onClick={handleStartSession}
-                                            >
-                                                Start Session with Next Patient
-                                            </Button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                            
-                            <div className="p-4 bg-gray-50 border-t">
-                                <div className="flex justify-center space-x-4">
-                                    <Button 
-                                        icon={isMicOn ? 'mic' : 'mic-off'} 
-                                        variant={isMicOn ? 'default' : 'solid'} 
-                                        onClick={handleToggleMic}
-                                    >
-                                        {isMicOn ? 'Mute' : 'Unmute'}
-                                    </Button>
-                                    <Button 
-                                        icon={isCameraOn ? 'video' : 'video-off'} 
-                                        variant={isCameraOn ? 'default' : 'solid'}
-                                        onClick={handleToggleCamera}
-                                    >
-                                        {isCameraOn ? 'Turn Off Camera' : 'Turn On Camera'}
-                                    </Button>
-                                    <Button 
-                                        icon="monitor" 
-                                        variant={isScreenSharing ? 'solid' : 'default'}
-                                        onClick={handleToggleScreenShare}
-                                    >
-                                        {isScreenSharing ? 'Stop Sharing' : 'Share Screen'}
-                                    </Button>
-                                    <Button 
-                                        icon="phone-off" 
-                                        variant="solid" 
-                                        color="red"
-                                        onClick={handleEndSession}
-                                        disabled={!isSessionActive}
-                                    >
-                                        End Call
-                                    </Button>
-                                </div>
-                            </div>
-                        </Card>
-                    </div>
-                    
-                    <div className="lg:col-span-1">
-                        <Card className="h-full flex flex-col">
-                            <div className="flex-grow">
-                                <Tabs value={activeTab} onChange={(val) => setActiveTab(val)}>
-                                    <Tabs.TabList>
-                                        <Tabs.TabNav value="queue">Patient Queue</Tabs.TabNav>
-                                        <Tabs.TabNav value="communication">Chat</Tabs.TabNav>
-                                        <Tabs.TabNav value="notes">Notes</Tabs.TabNav>
-                                    </Tabs.TabList>
-                                    <div className="p-4">
-                                        {activeTab === 'queue' && (
-                                            <div className="space-y-3">
-                                                {patientQueue.map(patient => (
-                                                    <div 
-                                                        key={patient.id} 
-                                                        className={`border rounded-lg p-3 ${
-                                                            patient.status === 'in-progress' ? 'border-blue-300 bg-blue-50' : ''
-                                                        }`}
-                                                    >
-                                                        <div className="flex justify-between">
-                                                            <div className="flex items-center">
-                                                                <Avatar shape="circle" size={35} />
-                                                                <div className="ml-2">
-                                                                    <div className="font-medium">{patient.name}</div>
-                                                                    <div className="text-xs text-gray-500">
-                                                                        {patient.age} yrs, {patient.gender}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <Tag className={
-                                                                patient.status === 'waiting' ? 'bg-amber-100 text-amber-600' :
-                                                                patient.status === 'in-progress' ? 'bg-blue-100 text-blue-600' :
-                                                                patient.status === 'completed' ? 'bg-emerald-100 text-emerald-600' :
-                                                                'bg-red-100 text-red-600'
-                                                            }>
-                                                                {patient.status === 'waiting' ? 'Waiting' :
-                                                                 patient.status === 'in-progress' ? 'In Progress' :
-                                                                 patient.status === 'completed' ? 'Completed' :
-                                                                 'Cancelled'}
-                                                            </Tag>
-                                                        </div>
-                                                        
-                                                        <div className="mt-2 text-sm">
-                                                            <div><span className="text-gray-500">Time:</span> {patient.appointmentTime}</div>
-                                                            <div><span className="text-gray-500">Reason:</span> {patient.reason}</div>
-                                                            {patient.status === 'waiting' && (
-                                                                <div className="mt-2">
-                                                                    {patient.waitTime > 0 ? (
-                                                                        <span className="text-amber-600">
-                                                                            Waiting for {patient.waitTime} min
-                                                                        </span>
-                                                                    ) : (
-                                                                        <span className="text-emerald-600">On time</span>
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        
-                                                        {patient.status === 'waiting' && (
-                                                            <div className="mt-3">
-                                                                <Button 
-                                                                    size="sm" 
-                                                                    variant="solid"
-                                                                    block
-                                                                >
-                                                                    Start Consultation
-                                                                </Button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                        
-                                        {activeTab === 'communication' && (
-                                            <div className="h-full flex flex-col">
-                                                <Tabs value={activeChatTab} onChange={(val) => setActiveChatTab(val)}>
-                                                    <Tabs.TabList>
-                                                        <Tabs.TabNav value="chat">Chat</Tabs.TabNav>
-                                                        <Tabs.TabNav value="history">History</Tabs.TabNav>
-                                                    </Tabs.TabList>
-                                                </Tabs>
-                                                
-                                                <div className="flex-grow overflow-y-auto mt-4 pr-2" style={{ maxHeight: '400px' }}>
-                                                    {chatMessages.map(msg => (
-                                                        <div 
-                                                            key={msg.id} 
-                                                            className={`mb-3 flex ${msg.sender === 'doctor' ? 'justify-end' : 'justify-start'}`}
-                                                        >
-                                                            <div className={`max-w-[80%] rounded-lg p-3 ${
-                                                                msg.sender === 'doctor' 
-                                                                    ? 'bg-blue-100 text-blue-900' 
-                                                                    : 'bg-gray-100 text-gray-900'
-                                                            }`}>
-                                                                <div>{msg.text}</div>
-                                                                <div className="text-xs mt-1 text-right opacity-70">
-                                                                    {msg.timestamp}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                
-                                                <div className="mt-4 border-t pt-4">
-                                                    <div className="flex">
-                                                        <Input 
-                                                            textArea
-                                                            placeholder="Type your message..."
-                                                            value={message}
-                                                            onChange={(e) => setMessage(e.target.value)}
-                                                            onKeyDown={handleKeyDown}
-                                                        />
-                                                        <Button 
-                                                            className="ml-2" 
-                                                            variant="solid"
-                                                            disabled={!message.trim()}
-                                                            onClick={handleSendMessage}
-                                                        >
-                                                            Send
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                        
-                                        {activeTab === 'notes' && (
-                                            <div>
-                                                <Input 
-                                                    textArea
-                                                    placeholder="Add notes about this consultation..."
-                                                    style={{ minHeight: '200px' }}
-                                                />
-                                                <div className="mt-3 flex justify-end">
-                                                    <Button variant="solid">Save Notes</Button>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </Tabs>
-                            </div>
-                        </Card>
-                    </div>
-                </div>
-            </div>
-        </Container>
+        <div className="p-4">
+            {notes.map(note => (
+                <Card key={note.id} className="mb-4 p-4">
+                    <h4 className="font-semibold">{note.title}</h4>
+                    <p className="text-sm mt-2">{note.content}</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                        {format(new Date(note.date), 'MMM dd, yyyy')}
+                    </p>
+                </Card>
+            ))}
+        </div>
     )
+}
+
+// Main component
+const VideoConsultation = () => {
+    const { pathname } = window.location
+    const isVideoCall = pathname.includes('/video-consultation/') // Check if we're in a video call
+
+    if (isVideoCall) {
+        return (
+            <VideoCallInterface>
+                <Tabs defaultValue="upcoming">
+                    <TabList>
+                        <TabNav value="upcoming" icon={<HiCalendar />}>
+                            Queue
+                        </TabNav>
+                        <TabNav value="chat" icon={<HiChat />}>
+                            Chat
+                        </TabNav>
+                        <TabNav value="notes" icon={<HiDocumentText />}>
+                            Notes
+                        </TabNav>
+                    </TabList>
+                    <div className="h-full">
+                        <TabContent value="upcoming">
+                            <UpcomingConsultations />
+                        </TabContent>
+                        <TabContent value="chat">
+                            <ChatSection />
+                        </TabContent>
+                        <TabContent value="notes">
+                            <NotesSection />
+                        </TabContent>
+                    </div>
+                </Tabs>
+            </VideoCallInterface>
+        )
+    }
+
+    return <PatientQueueList />
 }
 
 export default VideoConsultation 
