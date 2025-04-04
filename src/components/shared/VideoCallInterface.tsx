@@ -19,7 +19,7 @@ import {
     RemoteVideoTrack,
     RemoteAudioTrack,
 } from 'twilio-video'
-import axios from 'axios'
+import VideoService from '@/services/VideoService'
 import { useAuth } from '@/auth'
 
 interface VideoCallInterfaceProps {
@@ -84,26 +84,17 @@ const VideoCallInterface = ({
 
     const getToken = async () => {
         try {
-            // Get the auth token from localStorage
-            // const authToken = localStorage.getItem('auth-token');
-
-            // if (!authToken) {
-            //     throw new Error('No authentication token found');
-            // }
-
-            const response = await axios.post(
-                '/api/video/token',
-                {
-                    identity: isDoctor ? `doctor-12345` : `patient-12345`,
-                    roomName: 'room-12345',
-                },
-                // {
-                //     headers: {
-                //         Authorization: `Bearer ${user.token}`,
-                //     },
-                // },
-            )
-            return response.data.token
+            // Create a unique identity format that includes user type and user ID
+            const identity = isDoctor 
+                ? `doctor-${user.id || 'unknown'}`
+                : `patient-${user.id || 'unknown'}`;
+            
+            const response = await VideoService.generateToken({
+                identity,
+                roomName
+            });
+            
+            return response.token;
         } catch (error) {
             console.error('Error getting token:', error)
             setError(
@@ -121,6 +112,15 @@ const VideoCallInterface = ({
         setError(null)
 
         try {
+            // Ensure the room exists or create it
+            try {
+                await VideoService.createRoom({ roomName });
+                console.log('Room created or already exists:', roomName);
+            } catch (error) {
+                // Ignore error if room already exists (409 Conflict)
+                console.log('Room may already exist:', error);
+            }
+
             const token = await getToken()
             if (!token) {
                 setError('Failed to get access token')
@@ -254,8 +254,21 @@ const VideoCallInterface = ({
         }
     }
 
-    const endCall = () => {
+    const endCall = async () => {
         cleanup()
+        
+        // If we have the room SID and it's the doctor ending the call,
+        // try to complete the room on the server side
+        if (room && isDoctor) {
+            try {
+                const roomSid = room.sid;
+                await VideoService.completeRoom(roomSid);
+                console.log('Room completed successfully:', roomSid);
+            } catch (error) {
+                console.error('Error completing room:', error);
+            }
+        }
+        
         onCallEnd?.()
     }
 
