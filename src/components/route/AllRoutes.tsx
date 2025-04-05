@@ -3,12 +3,15 @@ import PublicRoute from './PublicRoute'
 import AuthorityGuard from './AuthorityGuard'
 import AppRoute from './AppRoute'
 import PageContainer from '@/components/template/PageContainer'
-import { protectedRoutes as appProtectedRoutes, publicRoutes } from '@/configs/routes.config'
+import {
+    protectedRoutes as appProtectedRoutes,
+    publicRoutes,
+} from '@/configs/routes.config'
 import { useAuth } from '@/auth'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import type { LayoutType } from '@/@types/theme'
 import VideoConsultation from '@/views/doctor/VideoConsultation'
-import Appointments from '@/views/doctor/Appointments'
+
 import PatientRecords from '@/views/doctor/PatientRecords'
 import Prescriptions from '@/views/doctor/Prescriptions'
 
@@ -31,20 +34,10 @@ const AllRoutes = (props: AllRoutesProps) => {
             meta: {
                 label: 'Video Consultation',
                 pageTitle: 'Video Consultation',
-                desc: 'Conduct video consultations with patients'
-            }
+                desc: 'Conduct video consultations with patients',
+            },
         },
-        {
-            key: 'appointments',
-            path: '/doctor/appointments',
-            component: Appointments,
-            authority: ['doctor'],
-            meta: {
-                label: 'Appointments',
-                pageTitle: 'Appointments',
-                desc: 'Manage your appointments'
-            }
-        },
+
         {
             key: 'patientRecords',
             path: '/doctor/patient-records',
@@ -53,8 +46,8 @@ const AllRoutes = (props: AllRoutesProps) => {
             meta: {
                 label: 'Patient Records',
                 pageTitle: 'Patient Records',
-                desc: 'View and manage patient records'
-            }
+                desc: 'View and manage patient records',
+            },
         },
         {
             key: 'prescriptions',
@@ -64,8 +57,8 @@ const AllRoutes = (props: AllRoutesProps) => {
             meta: {
                 label: 'Prescriptions',
                 pageTitle: 'Prescriptions',
-                desc: 'Manage prescriptions for patients'
-            }
+                desc: 'Manage prescriptions for patients',
+            },
         },
     ]
 

@@ -53,16 +53,7 @@ const navigationConfig: NavigationTree[] = [
         authority: ['user'],
         subMenu: [],
     },
-    {
-        key: 'appointments',
-        path: '/doctor/appointments',
-        title: 'Appointments',
-        translateKey: 'nav.appointments',
-        icon: 'calendar',
-        type: NAV_ITEM_TYPE_ITEM,
-        authority: ['doctor'],
-        subMenu: [],
-    },
+
     {
         key: 'patientRecords',
         path: '/doctor/patient-records',
