@@ -10,6 +10,8 @@ type DoctorProfile = {
     status: string
     emailVerified: boolean
     profilePhoto: string | null
+    isOnline?: string
+    lastSeen?: string
     timeCreated: string
     timeUpdated: string
     DoctorProfessional: {
@@ -29,6 +31,12 @@ type DoctorProfile = {
         timeCreated: string
         timeUpdated: string
     }
+}
+
+type AvailableDoctorsResponse = {
+    success: boolean
+    count: number
+    data: DoctorProfile[]
 }
 
 const DoctorService = {
@@ -89,7 +97,20 @@ const DoctorService = {
             data,
         })
     },
+    
+    /**
+     * Fetch available doctors who are online and have "available" status
+     * @param specialization Optional specialization to filter doctors by
+     * @returns Promise with available doctors data
+     */
+    getAvailableDoctors(specialization?: string) {
+        return ApiService.fetchDataWithAxios<AvailableDoctorsResponse>({
+            url: '/api/doctors/available',
+            method: 'GET',
+            params: specialization ? { specialization } : undefined,
+        })
+    },
 }
 
-export type { DoctorProfile }
+export type { DoctorProfile, AvailableDoctorsResponse }
 export default DoctorService
