@@ -29,7 +29,7 @@ const statsData = [
     {
         title: 'Available Doctors',
         value: 0,
-        growth: 12.5,
+        // growth: 12.5,
         icon: 'user-md',
     },
     // {
@@ -205,12 +205,12 @@ const Home = () => {
                                         <span className="text-xl font-bold">
                                             {stat.value}
                                         </span>
-                                        <span
+                                        {/* <span
                                             className={`text-xs ${stat.growth > 0 ? 'text-emerald-500' : 'text-red-500'}`}
                                         >
                                             {stat.growth > 0 ? '+' : ''}
                                             {stat.growth}%
-                                        </span>
+                                        </span> */}
                                     </div>
                                 </div>
                             </div>
@@ -348,7 +348,7 @@ const Home = () => {
                                     <Button variant="solid" size="sm">
                                         <span className="icon-video mr-1"></span>
                                         <Link
-                                            to={`/video-consultation/${doctor.id}`}
+                                            to={`/user/video-consultation/${doctor.id}`}
                                             className="text-white"
                                         >
                                             Consult Now

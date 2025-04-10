@@ -58,20 +58,56 @@ const VideoCallInterface = ({
 
     // Cleanup function
     const cleanup = () => {
-        if (localTracks.video) {
-            localTracks.video.stop()
-        }
-        if (localTracks.audio) {
-            localTracks.audio.stop()
-        }
-        if (room) {
-            room.disconnect()
-        }
-        if (remoteVideoRef.current) {
-            remoteVideoRef.current.innerHTML = ''
-        }
-        if (localVideoRef.current) {
-            localVideoRef.current.innerHTML = ''
+        try {
+            // Add small delay for testing purposes
+            setTimeout(() => {
+                try {
+                    if (localTracks.video) {
+                        localTracks.video.stop()
+                    }
+                    if (localTracks.audio) {
+                        localTracks.audio.stop()
+                    }
+                    
+                    // Disconnect room last
+                    if (room) {
+                        room.disconnect()
+                    }
+
+                    // Clean up video elements
+                    if (remoteVideoRef.current) {
+                        const mediaElements = remoteVideoRef.current.querySelectorAll('video, audio')
+                        mediaElements.forEach(element => {
+                            try {
+                                if (element && element.parentNode) {
+                                    element.parentNode.removeChild(element)
+                                }
+                            } catch (err) {
+                                console.warn('Error removing remote media element:', err)
+                            }
+                        })
+                        remoteVideoRef.current.innerHTML = ''
+                    }
+
+                    if (localVideoRef.current) {
+                        const mediaElements = localVideoRef.current.querySelectorAll('video, audio')
+                        mediaElements.forEach(element => {
+                            try {
+                                if (element && element.parentNode) {
+                                    element.parentNode.removeChild(element)
+                                }
+                            } catch (err) {
+                                console.warn('Error removing local media element:', err)
+                            }
+                        })
+                        localVideoRef.current.innerHTML = ''
+                    }
+                } catch (err) {
+                    console.error('Error in delayed cleanup:', err)
+                }
+            }, 100) // Small delay for testing
+        } catch (err) {
+            console.error('Error initiating cleanup:', err)
         }
     }
 
@@ -85,16 +121,14 @@ const VideoCallInterface = ({
     const getToken = async () => {
         try {
             // Create a unique identity format that includes user type and user ID
-            const identity = isDoctor 
-                ? `doctor-${user.id || 'unknown'}`
-                : `patient-${user.id || 'unknown'}`;
-            
+            const identity = isDoctor ? `doctor-1234` : `patient-1234`
+
             const response = await VideoService.generateToken({
                 identity,
-                roomName
-            });
-            
-            return response.token;
+                roomName,
+            })
+
+            return response.token
         } catch (error) {
             console.error('Error getting token:', error)
             setError(
@@ -107,18 +141,21 @@ const VideoCallInterface = ({
     }
 
     const joinRoom = async () => {
-        if (isConnecting) return
+        if (isConnecting && roomName === undefined) return
         setIsConnecting(true)
         setError(null)
 
         try {
             // Ensure the room exists or create it
             try {
-                await VideoService.createRoom({ roomName });
-                console.log('Room created or already exists:', roomName);
+                await VideoService.createRoom({
+                    roomName: 'room-1234',
+                    type: 'group',
+                })
+                console.log('Room created or already exists:', roomName)
             } catch (error) {
                 // Ignore error if room already exists (409 Conflict)
-                console.log('Room may already exist:', error);
+                console.log('Room may already exist:', error)
             }
 
             const token = await getToken()
@@ -149,7 +186,7 @@ const VideoCallInterface = ({
 
             // Connect to room
             const room = await connect(token, {
-                name: roomName,
+                name: 'room-1234',
                 tracks: [videoTrack, audioTrack],
                 dominantSpeaker: true,
                 maxAudioBitrate: 16000, // For better audio quality
@@ -199,31 +236,113 @@ const VideoCallInterface = ({
     ) => {
         if (!remoteVideoRef.current) return
 
-        if (track.kind === 'video' || track.kind === 'audio') {
+        try {
             const element = track.attach()
             if (track.kind === 'video') {
                 element.style.width = '100%'
                 element.style.height = '100%'
                 element.style.objectFit = 'cover'
+                
+                // Safely remove existing video elements
+                const existingVideos = remoteVideoRef.current.querySelectorAll('video')
+                existingVideos.forEach(video => {
+                    try {
+                        if (video && video.parentNode) {
+                            video.parentNode.removeChild(video)
+                        }
+                    } catch (err) {
+                        console.warn('Error removing existing video:', err)
+                    }
+                })
             }
+            
+            // Add data attribute to track elements for easier cleanup
+            element.setAttribute('data-track-id', track.sid)
             remoteVideoRef.current.appendChild(element)
+        } catch (err) {
+            console.error('Error in handleTrackSubscribed:', err)
         }
     }
 
     const handleTrackUnsubscribed = (
         track: RemoteVideoTrack | RemoteAudioTrack,
     ) => {
-        if (track.kind === 'video' || track.kind === 'audio') {
-            track.detach().forEach((element: HTMLElement) => element.remove())
+        try {
+            // First try to find and remove elements by track ID
+            if (remoteVideoRef.current) {
+                const elements = remoteVideoRef.current.querySelectorAll(`[data-track-id="${track.sid}"]`)
+                elements.forEach(element => {
+                    try {
+                        if (element && element.parentNode) {
+                            element.parentNode.removeChild(element)
+                        }
+                    } catch (err) {
+                        console.warn('Error removing track element:', err)
+                    }
+                })
+            }
+
+            // Then try the normal detach as backup
+            try {
+                const elements = track.detach()
+                elements.forEach((element: HTMLElement) => {
+                    try {
+                        if (element && element.parentNode) {
+                            element.parentNode.removeChild(element)
+                        }
+                    } catch (err) {
+                        console.warn('Error in track detach cleanup:', err)
+                    }
+                })
+            } catch (err) {
+                console.warn('Error in track detach:', err)
+            }
+        } catch (err) {
+            console.error('Error in handleTrackUnsubscribed:', err)
         }
     }
 
     const handleParticipantDisconnected = (participant: RemoteParticipant) => {
         console.log(`Participant ${participant.identity} disconnected`)
-        setRemoteParticipantIdentity(null)
-        if (remoteVideoRef.current) {
-            remoteVideoRef.current.innerHTML = ''
-        }
+        
+        // Add small delay before cleanup for testing purposes
+        setTimeout(() => {
+            try {
+                if (remoteVideoRef.current) {
+                    // First try to cleanup participant's tracks
+                    participant.tracks.forEach(publication => {
+                        if (publication.track) {
+                            try {
+                                const elements = publication.track.detach()
+                                elements.forEach(element => {
+                                    if (element && element.parentNode) {
+                                        element.parentNode.removeChild(element)
+                                    }
+                                })
+                            } catch (err) {
+                                console.warn('Error cleaning up participant track:', err)
+                            }
+                        }
+                    })
+
+                    // Then clean up any remaining media elements
+                    const mediaElements = remoteVideoRef.current.querySelectorAll('video, audio')
+                    mediaElements.forEach(element => {
+                        try {
+                            if (element && element.parentNode) {
+                                element.parentNode.removeChild(element)
+                            }
+                        } catch (err) {
+                            console.warn('Error removing media element:', err)
+                        }
+                    })
+                }
+            } catch (err) {
+                console.error('Error in handleParticipantDisconnected:', err)
+            } finally {
+                setRemoteParticipantIdentity(null)
+            }
+        }, 100) // Small delay for testing
     }
 
     const handleRoomDisconnected = (room: Room) => {
@@ -256,19 +375,19 @@ const VideoCallInterface = ({
 
     const endCall = async () => {
         cleanup()
-        
+
         // If we have the room SID and it's the doctor ending the call,
         // try to complete the room on the server side
         if (room && isDoctor) {
             try {
-                const roomSid = room.sid;
-                await VideoService.completeRoom(roomSid);
-                console.log('Room completed successfully:', roomSid);
+                const roomSid = room.sid
+                await VideoService.completeRoom(roomSid)
+                console.log('Room completed successfully:', roomSid)
             } catch (error) {
-                console.error('Error completing room:', error);
+                console.error('Error completing room:', error)
             }
         }
-        
+
         onCallEnd?.()
     }
 

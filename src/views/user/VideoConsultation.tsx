@@ -35,7 +35,7 @@ const VideoConsultation = () => {
     return (
         <div className="container mx-auto p-4">
             <div className="mb-6">
-                <h1 className="text-2xl font-bold">Video Consultations History</h1>
+                <h1 className="text-2xl font-bold">Video Consultations </h1>
                 <p className="text-gray-500">Your scheduled video consultations with doctors</p>
             </div>
             
