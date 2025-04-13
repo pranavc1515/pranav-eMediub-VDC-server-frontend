@@ -167,9 +167,10 @@ const SignInForm = (props: SignInFormProps) => {
                 const response = await ApiService.fetchDataWithAxios({
                     url: fullUrl,
                     method: 'post',
-                    data: userType === 'doctor' 
-                        ? { phoneNumber: phoneNumber, otp }
-                        : { phone: phoneNumber, otp },
+                    data:
+                        userType === 'doctor'
+                            ? { phoneNumber: phoneNumber, otp }
+                            : { phone: phoneNumber, otp },
                 })
 
                 if (
@@ -178,107 +179,138 @@ const SignInForm = (props: SignInFormProps) => {
                         (response as any).success === true)
                 ) {
                     // Handle different response structures for doctor and user
-                    const responseData = userType === 'doctor' ? (response as any).data : response;
-                    
+                    const responseData =
+                        userType === 'doctor'
+                            ? (response as any).data
+                            : response
+
                     if (!responseData) {
-                        console.error('Invalid response data:', response);
-                        setMessage?.('Invalid response from server');
-                        setSubmitting(false);
-                        return;
+                        console.error('Invalid response data:', response)
+                        setMessage?.('Invalid response from server')
+                        setSubmitting(false)
+                        return
                     }
-                    
-                    const token = userType === 'doctor' ? responseData.token : responseData.token;
-                    const doctor = responseData.doctor;
-                    const user = userType === 'doctor' ? responseData.user : responseData;
-                    
+
+                    const token =
+                        userType === 'doctor'
+                            ? responseData.token
+                            : responseData.token
+                    const doctor = responseData.doctor
+                    const user =
+                        userType === 'doctor' ? responseData.user : responseData
+
                     if (!token) {
-                        console.error('No token in response:', responseData);
-                        setMessage?.('Authentication failed: No token received');
-                        setSubmitting(false);
-                        return;
+                        console.error('No token in response:', responseData)
+                        setMessage?.('Authentication failed: No token received')
+                        setSubmitting(false)
+                        return
                     }
-                    
+
                     if (!token) {
-                        console.error('No token in response:', responseData);
-                        setMessage?.('Authentication failed: No token received');
-                        setSubmitting(false);
-                        return;
+                        console.error('No token in response:', responseData)
+                        setMessage?.('Authentication failed: No token received')
+                        setSubmitting(false)
+                        return
                     }
-                    
-                    console.log('OTP validation successful:', responseData);
-                    
+
+                    console.log('OTP validation successful:', responseData)
+
                     // Store the token in different ways to ensure it's available
-                    localStorage.setItem('token', token);
-                    sessionStorage.setItem('token', token);
-                    setToken(token);
-                    
+                    localStorage.setItem('token', token)
+                    sessionStorage.setItem('token', token)
+                    setToken(token)
+
                     // Create a profile that matches the User type structure in auth.ts
-                    const profile = userType === 'doctor' ? {
-                        userId: doctor.id.toString(),
-                        userName: `Dr. ${doctor.phoneNumber}`,
-                        authority: ['doctor'],
-                        avatar: '',
-                        email: doctor.phoneNumber,
-                    } : {
-                        userId: user.id?.toString() || user.userId?.toString() || '',
-                        userName: user.fullName || phoneNumber,
-                        authority: ['user'],
-                        avatar: user.profilePhoto || '',
-                        email: user.email || phoneNumber,
-                        phoneNumber: user.phoneNumber || phoneNumber,
-                        isProfileComplete: user.isProfileComplete || false
-                    }
-                    
-                    console.log('Created profile for auth:', profile);
-                    
-                    console.log('Created profile for auth:', profile);
-                    
-                    console.log('Created profile for auth:', profile);
-                    
+                    const profile =
+                        userType === 'doctor'
+                            ? {
+                                  userId: doctor.id.toString(),
+                                  userName: `Dr. ${doctor.phoneNumber}`,
+                                  authority: ['doctor'],
+                                  avatar: '',
+                                  email: doctor.phoneNumber,
+                              }
+                            : {
+                                  userId:
+                                      user.id?.toString() ||
+                                      user.userId?.toString() ||
+                                      '',
+                                  userName: user.fullName || phoneNumber,
+                                  authority: ['user'],
+                                  avatar: user.profilePhoto || '',
+                                  email: user.email || phoneNumber,
+                                  phoneNumber: user.phoneNumber || phoneNumber,
+                                  isProfileComplete:
+                                      user.isProfileComplete || false,
+                              }
+
+                    console.log('Created profile for auth:', profile)
+
+                    console.log('Created profile for auth:', profile)
+
+                    console.log('Created profile for auth:', profile)
+
                     // Then sign in with the correctly structured profile
                     const result = await signIn({
                         email: phoneNumber,
                         password: '',
                         userType: userType,
                         profile,
-                        token
+                        token,
                     })
 
                     console.log('Sign in result:', result)
 
                     // Only redirect if sign in was successful
                     if (result.status === 'success') {
-                        console.log('Sign in successful, checking profile completion');
-                        
+                        console.log(
+                            'Sign in successful, checking profile completion',
+                        )
+
                         // Check if profile is complete - handle different response structures
-                        const isProfileComplete = userType === 'doctor' 
-                            ? doctor?.isProfileComplete 
-                            : user?.isProfileComplete;
-                            
+                        const isProfileComplete =
+                            userType === 'doctor'
+                                ? doctor?.isProfileComplete
+                                : user?.isProfileComplete
+
                         if (isProfileComplete) {
-                            console.log('Profile is complete, redirecting to home');
-                            navigate(appConfig.authenticatedEntryPath);
+                            console.log(
+                                'Profile is complete, redirecting to home',
+                            )
+                            navigate(appConfig.authenticatedEntryPath)
                         } else {
-                            console.log('Profile is incomplete, redirecting to profile setup');
-                            navigate('/profile-setup');
+                            console.log(
+                                'Profile is incomplete, redirecting to profile setup',
+                            )
+                            navigate('/profile-setup')
                         }
                     } else if (result.status === 'failed') {
                         // If sign in failed despite valid OTP
-                        console.error('Sign in failed after OTP validation:', result);
-                        setMessage?.(result.message || 'Authentication failed');
+                        console.error(
+                            'Sign in failed after OTP validation:',
+                            result,
+                        )
+                        setMessage?.(result.message || 'Authentication failed')
                     } else {
                         // If no status is returned, consider it a success since we have the token
-                        console.log('No explicit status returned, proceeding with token');
-                        const isProfileComplete = userType === 'doctor' 
-                            ? doctor?.isProfileComplete 
-                            : user?.isProfileComplete;
-                            
+                        console.log(
+                            'No explicit status returned, proceeding with token',
+                        )
+                        const isProfileComplete =
+                            userType === 'doctor'
+                                ? doctor?.isProfileComplete
+                                : user?.isProfileComplete
+
                         if (isProfileComplete) {
-                            console.log('Profile is complete, redirecting to home');
-                            navigate(appConfig.authenticatedEntryPath);
+                            console.log(
+                                'Profile is complete, redirecting to home',
+                            )
+                            navigate(appConfig.authenticatedEntryPath)
                         } else {
-                            console.log('Profile is incomplete, redirecting to profile setup');
-                            navigate('/profile-setup');
+                            console.log(
+                                'Profile is incomplete, redirecting to profile setup',
+                            )
+                            navigate('/profile-setup')
                         }
                     }
                 } else {

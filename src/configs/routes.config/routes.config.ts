@@ -75,6 +75,12 @@ export const protectedRoutes: Routes = [
         component: lazy(() => import('@/views/about-us')),
         authority: [],
     },
+    {
+        key: 'razerpayTest',
+        path: '/razerpay-test',
+        component: lazy(() => import('@/views/razerpay-test')),
+        authority: [],
+    },
     /** Example purpose only, please remove */
     {
         key: 'singleMenuItem',
