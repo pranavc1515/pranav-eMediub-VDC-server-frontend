@@ -14,25 +14,32 @@ const UpcomingConsultations = () => {
             doctorName: 'Dr. Sarah Wilson',
             specialization: 'Neurologist',
             date: '2024-03-28',
-            time: '11:30 AM'
+            time: '11:30 AM',
         },
         {
             id: 2,
             doctorName: 'Dr. Michael Brown',
             specialization: 'Dermatologist',
             date: '2024-03-30',
-            time: '2:00 PM'
-        }
+            time: '2:00 PM',
+        },
     ]
 
     return (
         <div className="p-4">
-            {consultations.map(consultation => (
+            {consultations.map((consultation) => (
                 <Card key={consultation.id} className="mb-4 p-4">
                     <h4 className="font-semibold">{consultation.doctorName}</h4>
-                    <p className="text-sm text-gray-500">{consultation.specialization}</p>
+                    <p className="text-sm text-gray-500">
+                        {consultation.specialization}
+                    </p>
                     <div className="mt-2 text-sm">
-                        <p>{format(new Date(consultation.date), 'MMM dd, yyyy')}</p>
+                        <p>
+                            {format(
+                                new Date(consultation.date),
+                                'MMM dd, yyyy',
+                            )}
+                        </p>
                         <p>{consultation.time}</p>
                     </div>
                 </Card>
@@ -43,49 +50,39 @@ const UpcomingConsultations = () => {
 
 const ChatSection = () => {
     const [messages] = useState([
-        { id: 1, sender: 'Dr. John Doe', message: 'How are you feeling today?', time: '10:30 AM' },
-        { id: 2, sender: 'You', message: 'Much better, thank you.', time: '10:31 AM' }
+        {
+            id: 1,
+            sender: 'Dr. John Doe',
+            message: 'How are you feeling today?',
+            time: '10:30 AM',
+        },
+        {
+            id: 2,
+            sender: 'You',
+            message: 'Much better, thank you.',
+            time: '10:31 AM',
+        },
     ])
 
     return (
         <div className="p-4">
-            {messages.map(message => (
-                <div key={message.id} className={`mb-4 ${message.sender === 'You' ? 'text-right' : ''}`}>
+            {messages.map((message) => (
+                <div
+                    key={message.id}
+                    className={`mb-4 ${message.sender === 'You' ? 'text-right' : ''}`}
+                >
                     <p className="text-sm text-gray-500">{message.sender}</p>
-                    <div className={`inline-block p-3 rounded-lg ${
-                        message.sender === 'You' 
-                            ? 'bg-blue-500 text-white' 
-                            : 'bg-gray-100 dark:bg-gray-700'
-                    }`}>
+                    <div
+                        className={`inline-block p-3 rounded-lg ${
+                            message.sender === 'You'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-gray-100 dark:bg-gray-700'
+                        }`}
+                    >
                         {message.message}
                     </div>
                     <p className="text-xs text-gray-500 mt-1">{message.time}</p>
                 </div>
-            ))}
-        </div>
-    )
-}
-
-const NotesSection = () => {
-    const [notes] = useState([
-        {
-            id: 1,
-            title: 'Symptoms',
-            content: 'Headache and mild fever since yesterday',
-            date: '2024-03-25'
-        }
-    ])
-
-    return (
-        <div className="p-4">
-            {notes.map(note => (
-                <Card key={note.id} className="mb-4 p-4">
-                    <h4 className="font-semibold">{note.title}</h4>
-                    <p className="text-sm mt-2">{note.content}</p>
-                    <p className="text-xs text-gray-500 mt-2">
-                        {format(new Date(note.date), 'MMM dd, yyyy')}
-                    </p>
-                </Card>
             ))}
         </div>
     )
@@ -96,14 +93,8 @@ const VideoCallView = () => {
         <VideoCallInterface>
             <Tabs defaultValue="upcoming">
                 <TabList>
-                    <TabNav value="upcoming" icon={<HiCalendar />}>
-                        Upcoming
-                    </TabNav>
                     <TabNav value="chat" icon={<HiChat />}>
                         Chat
-                    </TabNav>
-                    <TabNav value="notes" icon={<HiDocumentText />}>
-                        Notes
                     </TabNav>
                 </TabList>
                 <div className="p-4">
@@ -113,13 +104,10 @@ const VideoCallView = () => {
                     <TabContent value="chat">
                         <ChatSection />
                     </TabContent>
-                    <TabContent value="notes">
-                        <NotesSection />
-                    </TabContent>
                 </div>
             </Tabs>
         </VideoCallInterface>
     )
 }
 
-export default VideoCallView 
+export default VideoCallView
