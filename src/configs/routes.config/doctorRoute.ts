@@ -8,6 +8,12 @@ const doctorRoute: Routes = [
         component: lazy(() => import('@/views/doctor/Profile')),
         authority: ['doctor'],
     },
+    {
+        key: 'doctor.profileSetup',
+        path: '/profile-setup',
+        component: lazy(() => import('@/views/doctor/ProfileSetup')),
+        authority: ['doctor'],
+    },
 ]
 
 export default doctorRoute

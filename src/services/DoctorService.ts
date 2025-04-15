@@ -12,6 +12,7 @@ type DoctorProfile = {
     profilePhoto: string | null
     isOnline?: string
     lastSeen?: string
+    isProfileComplete?: boolean
     timeCreated: string
     timeUpdated: string
     DoctorProfessional: {
@@ -37,6 +38,16 @@ type AvailableDoctorsResponse = {
     success: boolean
     count: number
     data: DoctorProfile[]
+}
+
+type CheckDoctorExistsResponse = {
+    success: boolean
+    exists: boolean
+    data: {
+        id: number
+        phoneNumber: string
+        isProfileComplete: boolean
+    } | null
 }
 
 const DoctorService = {
@@ -99,6 +110,19 @@ const DoctorService = {
     },
     
     /**
+     * Check if a doctor exists by phone number
+     * @param phoneNumber The phone number to check
+     * @returns Promise with doctor existence data
+     */
+    checkDoctorExists(phoneNumber: string) {
+        return ApiService.fetchDataWithAxios<CheckDoctorExistsResponse>({
+            url: '/api/doctors/check-exists',
+            method: 'POST',
+            data: { phoneNumber },
+        })
+    },
+    
+    /**
      * Fetch available doctors who are online and have "available" status
      * @param specialization Optional specialization to filter doctors by
      * @returns Promise with available doctors data
@@ -112,5 +136,5 @@ const DoctorService = {
     },
 }
 
-export type { DoctorProfile, AvailableDoctorsResponse }
+export type { DoctorProfile, AvailableDoctorsResponse, CheckDoctorExistsResponse }
 export default DoctorService

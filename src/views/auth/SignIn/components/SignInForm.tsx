@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom'
 import appConfig from '@/configs/app.config'
 import OtpInput from '@/components/shared/OtpInput'
 import ApiService from '@/services/ApiService'
+import DoctorService from '@/services/DoctorService'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useToken } from '@/store/authStore'
@@ -87,35 +88,21 @@ const SignInForm = (props: SignInFormProps) => {
             setSubmitting(true)
 
             try {
-                const apiEndpoint =
-                    userType === 'doctor'
-                        ? 'api/doctors/register'
-                        : 'api/users/register-new'
-                // Fix URL construction by ensuring a slash between base URL and endpoint
+                // For both doctors and users, first send OTP
+                const apiEndpoint = userType === 'doctor' ? 'api/doctors/register' : 'api/users/register-new'
                 const fullUrl = `/${apiEndpoint}`
-
-                // console.log('Sending request with data:', {
-                //     url: fullUrl,
-                //     data:
-                //         userType === 'doctor'
-                //             ? { phoneNumber: phone }
-                //             : { username: phone },
-                // })
-
+                
                 const response = await ApiService.fetchDataWithAxios({
                     url: fullUrl,
                     method: 'post',
-                    data:
-                        userType === 'doctor'
-                            ? { phoneNumber: phone }
-                            : { phone },
+                    data: userType === 'doctor' ? { phoneNumber: phone } : { phone },
                     headers: {
                         'Content-Type': 'application/json',
                     },
                 })
-
+                
                 console.log('API Response:', response)
-
+                
                 if (
                     (response && (response as any).status === true) ||
                     (response as any).success === true
@@ -206,19 +193,36 @@ const SignInForm = (props: SignInFormProps) => {
                         return
                     }
 
-                    if (!token) {
-                        console.error('No token in response:', responseData)
-                        setMessage?.('Authentication failed: No token received')
-                        setSubmitting(false)
-                        return
-                    }
-
                     console.log('OTP validation successful:', responseData)
 
                     // Store the token in different ways to ensure it's available
                     localStorage.setItem('token', token)
                     sessionStorage.setItem('token', token)
                     setToken(token)
+
+                    // For doctors, check if profile exists and is complete
+                    if (userType === 'doctor') {
+                        try {
+                            const checkResponse = await DoctorService.checkDoctorExists(phoneNumber)
+                            console.log('Doctor check response:', checkResponse)
+                            
+                            if (!checkResponse.success || !checkResponse.exists) {
+                                // Doctor doesn't exist or error occurred
+                                setMessage?.('Failed to verify doctor account. Please try again.')
+                                setSubmitting(false)
+                                return
+                            }
+                            
+                            // Update profile data with doctor existence check
+                            const isProfileComplete = checkResponse.data?.isProfileComplete || false
+                            doctor.isProfileComplete = isProfileComplete
+                        } catch (error) {
+                            console.error('Error checking doctor existence:', error)
+                            setMessage?.('Failed to verify doctor account. Please try again.')
+                            setSubmitting(false)
+                            return
+                        }
+                    }
 
                     // Create a profile that matches the User type structure in auth.ts
                     const profile =
@@ -243,10 +247,6 @@ const SignInForm = (props: SignInFormProps) => {
                                   isProfileComplete:
                                       user.isProfileComplete || false,
                               }
-
-                    console.log('Created profile for auth:', profile)
-
-                    console.log('Created profile for auth:', profile)
 
                     console.log('Created profile for auth:', profile)
 
