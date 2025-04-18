@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
     Card,
     Input,
@@ -6,6 +6,8 @@ import {
     Badge,
     Avatar,
     Table,
+    Switcher,
+    Pagination,
 } from '@/components/ui'
 import Container from '@/components/shared/Container'
 import DoubleSidedImage from '@/components/shared/DoubleSidedImage'
@@ -14,15 +16,21 @@ import { useSessionUser } from '@/store/authStore'
 import useDoctors from '@/hooks/useDoctors'
 
 const problemCategories = [
-    { value: 'general', label: 'General Health' },
-    { value: 'cardiology', label: 'Heart & Cardiology' },
-    { value: 'pediatrics', label: 'Pediatrics' },
-    { value: 'dermatology', label: 'Skin Problems' },
-    { value: 'orthopedics', label: 'Bone & Joint Pain' },
-    { value: 'mental', label: 'Mental Health' },
-    { value: 'neurology', label: 'Neurology' },
-    { value: 'endodontics', label: 'Endodontics' },
-    { value: 'other', label: 'Other Problems' },
+    { value: 'general', label: 'General Health Concerns' },
+    { value: 'cardiology', label: 'Heart & Cardiovascular Issues' },
+    { value: 'pediatrics', label: "Children's Health" },
+    { value: 'dermatology', label: 'Skin Problems & Disorders' },
+    { value: 'orthopedics', label: 'Bone, Joint & Muscle Pain' },
+    { value: 'mental', label: 'Mental Health & Well-being' },
+    { value: 'neurology', label: 'Neurological Disorders' },
+    { value: 'endodontics', label: 'Dental & Root Canal Problems' },
+    { value: 'gynecology', label: "Women's Health" },
+    { value: 'urology', label: 'Urological Issues' },
+    { value: 'ophthalmology', label: 'Eye Problems & Vision' },
+    { value: 'ent', label: 'Ear, Nose & Throat Issues' },
+    { value: 'pulmonology', label: 'Respiratory Problems' },
+    { value: 'gastroenterology', label: 'Digestive System Issues' },
+    { value: 'other', label: 'Other Health Concerns' },
 ]
 
 const statsData = [
@@ -68,6 +76,8 @@ const appointmentsData = [
 const Home = () => {
     const [selectedCategory, setSelectedCategory] = useState('all')
     const [searchTerm, setSearchTerm] = useState('')
+    const [showOnlyAvailable, setShowOnlyAvailable] = useState(true)
+    const [currentPage, setCurrentPage] = useState(1)
 
     // Get user from auth store
     const user = useSessionUser((state) => state.user)
@@ -75,12 +85,34 @@ const Home = () => {
     // Determine if user is doctor based on authority
     const isDoctor = user.authority?.includes('doctor') || false
 
-    // Use custom hook to get doctors data
-    const specialization = selectedCategory !== 'all' ? selectedCategory : undefined
-    const { doctors, count, loading, error, filterDoctors } = useDoctors({
+    // Use custom hook to get doctors data with the updated props
+    const specialization =
+        selectedCategory !== 'all' ? selectedCategory : undefined
+    const {
+        doctors,
+        count,
+        loading,
+        error,
+        fetchDoctors,
+        filterDoctors,
+        totalPages = 1,
+        currentPage: remotePage = 1,
+        changePage,
+        search,
+    } = useDoctors({
         specialization,
-        autoFetch: !isDoctor
+        autoFetch: !isDoctor,
+        showOnlyAvailable,
+        initialPage: 1,
+        pageSize: 15,
     })
+
+    // Effect to refetch data when availability toggle changes
+    useEffect(() => {
+        if (!isDoctor) {
+            fetchDoctors(1)
+        }
+    }, [showOnlyAvailable, fetchDoctors, isDoctor])
 
     // Update stats count
     statsData[0].value = count
@@ -90,8 +122,23 @@ const Home = () => {
         setSelectedCategory(category)
     }
 
-    // Filter doctors by search term
-    const filteredDoctors = filterDoctors(searchTerm)
+    // Handle search input change
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const term = e.target.value
+        setSearchTerm(term)
+        search(term)
+    }
+
+    // Handle availability toggle
+    const handleAvailabilityToggle = (checked: boolean) => {
+        setShowOnlyAvailable(checked)
+    }
+
+    // Handle pagination
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page)
+        changePage?.(page)
+    }
 
     const renderDoctorDashboard = () => {
         return (
@@ -136,7 +183,7 @@ const Home = () => {
 
                 {/* Upcoming Appointments */}
                 <Card className="mb-6">
-                    <h4 className="mb-4">Upcoming Appointments</h4>
+                    <h4 className="mb-4">Patients in Queue</h4>
                     <Table>
                         <thead>
                             <tr>
@@ -156,7 +203,16 @@ const Home = () => {
                                     <td>{appointment.time}</td>
                                     <td>{appointment.problem}</td>
                                     <td>
-                                        <Badge className="bg-emerald-500">
+                                        <Badge
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                borderRadius: '50px',
+                                                padding: '4px 8px',
+                                            }}
+                                            className="bg-emerald-500 text-white"
+                                        >
                                             {appointment.status}
                                         </Badge>
                                     </td>
@@ -225,16 +281,27 @@ const Home = () => {
                             <Input
                                 placeholder="Search doctor or specialty..."
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={handleSearchChange}
                                 prefix={
                                     <span className="text-lg icon-search"></span>
                                 }
                             />
                         </div>
                         <div className="w-full md:w-2/3">
-                            <h6 className="mb-2 text-sm text-gray-500">
-                                Select your health concern:
-                            </h6>
+                            <div className="flex justify-between items-center mb-2">
+                                <h6 className="text-sm text-gray-500">
+                                    Select your health concern:
+                                </h6>
+                                <div className="flex items-center">
+                                    <span className="text-sm mr-2">
+                                        Show only available doctors
+                                    </span>
+                                    <Switcher
+                                        checked={showOnlyAvailable}
+                                        onChange={handleAvailabilityToggle}
+                                    />
+                                </div>
+                            </div>
                             <div className="flex flex-wrap gap-2">
                                 <Button
                                     className={`${selectedCategory === 'all' ? 'bg-primary-500 text-white' : 'bg-gray-100'} rounded-full text-sm px-3 py-1`}
@@ -305,10 +372,12 @@ const Home = () => {
                 {/* Loading and Error States */}
                 {loading && (
                     <div className="flex justify-center p-4">
-                        <span className="text-primary-500">Loading doctors...</span>
+                        <span className="text-primary-500">
+                            Loading doctors...
+                        </span>
                     </div>
                 )}
-                
+
                 {error && (
                     <div className="bg-red-100 text-red-600 p-4 rounded mb-4">
                         {error}
@@ -317,60 +386,118 @@ const Home = () => {
 
                 {/* Doctors Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    {!loading && filteredDoctors.length > 0 ? (
-                        filteredDoctors.map((doctor) => (
-                            <Card
-                                key={doctor.id}
-                                className="hover:shadow-lg transition-shadow"
-                            >
-                                <div className="flex items-center gap-4 mb-4">
-                                    <Avatar 
-                                        size={60} 
-                                        src={doctor.profilePhoto || '/img/avatars/default-avatar.jpg'} 
-                                    />
-                                    <div>
-                                        <h5 className="font-semibold">
-                                            {doctor.fullName}
-                                        </h5>
-                                        <p className="text-gray-500">
-                                            {doctor.DoctorProfessional?.specialization}
-                                        </p>
-                                        <div className="flex items-center gap-1">
-                                            <span className="mx-1">•</span>
-                                            <span>{doctor.DoctorProfessional?.yearsOfExperience} years exp.</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <Badge className="bg-emerald-500">
-                                        Available now
-                                    </Badge>
-                                    <Button variant="solid" size="sm">
-                                        <span className="icon-video mr-1"></span>
-                                        <Link
-                                            to={`/user/video-consultation/${doctor.id}`}
-                                            className="text-white"
-                                        >
-                                            Consult Now
-                                        </Link>
-                                    </Button>
-                                </div>
-                            </Card>
-                        ))
-                    ) : !loading && (
-                        <div className="col-span-full text-center p-8">
-                            <div className="text-gray-400 text-xl mb-2">
-                                No doctors available for the selected category
-                            </div>
-                            <Button
-                                variant="plain"
-                                onClick={() => handleCategoryChange('all')}
-                            >
-                                Show all doctors
-                            </Button>
-                        </div>
-                    )}
+                    {!loading && doctors && doctors.length > 0
+                        ? doctors.map((doctor) => (
+                              <Card
+                                  key={doctor.id}
+                                  className="hover:shadow-lg transition-shadow"
+                              >
+                                  <div className="flex items-center gap-4 mb-4">
+                                      <Avatar
+                                          size={60}
+                                          src={
+                                              doctor.profilePhoto ||
+                                              '/img/avatars/default-avatar.jpg'
+                                          }
+                                      />
+                                      <div>
+                                          <h5 className="font-semibold">
+                                              {doctor.fullName}
+                                          </h5>
+                                          <p className="text-gray-500">
+                                              {
+                                                  doctor.DoctorProfessional
+                                                      ?.specialization
+                                              }
+                                          </p>
+                                          <div className="flex items-center gap-1">
+                                              <span>
+                                                  {
+                                                      doctor.DoctorProfessional
+                                                          ?.yearsOfExperience
+                                                  }{' '}
+                                                  years experience
+                                              </span>
+                                          </div>
+                                      </div>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                      <Badge
+                                          style={{
+                                              borderRadius: '50px',
+                                              padding: '4px 8px',
+                                          }}
+                                          className={
+                                              doctor.isOnline === 'available'
+                                                  ? 'bg-emerald-500 text-white'
+                                                  : 'bg-gray-500 text-white'
+                                          }
+                                      >
+                                          {doctor.isOnline === 'available'
+                                              ? 'Available now'
+                                              : 'Offline'}
+                                      </Badge>
+                                      <Button
+                                          variant="solid"
+                                          size="sm"
+                                          disabled={
+                                              doctor.isOnline !== 'available'
+                                          }
+                                          className={
+                                              doctor.isOnline !== 'available'
+                                                  ? 'opacity-50 cursor-not-allowed'
+                                                  : ''
+                                          }
+                                      >
+                                          <span className="icon-video mr-1"></span>
+                                          <Link
+                                              to={
+                                                  doctor.isOnline ===
+                                                  'available'
+                                                      ? `/user/video-consultation/${doctor.id}`
+                                                      : '#'
+                                              }
+                                              className="text-white"
+                                              onClick={(e) =>
+                                                  doctor.isOnline !==
+                                                      'available' &&
+                                                  e.preventDefault()
+                                              }
+                                          >
+                                              Consult Now
+                                          </Link>
+                                      </Button>
+                                  </div>
+                              </Card>
+                          ))
+                        : !loading && (
+                              <div className="col-span-full text-center p-8">
+                                  <div className="text-gray-400 text-xl mb-2">
+                                      No doctors available for the selected
+                                      category
+                                  </div>
+                                  <Button
+                                      variant="plain"
+                                      onClick={() =>
+                                          handleCategoryChange('all')
+                                      }
+                                  >
+                                      Show all doctors
+                                  </Button>
+                              </div>
+                          )}
                 </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex justify-center mb-6">
+                        <Pagination
+                            currentPage={currentPage}
+                            total={totalPages}
+                            onChange={handlePageChange}
+                        />
+                    </div>
+                )}
             </Container>
         )
     }

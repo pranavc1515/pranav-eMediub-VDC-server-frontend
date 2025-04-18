@@ -38,6 +38,9 @@ type AvailableDoctorsResponse = {
     success: boolean
     count: number
     data: DoctorProfile[]
+    totalPages?: number
+    currentPage?: number
+    pageSize?: number
 }
 
 type CheckDoctorExistsResponse = {
@@ -48,6 +51,14 @@ type CheckDoctorExistsResponse = {
         phoneNumber: string
         isProfileComplete: boolean
     } | null
+}
+
+type GetDoctorsParams = {
+    specialization?: string
+    page?: number
+    limit?: number
+    search?: string
+    onlyAvailable?: boolean
 }
 
 const DoctorService = {
@@ -134,7 +145,30 @@ const DoctorService = {
             params: specialization ? { specialization } : undefined,
         })
     },
+
+    /**
+     * Get doctors with pagination, search and availability filtering
+     * @param params Options for filtering, pagination and search
+     * @returns Promise with doctors data
+     */
+    getDoctors(params: GetDoctorsParams = {}) {
+        const { onlyAvailable, specialization, page, limit, search } = params
+        
+        // Determine which endpoint to use based on availability
+        const url = onlyAvailable ? '/api/doctors/available' : '/api/doctors'
+        
+        return ApiService.fetchDataWithAxios<AvailableDoctorsResponse>({
+            url,
+            method: 'GET',
+            params: {
+                ...(specialization && { specialization }),
+                ...(page && { page }),
+                ...(limit && { limit }),
+                ...(search && { search })
+            }
+        })
+    }
 }
 
-export type { DoctorProfile, AvailableDoctorsResponse, CheckDoctorExistsResponse }
+export type { DoctorProfile, AvailableDoctorsResponse, CheckDoctorExistsResponse, GetDoctorsParams }
 export default DoctorService

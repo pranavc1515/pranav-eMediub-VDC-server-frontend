@@ -15,7 +15,6 @@ import {
     LocalVideoTrack,
     LocalAudioTrack,
     RemoteParticipant,
-    RemoteTrack,
     RemoteVideoTrack,
     RemoteAudioTrack,
 } from 'twilio-video'
@@ -54,60 +53,43 @@ const VideoCallInterface = ({
     const localVideoRef = useRef<HTMLDivElement>(null)
     const remoteVideoRef = useRef<HTMLDivElement>(null)
     const { user } = useAuth()
+    const sessionUser = useSessionUser((state) => state.user)
     const isDoctor = user.authority?.includes('doctor') || false
 
     // Cleanup function
     const cleanup = () => {
         try {
-            // Add small delay for testing purposes
+            // First stop and disconnect tracks
+            if (localTracks.video) {
+                localTracks.video.stop()
+            }
+            if (localTracks.audio) {
+                localTracks.audio.stop()
+            }
+
+            // Disconnect room
+            if (room) {
+                room.disconnect()
+            }
+
+            // Clean up video elements after disconnection
             setTimeout(() => {
                 try {
-                    if (localTracks.video) {
-                        localTracks.video.stop()
-                    }
-                    if (localTracks.audio) {
-                        localTracks.audio.stop()
-                    }
-                    
-                    // Disconnect room last
-                    if (room) {
-                        room.disconnect()
-                    }
-
-                    // Clean up video elements
-                    if (remoteVideoRef.current) {
-                        const mediaElements = remoteVideoRef.current.querySelectorAll('video, audio')
-                        mediaElements.forEach(element => {
-                            try {
-                                if (element && element.parentNode) {
-                                    element.parentNode.removeChild(element)
-                                }
-                            } catch (err) {
-                                console.warn('Error removing remote media element:', err)
-                            }
-                        })
-                        remoteVideoRef.current.innerHTML = ''
-                    }
-
+                    // Clear local video container
                     if (localVideoRef.current) {
-                        const mediaElements = localVideoRef.current.querySelectorAll('video, audio')
-                        mediaElements.forEach(element => {
-                            try {
-                                if (element && element.parentNode) {
-                                    element.parentNode.removeChild(element)
-                                }
-                            } catch (err) {
-                                console.warn('Error removing local media element:', err)
-                            }
-                        })
                         localVideoRef.current.innerHTML = ''
                     }
+
+                    // Clear remote video container
+                    if (remoteVideoRef.current) {
+                        remoteVideoRef.current.innerHTML = ''
+                    }
                 } catch (err) {
-                    console.error('Error in delayed cleanup:', err)
+                    console.error('Error clearing video containers:', err)
                 }
-            }, 100) // Small delay for testing
+            }, 200)
         } catch (err) {
-            console.error('Error initiating cleanup:', err)
+            console.error('Error in cleanup:', err)
         }
     }
 
@@ -121,7 +103,8 @@ const VideoCallInterface = ({
     const getToken = async () => {
         try {
             // Create a unique identity format that includes user type and user ID
-            const identity = isDoctor ? `doctor-1234` : `patient-1234`
+            const userId = sessionUser.userId || '0' // Fallback to '0' if userId is not available
+            const identity = isDoctor ? `doctor-${userId}` : `patient-${userId}`
 
             const response = await VideoService.generateToken({
                 identity,
@@ -150,7 +133,6 @@ const VideoCallInterface = ({
             try {
                 await VideoService.createRoom({
                     roomName: 'room-1234',
-                    type: 'group',
                 })
                 console.log('Room created or already exists:', roomName)
             } catch (error) {
@@ -222,13 +204,36 @@ const VideoCallInterface = ({
         // Handle participant's existing tracks
         participant.tracks.forEach((publication) => {
             if (publication.isSubscribed && publication.track) {
-                handleTrackSubscribed(publication.track)
+                // Check track type before handling
+                if (
+                    publication.track.kind === 'video' ||
+                    publication.track.kind === 'audio'
+                ) {
+                    handleTrackSubscribed(
+                        publication.track as
+                            | RemoteVideoTrack
+                            | RemoteAudioTrack,
+                    )
+                }
             }
         })
 
         // Handle track subscription
-        participant.on('trackSubscribed', handleTrackSubscribed)
-        participant.on('trackUnsubscribed', handleTrackUnsubscribed)
+        participant.on('trackSubscribed', (track) => {
+            if (track.kind === 'video' || track.kind === 'audio') {
+                handleTrackSubscribed(
+                    track as RemoteVideoTrack | RemoteAudioTrack,
+                )
+            }
+        })
+
+        participant.on('trackUnsubscribed', (track) => {
+            if (track.kind === 'video' || track.kind === 'audio') {
+                handleTrackUnsubscribed(
+                    track as RemoteVideoTrack | RemoteAudioTrack,
+                )
+            }
+        })
     }
 
     const handleTrackSubscribed = (
@@ -238,27 +243,32 @@ const VideoCallInterface = ({
 
         try {
             const element = track.attach()
+
+            // Add track ID to the element for later reference
+            element.setAttribute('data-track-id', track.sid)
+
             if (track.kind === 'video') {
                 element.style.width = '100%'
                 element.style.height = '100%'
                 element.style.objectFit = 'cover'
-                
-                // Safely remove existing video elements
-                const existingVideos = remoteVideoRef.current.querySelectorAll('video')
-                existingVideos.forEach(video => {
+
+                // Remove any existing video elements to prevent duplicates
+                const existingVideos =
+                    remoteVideoRef.current.querySelectorAll('video')
+                existingVideos.forEach((video) => {
                     try {
-                        if (video && video.parentNode) {
-                            video.parentNode.removeChild(video)
-                        }
+                        remoteVideoRef.current?.removeChild(video)
                     } catch (err) {
-                        console.warn('Error removing existing video:', err)
+                        console.warn(
+                            'Could not remove existing video, may already be detached',
+                        )
                     }
                 })
             }
-            
-            // Add data attribute to track elements for easier cleanup
-            element.setAttribute('data-track-id', track.sid)
+
+            // Add the new element
             remoteVideoRef.current.appendChild(element)
+            console.log(`Track ${track.kind} attached with ID: ${track.sid}`)
         } catch (err) {
             console.error('Error in handleTrackSubscribed:', err)
         }
@@ -268,35 +278,24 @@ const VideoCallInterface = ({
         track: RemoteVideoTrack | RemoteAudioTrack,
     ) => {
         try {
-            // First try to find and remove elements by track ID
-            if (remoteVideoRef.current) {
-                const elements = remoteVideoRef.current.querySelectorAll(`[data-track-id="${track.sid}"]`)
-                elements.forEach(element => {
-                    try {
-                        if (element && element.parentNode) {
-                            element.parentNode.removeChild(element)
-                        }
-                    } catch (err) {
-                        console.warn('Error removing track element:', err)
-                    }
-                })
-            }
+            console.log(
+                `Unsubscribing from track ${track.kind} with ID: ${track.sid}`,
+            )
 
-            // Then try the normal detach as backup
-            try {
-                const elements = track.detach()
-                elements.forEach((element: HTMLElement) => {
-                    try {
-                        if (element && element.parentNode) {
-                            element.parentNode.removeChild(element)
-                        }
-                    } catch (err) {
-                        console.warn('Error in track detach cleanup:', err)
+            // Safely detach the track elements
+            const elements = track.detach()
+            elements.forEach((element) => {
+                try {
+                    // Verify the element is still in the DOM before removing
+                    if (element.parentNode) {
+                        element.parentNode.removeChild(element)
                     }
-                })
-            } catch (err) {
-                console.warn('Error in track detach:', err)
-            }
+                } catch (err) {
+                    console.warn(
+                        'Error removing track element, may already be detached',
+                    )
+                }
+            })
         } catch (err) {
             console.error('Error in handleTrackUnsubscribed:', err)
         }
@@ -304,45 +303,21 @@ const VideoCallInterface = ({
 
     const handleParticipantDisconnected = (participant: RemoteParticipant) => {
         console.log(`Participant ${participant.identity} disconnected`)
-        
-        // Add small delay before cleanup for testing purposes
+
+        // Set identity to null first
+        setRemoteParticipantIdentity(null)
+
+        // Add delay before cleanup to ensure React has processed state changes
         setTimeout(() => {
             try {
                 if (remoteVideoRef.current) {
-                    // First try to cleanup participant's tracks
-                    participant.tracks.forEach(publication => {
-                        if (publication.track) {
-                            try {
-                                const elements = publication.track.detach()
-                                elements.forEach(element => {
-                                    if (element && element.parentNode) {
-                                        element.parentNode.removeChild(element)
-                                    }
-                                })
-                            } catch (err) {
-                                console.warn('Error cleaning up participant track:', err)
-                            }
-                        }
-                    })
-
-                    // Then clean up any remaining media elements
-                    const mediaElements = remoteVideoRef.current.querySelectorAll('video, audio')
-                    mediaElements.forEach(element => {
-                        try {
-                            if (element && element.parentNode) {
-                                element.parentNode.removeChild(element)
-                            }
-                        } catch (err) {
-                            console.warn('Error removing media element:', err)
-                        }
-                    })
+                    // Clear the remote video container instead of trying to remove individual elements
+                    remoteVideoRef.current.innerHTML = ''
                 }
             } catch (err) {
                 console.error('Error in handleParticipantDisconnected:', err)
-            } finally {
-                setRemoteParticipantIdentity(null)
             }
-        }, 100) // Small delay for testing
+        }, 200)
     }
 
     const handleRoomDisconnected = (room: Room) => {

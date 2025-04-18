@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import React, {
+    createContext,
+    useContext,
+    useState,
+    useCallback,
+    ReactNode,
+} from 'react'
 import VideoService from '@/services/VideoService'
 
 interface VideoCallContextType {
@@ -8,22 +14,28 @@ interface VideoCallContextType {
     initiateCall: (roomName: string) => Promise<void>
     acceptCall: (roomName: string) => void
     endCall: () => Promise<void>
-    participants: Array<{ sid: string, identity: string }> 
+    participants: Array<{ sid: string; identity: string }>
     isLoading: boolean
     error: string | null
 }
 
-const VideoCallContext = createContext<VideoCallContextType | undefined>(undefined)
+const VideoCallContext = createContext<VideoCallContextType | undefined>(
+    undefined,
+)
 
 interface VideoCallProviderProps {
     children: ReactNode
 }
 
-export const VideoCallProvider: React.FC<VideoCallProviderProps> = ({ children }) => {
+export const VideoCallProvider: React.FC<VideoCallProviderProps> = ({
+    children,
+}) => {
     const [isCallActive, setIsCallActive] = useState(false)
     const [currentRoomName, setCurrentRoomName] = useState<string | null>(null)
     const [currentRoomSid, setCurrentRoomSid] = useState<string | null>(null)
-    const [participants, setParticipants] = useState<Array<{ sid: string, identity: string }>>([])
+    const [participants, setParticipants] = useState<
+        Array<{ sid: string; identity: string }>
+    >([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -31,15 +43,15 @@ export const VideoCallProvider: React.FC<VideoCallProviderProps> = ({ children }
     const initiateCall = useCallback(async (roomName: string) => {
         setIsLoading(true)
         setError(null)
-        
+
         try {
             // Create a new room
             const response = await VideoService.createRoom({ roomName })
-            
+
             setCurrentRoomName(roomName)
             setCurrentRoomSid(response.room.sid)
             setIsCallActive(true)
-            
+
             // Fetch initial participants (should be empty at first)
             fetchParticipants(response.room.sid)
         } catch (error) {
@@ -69,7 +81,7 @@ export const VideoCallProvider: React.FC<VideoCallProviderProps> = ({ children }
     // End the current call
     const endCall = useCallback(async () => {
         setIsLoading(true)
-        
+
         try {
             // If we have a room SID, try to complete the room
             if (currentRoomSid) {
@@ -96,7 +108,7 @@ export const VideoCallProvider: React.FC<VideoCallProviderProps> = ({ children }
         endCall,
         participants,
         isLoading,
-        error
+        error,
     }
 
     return (
@@ -112,4 +124,4 @@ export const useVideoCall = (): VideoCallContextType => {
         throw new Error('useVideoCall must be used within a VideoCallProvider')
     }
     return context
-} 
+}
