@@ -11,6 +11,7 @@ import { useAuth } from '@/auth'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import type { LayoutType } from '@/@types/theme'
 import VideoConsultation from '@/views/doctor/VideoConsultation'
+import UserVideoConsultation from '@/views/VideoConsultation'
 
 import PatientRecords from '@/views/doctor/PatientRecords'
 import Prescriptions from '@/views/doctor/Prescriptions'
@@ -62,8 +63,22 @@ const AllRoutes = (props: AllRoutesProps) => {
         },
     ]
 
-    // Combine the doctor routes with the existing protected routes
-    const combinedProtectedRoutes = [...appProtectedRoutes, ...doctorRoutes]
+    const patientRoutes = [
+        {
+            key: 'userVideoConsultation',
+            path: '/user/video-consultation/:doctorId',
+            component: UserVideoConsultation,
+            authority: ['user'],
+            meta: {
+                pageContainerType: 'gutterless',
+                label: 'Video Consultation',
+                pageTitle: 'Video Consultation',
+                desc: 'Join video consultation with doctor',
+            },
+        },
+    ]
+
+    const combinedProtectedRoutes = [...appProtectedRoutes, ...doctorRoutes, ...patientRoutes]
 
     return (
         <Routes>
