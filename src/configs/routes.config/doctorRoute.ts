@@ -13,6 +13,9 @@ const doctorRoute: Routes = [
         path: '/profile-setup',
         component: lazy(() => import('@/views/doctor/ProfileSetup')),
         authority: ['doctor'],
+        meta: {
+            layout: 'blank',
+        },
     },
 ]
 
