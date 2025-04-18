@@ -314,6 +314,41 @@ const SignInForm = (props: SignInFormProps) => {
                         
                         // Update doctor.isProfileComplete for authentication profile
                         doctor.isProfileComplete = isProfileComplete;
+                    } else if (userType === 'user') {
+                        // For users, create user profile
+                        const userProfile = {
+                            userId: user.id?.toString() || user.userId?.toString() || '',
+                            userName: user.fullName || phoneNumber,
+                            authority: ['user'],
+                            avatar: user.profilePhoto || '',
+                            email: user.email || phoneNumber,
+                            phoneNumber: user.phoneNumber || phoneNumber,
+                            isProfileComplete: user.isProfileComplete || false,
+                        };
+                        
+                        // If user profile is not complete, redirect to user profile setup
+                        if (!user.isProfileComplete) {
+                            console.log('User profile incomplete, redirecting to user profile setup')
+                            
+                            // Sign in first to ensure authentication is set up properly
+                            const authResult = await signIn({
+                                email: phoneNumber,
+                                password: '',
+                                userType: 'user',
+                                profile: userProfile,
+                                token,
+                            });
+                            
+                            if (authResult.status === 'success') {
+                                // Use window.location for hard navigation to bypass router guards
+                                window.location.href = '/user-profile-setup';
+                            } else {
+                                console.error('Failed to authenticate before redirect:', authResult);
+                            }
+                            
+                            setSubmitting(false);
+                            return;
+                        }
                     }
 
                     // Create a profile that matches the User type structure in auth.ts
@@ -375,7 +410,11 @@ const SignInForm = (props: SignInFormProps) => {
                                 'Profile is incomplete, redirecting to profile setup',
                             )
                             // Use window.location for hard navigation to bypass router guards
-                            window.location.href = '/profile-setup';
+                            if (userType === 'doctor') {
+                                window.location.href = '/profile-setup';
+                            } else {
+                                window.location.href = '/user-profile-setup';
+                            }
                         }
                     } else if (result.status === 'failed') {
                         // If sign in failed despite valid OTP
@@ -406,7 +445,11 @@ const SignInForm = (props: SignInFormProps) => {
                                 'Profile is incomplete, redirecting to profile setup',
                             )
                             // Use window.location for hard navigation to bypass router guards
-                            window.location.href = '/profile-setup';
+                            if (userType === 'doctor') {
+                                window.location.href = '/profile-setup';
+                            } else {
+                                window.location.href = '/user-profile-setup';
+                            }
                         }
                     }
                 } else {

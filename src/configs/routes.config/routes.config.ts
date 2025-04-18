@@ -22,6 +22,15 @@ export const protectedRoutes: Routes = [
         authority: [],
     },
     {
+        key: 'user.profileSetup',
+        path: '/user-profile-setup',
+        component: lazy(() => import('@/views/user/ProfileSetup')),
+        authority: ['user'],
+        meta: {
+            layout: 'blank',
+        },
+    },
+    {
         key: 'videoConsultation',
         path: '/doctor/video-consultation',
         component: lazy(() => import('@/views/doctor/VideoConsultation')),
@@ -80,6 +89,12 @@ export const protectedRoutes: Routes = [
         path: '/razerpay-test',
         component: lazy(() => import('@/views/razerpay-test')),
         authority: [],
+    },
+    {
+        key: 'userProfile',
+        path: '/user/profile',
+        component: lazy(() => import('@/views/user/Profile')),
+        authority: ['user'],
     },
     /** Example purpose only, please remove */
     {

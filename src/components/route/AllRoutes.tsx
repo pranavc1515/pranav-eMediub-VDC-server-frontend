@@ -11,7 +11,7 @@ import { useAuth } from '@/auth'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import type { LayoutType } from '@/@types/theme'
 import VideoConsultation from '@/views/doctor/VideoConsultation'
-import UserVideoConsultation from '@/views/VideoConsultation'
+import UserVideoConsultation from '@/views/user/VideoConsultation'
 
 import PatientRecords from '@/views/doctor/PatientRecords'
 import Prescriptions from '@/views/doctor/Prescriptions'

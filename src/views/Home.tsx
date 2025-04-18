@@ -386,7 +386,7 @@ const Home = () => {
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 <Button
-                                    className={`${selectedCategory === 'all' ? 'bg-primary-500 text-white' : 'bg-gray-100'} rounded-full text-sm px-3 py-1`}
+                                    className={`${selectedCategory === 'all' ? 'bg-primary-500 text-dark' : 'bg-gray-100'} rounded-full text-sm px-3 py-1`}
                                     variant={
                                         selectedCategory === 'all'
                                             ? 'solid'
@@ -400,7 +400,8 @@ const Home = () => {
                                 {problemCategories.map((category) => (
                                     <Button
                                         key={category.value}
-                                        className={`${selectedCategory === category.value ? 'bg-primary-500 text-white' : 'bg-gray-100'} rounded-full text-sm px-3 py-1`}
+                                        className={`${selectedCategory === category.value ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-blue-500 hover:text-white'} rounded-full text-sm px-3 py-1`}
+
                                         variant={
                                             selectedCategory === category.value
                                                 ? 'solid'
@@ -442,8 +443,8 @@ const Home = () => {
                         </div>
                         <div className="md:w-1/3 flex justify-end">
                             <DoubleSidedImage
-                                src="/img/others/doctor-consultation.png"
-                                darkModeSrc="/img/others/doctor-consultation-dark.png"
+                                src="/img/others/medium-shot-doctor-checking-her-tablet.jpg"
+                                darkModeSrc="/img/others/medium-shot-doctor-checking-her-tablet.jpg"
                                 alt="Video consultation"
                                 className="h-40 object-contain"
                             />
