@@ -20,9 +20,15 @@ import {
 } from 'twilio-video'
 import VideoService from '@/services/VideoService'
 import { useAuth } from '@/auth'
+import { io, Socket } from 'socket.io-client'
+import { v4 as uuidv4 } from 'uuid'
+
+// Define the API URL using Vite's import.meta.env instead of process.env
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 interface VideoCallInterfaceProps {
-    roomName: string
+    roomName?: string
+    doctorId?: string
     onCallEnd?: () => void
     children?: React.ReactNode
 }
@@ -32,8 +38,14 @@ interface LocalTracks {
     audio: LocalAudioTrack | null
 }
 
+interface QueueStatus {
+    position: number
+    estimatedWait: string
+}
+
 const VideoCallInterface = ({
-    roomName,
+    roomName: initialRoomName,
+    doctorId,
     onCallEnd,
     children,
 }: VideoCallInterfaceProps) => {
@@ -49,6 +61,13 @@ const VideoCallInterface = ({
     const [remoteParticipantIdentity, setRemoteParticipantIdentity] = useState<
         string | null
     >(null)
+    const [socket, setSocket] = useState<Socket | null>(null)
+    const [queueStatus, setQueueStatus] = useState<QueueStatus | null>(null)
+    const [consultationId, setConsultationId] = useState<string | null>(null)
+    const [actualRoomName, setActualRoomName] = useState<string>(
+        initialRoomName || `room-${uuidv4()}`
+    )
+    const [isWaiting, setIsWaiting] = useState(true)
 
     const localVideoRef = useRef<HTMLDivElement>(null)
     const remoteVideoRef = useRef<HTMLDivElement>(null)
@@ -56,31 +75,60 @@ const VideoCallInterface = ({
     const sessionUser = useSessionUser((state) => state.user)
     const isDoctor = user.authority?.includes('doctor') || false
 
+    useEffect(() => {
+        // Initialize socket connection
+        const socket = io(API_URL)
+        setSocket(socket)
+
+        if (isDoctor) {
+            socket.emit('JOIN_DOCTOR_ROOM', { doctorId: user.userId })
+        } else if (doctorId) {
+            // Patient joining queue
+            socket.emit('PATIENT_JOIN_QUEUE', {
+                doctorId,
+                patientId: user.userId,
+                roomName: actualRoomName,
+            })
+        }
+
+        // Socket event listeners
+        socket.on('QUEUE_POSITION_UPDATE', (status: QueueStatus) => {
+            setQueueStatus(status)
+        })
+
+        socket.on('INVITE_PATIENT', async (data) => {
+            setConsultationId(data.consultationId)
+            setIsWaiting(false)
+            await joinRoom()
+        })
+
+        socket.on('CONSULTATION_ENDED', () => {
+            cleanup()
+            onCallEnd?.()
+        })
+
+        return () => {
+            socket.disconnect()
+        }
+    }, [])
+
     // Cleanup function
     const cleanup = () => {
         try {
-            // First stop and disconnect tracks
             if (localTracks.video) {
                 localTracks.video.stop()
             }
             if (localTracks.audio) {
                 localTracks.audio.stop()
             }
-
-            // Disconnect room
             if (room) {
                 room.disconnect()
             }
-
-            // Clean up video elements after disconnection
             setTimeout(() => {
                 try {
-                    // Clear local video container
                     if (localVideoRef.current) {
                         localVideoRef.current.innerHTML = ''
                     }
-
-                    // Clear remote video container
                     if (remoteVideoRef.current) {
                         remoteVideoRef.current.innerHTML = ''
                     }
@@ -93,22 +141,14 @@ const VideoCallInterface = ({
         }
     }
 
-    useEffect(() => {
-        joinRoom()
-        return () => {
-            cleanup()
-        }
-    }, [])
-
     const getToken = async () => {
         try {
-            // Create a unique identity format that includes user type and user ID
-            const userId = sessionUser.userId || '0' // Fallback to '0' if userId is not available
+            const userId = sessionUser.userId || '0'
             const identity = isDoctor ? `doctor-${userId}` : `patient-${userId}`
 
             const response = await VideoService.generateToken({
                 identity,
-                roomName,
+                roomName: actualRoomName,
             })
 
             return response.token
@@ -124,20 +164,20 @@ const VideoCallInterface = ({
     }
 
     const joinRoom = async () => {
-        if (isConnecting && roomName === undefined) return
+        if (isConnecting || (isWaiting && !isDoctor)) return
         setIsConnecting(true)
         setError(null)
 
         try {
-            // Ensure the room exists or create it
-            try {
-                await VideoService.createRoom({
-                    roomName: 'room-1234',
-                })
-                console.log('Room created or already exists:', roomName)
-            } catch (error) {
-                // Ignore error if room already exists (409 Conflict)
-                console.log('Room may already exist:', error)
+            // Create room if doctor
+            if (isDoctor) {
+                try {
+                    await VideoService.createRoom({
+                        roomName: actualRoomName,
+                    })
+                } catch (error) {
+                    console.log('Room may already exist:', error)
+                }
             }
 
             const token = await getToken()
@@ -146,7 +186,6 @@ const VideoCallInterface = ({
                 return
             }
 
-            // Create local tracks
             const videoTrack = await createLocalVideoTrack({
                 width: 640,
                 height: 480,
@@ -156,7 +195,6 @@ const VideoCallInterface = ({
 
             setLocalTracks({ video: videoTrack, audio: audioTrack })
 
-            // Attach local video
             if (localVideoRef.current) {
                 const videoElement = videoTrack.attach()
                 videoElement.style.width = '100%'
@@ -166,13 +204,12 @@ const VideoCallInterface = ({
                 localVideoRef.current.appendChild(videoElement)
             }
 
-            // Connect to room
             const room = await connect(token, {
-                name: 'room-1234',
+                name: actualRoomName,
                 tracks: [videoTrack, audioTrack],
                 dominantSpeaker: true,
-                maxAudioBitrate: 16000, // For better audio quality
-                preferredVideoCodecs: [{ codec: 'VP8', simulcast: true }], // For better video quality
+                maxAudioBitrate: 16000,
+                preferredVideoCodecs: [{ codec: 'VP8', simulcast: true }],
             })
 
             console.log('Connected to room:', room.name)
@@ -349,24 +386,62 @@ const VideoCallInterface = ({
     }
 
     const endCall = async () => {
-        cleanup()
-
-        // If we have the room SID and it's the doctor ending the call,
-        // try to complete the room on the server side
-        if (room && isDoctor) {
-            try {
-                const roomSid = room.sid
-                await VideoService.completeRoom(roomSid)
-                console.log('Room completed successfully:', roomSid)
-            } catch (error) {
-                console.error('Error completing room:', error)
-            }
+        if (isDoctor && consultationId && socket) {
+            socket.emit('END_CONSULTATION', { consultationId })
+        } else if (!isDoctor && socket) {
+            socket.emit('LEAVE_QUEUE', {
+                patientId: user.userId,
+                doctorId,
+            })
         }
 
+        cleanup()
         onCallEnd?.()
     }
 
-    return (
+    // Render waiting room for patients
+    const renderWaitingRoom = () => {
+        return (
+            <div className="flex-1 flex items-center justify-center bg-gray-900">
+                <div className="text-center text-white p-8">
+                    <h2 className="text-2xl font-bold mb-4">
+                        Waiting for your consultation
+                    </h2>
+                    {queueStatus && (
+                        <div className="mb-4">
+                            <p className="text-lg">
+                                Your position in queue:{' '}
+                                <span className="font-bold">
+                                    {queueStatus.position}
+                                </span>
+                            </p>
+                            <p className="text-lg">
+                                Estimated wait time:{' '}
+                                <span className="font-bold">
+                                    {queueStatus.estimatedWait}
+                                </span>
+                            </p>
+                        </div>
+                    )}
+                    <p className="text-gray-400">
+                        Please don't close this window. You'll be connected with
+                        the doctor shortly.
+                    </p>
+                    <Button
+                        variant="solid"
+                        className="mt-4 bg-red-500"
+                        onClick={endCall}
+                    >
+                        Leave Queue
+                    </Button>
+                </div>
+            </div>
+        )
+    }
+
+    return !isDoctor && isWaiting ? (
+        renderWaitingRoom()
+    ) : (
         <div className="flex h-full">
             <div className="flex-1 flex flex-col bg-gray-900">
                 {error && (

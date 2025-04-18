@@ -11,9 +11,13 @@ import {
 } from '@/components/ui'
 import Container from '@/components/shared/Container'
 import DoubleSidedImage from '@/components/shared/DoubleSidedImage'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useDoctors from '@/hooks/useDoctors'
+import { io, Socket } from 'socket.io-client'
+
+// Define the API URL using Vite's import.meta.env instead of process.env
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 const problemCategories = [
     { value: 'general', label: 'General Health Concerns' },
@@ -73,11 +77,23 @@ const appointmentsData = [
     // Add more appointments as needed
 ]
 
+interface QueuePatient {
+    id: string
+    firstName: string
+    lastName: string
+    position: number
+    joinedAt: string
+    status: string
+}
+
 const Home = () => {
     const [selectedCategory, setSelectedCategory] = useState('all')
     const [searchTerm, setSearchTerm] = useState('')
     const [showOnlyAvailable, setShowOnlyAvailable] = useState(true)
     const [currentPage, setCurrentPage] = useState(1)
+    const [patientQueue, setPatientQueue] = useState<QueuePatient[]>([])
+    const [socket, setSocket] = useState<Socket | null>(null)
+    const navigate = useNavigate()
 
     // Get user from auth store
     const user = useSessionUser((state) => state.user)
@@ -114,6 +130,26 @@ const Home = () => {
         }
     }, [showOnlyAvailable, fetchDoctors, isDoctor])
 
+    useEffect(() => {
+        if (isDoctor) {
+            // Initialize socket connection for doctor
+            const socket = io(API_URL)
+            setSocket(socket)
+
+            // Join doctor's room for updates
+            socket.emit('JOIN_DOCTOR_ROOM', { doctorId: user.userId })
+
+            // Listen for queue updates
+            socket.on('QUEUE_CHANGED', (updatedQueue: QueuePatient[]) => {
+                setPatientQueue(updatedQueue)
+            })
+
+            return () => {
+                socket.disconnect()
+            }
+        }
+    }, [isDoctor, user.userId])
+
     // Update stats count
     statsData[0].value = count
 
@@ -140,6 +176,18 @@ const Home = () => {
         changePage?.(page)
     }
 
+    const handleStartConsultation = (patientId: string) => {
+        if (socket) {
+            socket.emit('INVITE_NEXT_PATIENT', {
+                doctorId: user.userId,
+            })
+        }
+    }
+
+    const handleConsultNow = (doctorId: string) => {
+        navigate(`/user/video-consultation/${doctorId}`)
+    }
+
     const renderDoctorDashboard = () => {
         return (
             <Container className="h-full">
@@ -155,53 +203,60 @@ const Home = () => {
                     <Card className="hover:shadow-lg transition-shadow">
                         <div className="flex items-center gap-4">
                             <div className="rounded-full p-3 bg-primary-100 text-primary-600">
-                                <span className="text-2xl icon-calendar"></span>
+                                <span className="text-2xl icon-users"></span>
                             </div>
                             <div>
                                 <h5 className="font-semibold text-sm">
-                                    Today&apos;s Appointments
+                                    Patients in Queue
                                 </h5>
-                                <div className="text-xl font-bold">8</div>
+                                <div className="text-xl font-bold">
+                                    {patientQueue.filter(p => p.status === 'waiting').length}
+                                </div>
                             </div>
                         </div>
                     </Card>
                     <Card className="hover:shadow-lg transition-shadow">
                         <div className="flex items-center gap-4">
                             <div className="rounded-full p-3 bg-primary-100 text-primary-600">
-                                <span className="text-2xl icon-users"></span>
+                                <span className="text-2xl icon-video"></span>
                             </div>
                             <div>
                                 <h5 className="font-semibold text-sm">
-                                    Total Patients
+                                    Active Consultation
                                 </h5>
-                                <div className="text-xl font-bold">124</div>
+                                <div className="text-xl font-bold">
+                                    {patientQueue.filter(p => p.status === 'in_consultation').length}
+                                </div>
                             </div>
                         </div>
                     </Card>
-                    {/* Add more stats cards as needed */}
                 </div>
 
-                {/* Upcoming Appointments */}
+                {/* Patient Queue */}
                 <Card className="mb-6">
                     <h4 className="mb-4">Patients in Queue</h4>
                     <Table>
                         <thead>
                             <tr>
+                                <th>Position</th>
                                 <th>Patient Name</th>
-                                <th>Date</th>
-                                <th>Time</th>
-                                <th>Problem</th>
+                                <th>Joined At</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {appointmentsData.map((appointment) => (
-                                <tr key={appointment.id}>
-                                    <td>{appointment.patientName}</td>
-                                    <td>{appointment.date}</td>
-                                    <td>{appointment.time}</td>
-                                    <td>{appointment.problem}</td>
+                            {patientQueue.map((patient) => (
+                                <tr key={patient.id}>
+                                    <td>{patient.position}</td>
+                                    <td>
+                                        {patient.firstName} {patient.lastName}
+                                    </td>
+                                    <td>
+                                        {new Date(
+                                            patient.joinedAt
+                                        ).toLocaleTimeString()}
+                                    </td>
                                     <td>
                                         <Badge
                                             style={{
@@ -211,18 +266,45 @@ const Home = () => {
                                                 borderRadius: '50px',
                                                 padding: '4px 8px',
                                             }}
-                                            className="bg-emerald-500 text-white"
+                                            className={
+                                                patient.status ===
+                                                'in_consultation'
+                                                    ? 'bg-primary-500'
+                                                    : patient.status === 'waiting'
+                                                    ? 'bg-emerald-500'
+                                                    : 'bg-gray-500'
+                                            }
                                         >
-                                            {appointment.status}
+                                            {patient.status}
                                         </Badge>
                                     </td>
                                     <td>
-                                        <Button variant="solid" size="sm">
-                                            Start Consultation
-                                        </Button>
+                                        {patient.status === 'waiting' && (
+                                            <Button
+                                                variant="solid"
+                                                size="sm"
+                                                onClick={() =>
+                                                    handleStartConsultation(
+                                                        patient.id
+                                                    )
+                                                }
+                                            >
+                                                Start Consultation
+                                            </Button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
+                            {patientQueue.length === 0 && (
+                                <tr>
+                                    <td
+                                        colSpan={5}
+                                        className="text-center py-4"
+                                    >
+                                        No patients in queue
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </Table>
                 </Card>
@@ -448,24 +530,12 @@ const Home = () => {
                                                   ? 'opacity-50 cursor-not-allowed'
                                                   : ''
                                           }
+                                          onClick={() =>
+                                              handleConsultNow(doctor.id)
+                                          }
                                       >
                                           <span className="icon-video mr-1"></span>
-                                          <Link
-                                              to={
-                                                  doctor.isOnline ===
-                                                  'available'
-                                                      ? `/user/video-consultation/${doctor.id}`
-                                                      : '#'
-                                              }
-                                              className="text-white"
-                                              onClick={(e) =>
-                                                  doctor.isOnline !==
-                                                      'available' &&
-                                                  e.preventDefault()
-                                              }
-                                          >
-                                              Consult Now
-                                          </Link>
+                                          Consult Now
                                       </Button>
                                   </div>
                               </Card>
