@@ -10,7 +10,25 @@ import Drawer from '@/components/ui/Drawer'
 import { Form, FormItem } from '@/components/ui/Form'
 import Input from '@/components/ui/Input'
 import DatePicker from '@/components/ui/DatePicker'
+import Select from '@/components/ui/Select'
 import dayjs from 'dayjs'
+
+// Common languages in India
+const languageOptions = [
+    { value: 'English', label: 'English' },
+    { value: 'Hindi', label: 'Hindi' },
+    { value: 'Tamil', label: 'Tamil' },
+    { value: 'Telugu', label: 'Telugu' },
+    { value: 'Kannada', label: 'Kannada' },
+    { value: 'Malayalam', label: 'Malayalam' },
+    { value: 'Marathi', label: 'Marathi' },
+    { value: 'Bengali', label: 'Bengali' },
+    { value: 'Gujarati', label: 'Gujarati' },
+    { value: 'Punjabi', label: 'Punjabi' },
+    { value: 'Urdu', label: 'Urdu' },
+    { value: 'Odia', label: 'Odia' },
+    { value: 'Assamese', label: 'Assamese' },
+]
 
 const Profile = () => {
     const [profile, setProfile] = useState<DoctorProfile | null>(null)
@@ -24,6 +42,8 @@ const Profile = () => {
     const [personalFormError, setPersonalFormError] = useState('')
     const [professionalFormLoading, setProfessionalFormLoading] = useState(false)
     const [professionalFormError, setProfessionalFormError] = useState('')
+
+    const [selectedLanguages, setSelectedLanguages] = useState<{value: string; label: string}[]>([])
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -41,6 +61,18 @@ const Profile = () => {
 
         fetchProfile()
     }, [])
+
+    // Initialize selected languages from profile data
+    useEffect(() => {
+        if (profile?.DoctorProfessional?.communicationLanguages) {
+            setSelectedLanguages(
+                profile.DoctorProfessional.communicationLanguages.map(lang => ({
+                    value: lang,
+                    label: lang
+                }))
+            );
+        }
+    }, [profile]);
 
     if (loading) {
         return (
@@ -417,10 +449,14 @@ const Profile = () => {
                         <FormItem
                             label="Communication Languages"
                         >
-                            <Input
-                                name="communicationLanguages"
+                            <Select
                                 id="communicationLanguages"
-                                defaultValue={profile?.DoctorProfessional.communicationLanguages.join(', ') || ''}
+                                name="communicationLanguages"
+                                isMulti
+                                options={languageOptions}
+                                value={selectedLanguages}
+                                onChange={(options) => setSelectedLanguages(options as {value: string; label: string}[])}
+                                placeholder="Select languages"
                             />
                         </FormItem>
                         <FormItem
@@ -467,11 +503,10 @@ const Profile = () => {
                                 variant="solid"
                                 onClick={(e) => {
                                     e.preventDefault();
-                                    const commLangValue = (document.getElementById('communicationLanguages') as HTMLInputElement).value;
-                                    const communicationLanguages = commLangValue
-                                        ? commLangValue.split(',').map(lang => lang.trim())
-                                        : [];
-                                        
+                                    
+                                    // Get values from the component state
+                                    const communicationLanguages = selectedLanguages.map(option => option.value);
+                                    
                                     // Get selected available days
                                     const availableDays: string[] = [];
                                     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];

@@ -6,12 +6,30 @@ import Loading from '@/components/shared/Loading'
 import Button from '@/components/ui/Button'
 import { Form, FormItem } from '@/components/ui/Form'
 import Input from '@/components/ui/Input'
+import Select from '@/components/ui/Select'
 import DoctorService from '@/services/DoctorService'
 import type { CheckDoctorExistsResponse } from '@/services/DoctorService'
 import Alert from '@/components/ui/Alert'
 import Steps from '@/components/ui/Steps'
 import { useToken } from '@/store/authStore'
 import type { ChangeEvent } from 'react'
+
+// Common languages in India
+const languageOptions = [
+    { value: 'English', label: 'English' },
+    { value: 'Hindi', label: 'Hindi' },
+    { value: 'Tamil', label: 'Tamil' },
+    { value: 'Telugu', label: 'Telugu' },
+    { value: 'Kannada', label: 'Kannada' },
+    { value: 'Malayalam', label: 'Malayalam' },
+    { value: 'Marathi', label: 'Marathi' },
+    { value: 'Bengali', label: 'Bengali' },
+    { value: 'Gujarati', label: 'Gujarati' },
+    { value: 'Punjabi', label: 'Punjabi' },
+    { value: 'Urdu', label: 'Urdu' },
+    { value: 'Odia', label: 'Odia' },
+    { value: 'Assamese', label: 'Assamese' },
+]
 
 const ProfileSetup = () => {
     const navigate = useNavigate()
@@ -187,6 +205,14 @@ const ProfileSetup = () => {
                 [name]: value
             }))
         }
+    }
+    
+    const handleLanguageChange = (selectedOptions: any) => {
+        const languages = selectedOptions ? selectedOptions.map((option: any) => option.value) : [];
+        setProfessionalFormData(prev => ({
+            ...prev,
+            communicationLanguages: languages
+        }));
     }
     
     if (loading) {
@@ -402,11 +428,15 @@ const ProfileSetup = () => {
                                 <FormItem
                                     label="Communication Languages"
                                 >
-                                    <Input
+                                    <Select
                                         name="communicationLanguages"
-                                        value={professionalFormData.communicationLanguages.join(', ')}
-                                        onChange={handleProfessionalInputChange}
-                                        placeholder="English, Hindi, etc. (comma separated)"
+                                        isMulti
+                                        options={languageOptions}
+                                        value={languageOptions.filter(option => 
+                                            professionalFormData.communicationLanguages.includes(option.value)
+                                        )}
+                                        onChange={handleLanguageChange}
+                                        placeholder="Select languages"
                                     />
                                 </FormItem>
                                 
