@@ -19,7 +19,7 @@ const teamMembers = [
         name: 'Ayyapa Raju',
         role: 'Director',
         avatar: '/img/avatars/doctor-2.jpg',
-        bio: 'Dr. Ayyapa oversees all medical protocols and quality assurance. With his background in both emergency medicine and telemedicine, he ensures that our platform delivers the highest standard of care.',
+        bio: 'Dr. Ayyapa oversees all medical protocols and quality assurance. With his background in both IT Sales and management, he ensures that our platform delivers the highest standard of care.',
     },
 ]
 
