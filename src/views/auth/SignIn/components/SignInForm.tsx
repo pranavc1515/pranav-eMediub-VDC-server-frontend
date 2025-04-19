@@ -480,7 +480,7 @@ const SignInForm = (props: SignInFormProps) => {
                                 <Input
                                     type="tel"
                                     autoComplete="off"
-                                    placeholder="Enter your phone number"
+                                    placeholder="Phone number"
                                     {...field}
                                 />
                             )}

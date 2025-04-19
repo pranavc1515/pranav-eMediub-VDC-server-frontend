@@ -17,7 +17,7 @@ const Side = ({ children, ...rest }: SideProps) => {
             </div>
             <div className="py-6 px-10 lg:flex flex-col flex-1 justify-between hidden rounded-3xl items-end relative xl:max-w-[520px] 2xl:max-w-[720px]">
                 <img
-                    src="/img/others/9109498.png"
+                    src="/img/others/portrait-doctor-video-conferencing-clinic.jpg"
                     className="absolute h-full w-full top-0 left-0 rounded-3xl"
                 />
             </div>
