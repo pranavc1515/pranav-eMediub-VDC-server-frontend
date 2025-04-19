@@ -13,22 +13,14 @@ const PatientQueueList = () => {
     const [patientQueue] = useState([
         {
             id: 1,
-            name: 'John Smith',
+            name: 'Ajit',
             age: 45,
             gender: 'Male',
             appointmentTime: '10:00 AM',
-            reason: 'Follow-up on blood pressure medication',
-            status: 'scheduled'
+            reason: '',
+            status: 'waiting in lobby'
         },
-        {
-            id: 2,
-            name: 'Anna Johnson',
-            age: 35,
-            gender: 'Female',
-            appointmentTime: '10:30 AM',
-            reason: 'Migraine consultation',
-            status: 'scheduled'
-        }
+        
     ])
 
     const handleJoinCall = (id: number) => {
@@ -50,9 +42,7 @@ const PatientQueueList = () => {
                                 <h3 className="text-lg font-semibold">{patient.name}</h3>
                                 <p className="text-sm text-gray-500">{patient.age} years, {patient.gender}</p>
                             </div>
-                            <div className="text-right">
-                                <p className="text-sm font-medium">{patient.appointmentTime}</p>
-                            </div>
+                            
                         </div>
                         <div className="mb-4">
                             <p className="text-sm text-gray-600">{patient.reason}</p>
@@ -210,30 +200,7 @@ const VideoConsultation = () => {
     if (isVideoCall) {
         return (
             <VideoCallInterface>
-                <Tabs defaultValue="upcoming">
-                    <TabList>
-                        <TabNav value="upcoming" icon={<HiCalendar />}>
-                            Queue
-                        </TabNav>
-                        <TabNav value="chat" icon={<HiChat />}>
-                            Chat
-                        </TabNav>
-                        <TabNav value="notes" icon={<HiDocumentText />}>
-                            Notes
-                        </TabNav>
-                    </TabList>
-                    <div className="h-full">
-                        <TabContent value="upcoming">
-                            <UpcomingConsultations />
-                        </TabContent>
-                        <TabContent value="chat">
-                            <ChatSection />
-                        </TabContent>
-                        <TabContent value="notes">
-                            <NotesSection />
-                        </TabContent>
-                    </div>
-                </Tabs>
+                
             </VideoCallInterface>
         )
     }

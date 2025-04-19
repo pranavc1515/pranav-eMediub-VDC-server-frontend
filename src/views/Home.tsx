@@ -15,6 +15,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useDoctors from '@/hooks/useDoctors'
 import { io, Socket } from 'socket.io-client'
+import PaymentService from '@/services/PaymentService'
 
 // Define the API URL using Vite's import.meta.env instead of process.env
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
@@ -184,8 +185,76 @@ const Home = () => {
         }
     }
 
-    const handleConsultNow = (doctorId: string) => {
-        navigate(`/user/video-consultation/${doctorId}`)
+    const handleConsultNow = (doctor: any) => {
+        const handleCreateOrder = async () => {
+            try {
+                const response = await PaymentService.createOrder({
+                    amount: 1, 
+                    currency: 'INR',
+                });
+
+                if (response.success && response.order) {
+                    initializeRazorpay(response.order, doctor.id);
+                } else {
+                    console.error('Failed to create payment order');
+                }
+            } catch (err) {
+                console.error('Payment order creation error:', err);
+            }
+        };
+
+        const initializeRazorpay = (order: any, doctorId: string) => {
+            if (!(window as any).Razorpay) {
+                console.error('Razorpay SDK failed to load.');
+                return;
+            }
+
+            const options = {
+                key: 'rzp_test_6pdNA8n5Gcoe3D', // Razorpay test key
+                amount: order.amount,
+                currency: order.currency,
+                name: 'eMediub',
+                description: 'Doctor Consultation',
+                order_id: order.id,
+                handler: function (response: any) {
+                    // Verify payment
+                    const verifyPayment = async () => {
+                        try {
+                            const verifyResponse = await PaymentService.verifyPayment({
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                            });
+
+                            if (verifyResponse.success) {
+                                // Redirect to consultation page after successful payment
+                                navigate(`/user/video-consultation/${doctorId}`);
+                            } else {
+                                console.error('Payment verification failed');
+                            }
+                        } catch (err) {
+                            console.error('Payment verification error:', err);
+                        }
+                    };
+                    
+                    verifyPayment();
+                },
+                prefill: {
+                    name: user.userName || 'Patient',
+                    email: user.email || '',
+                    contact: '',
+                },
+                theme: {
+                    color: '#3399cc',
+                },
+            };
+
+            const razorpayInstance = new (window as any).Razorpay(options);
+            razorpayInstance.open();
+        };
+
+        // Start the payment process
+        handleCreateOrder();
     }
 
     const renderDoctorDashboard = () => {
@@ -532,7 +601,7 @@ const Home = () => {
                                                   : ''
                                           }
                                           onClick={() =>
-                                              handleConsultNow(doctor.id)
+                                              handleConsultNow(doctor)
                                           }
                                       >
                                           <span className="icon-video mr-1"></span>

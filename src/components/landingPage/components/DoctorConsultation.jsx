@@ -32,7 +32,7 @@ const ConsultationSection = () => {
                         <img src={call} className='mr-2' alt="" />
                         <input
                             type="text"
-                            placeholder="Enter your Phone Number"
+                            placeholder="Phone Number"
                             className="w-full py-3 px-4 outline-none text-gray-700"
                         />
                         <button className="bg-[#1376F8] text-[#FFFFFF] text-[16px] px-6 py-3 h-[55px] font-medium">

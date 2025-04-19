@@ -511,9 +511,9 @@ const VideoCallInterface = ({
             </div>
 
             {/* Side Panel */}
-            <div className="w-80 bg-white dark:bg-gray-800 border-l dark:border-gray-700">
+            {/* <div className="w-80 bg-white dark:bg-gray-800 border-l dark:border-gray-700">
                 {children}
-            </div>
+            </div> */}
         </div>
     )
 }
