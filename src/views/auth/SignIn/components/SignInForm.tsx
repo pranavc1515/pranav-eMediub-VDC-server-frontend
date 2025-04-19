@@ -85,6 +85,8 @@ const SignInForm = (props: SignInFormProps) => {
 
     const onSignIn = async (values: SignInFormSchema) => {
         const { phone } = values
+        // Add +91 prefix to the phone number for API requests
+        const formattedPhone = `+91${phone}`
 
         if (!disableSubmit) {
             setSubmitting(true)
@@ -93,7 +95,7 @@ const SignInForm = (props: SignInFormProps) => {
                 // For doctors, first check if they exist with the given phone number
                 if (userType === 'doctor') {
                     try {
-                        const checkResponse = await DoctorService.checkDoctorExists(phone)
+                        const checkResponse = await DoctorService.checkDoctorExists(formattedPhone)
                         console.log('Doctor check-exists response:', checkResponse)
                         
                         // Store doctor status for later use after OTP verification
@@ -108,7 +110,7 @@ const SignInForm = (props: SignInFormProps) => {
                         const response = await ApiService.fetchDataWithAxios({
                             url: `/${apiEndpoint}`,
                             method: 'post',
-                            data: { phoneNumber: phone },
+                            data: { phoneNumber: formattedPhone },
                             headers: {
                                 'Content-Type': 'application/json',
                             },
@@ -120,7 +122,7 @@ const SignInForm = (props: SignInFormProps) => {
                             (response && (response as any).status === true) ||
                             (response as any).success === true
                         ) {
-                            setPhoneNumber(phone || '')
+                            setPhoneNumber(formattedPhone || '')
                             setShowOtpVerification(true)
                             resetOtpForm()
                             setOtpValue('')
@@ -147,7 +149,7 @@ const SignInForm = (props: SignInFormProps) => {
                     const response = await ApiService.fetchDataWithAxios({
                         url: fullUrl,
                         method: 'post',
-                        data: { phone },
+                        data: { phone: formattedPhone },
                         headers: {
                             'Content-Type': 'application/json',
                         },
@@ -159,7 +161,7 @@ const SignInForm = (props: SignInFormProps) => {
                         (response && (response as any).status === true) ||
                         (response as any).success === true
                     ) {
-                        setPhoneNumber(phone || '')
+                        setPhoneNumber(formattedPhone || '')
                         setShowOtpVerification(true)
                         resetOtpForm()
                         setOtpValue('')
@@ -480,7 +482,8 @@ const SignInForm = (props: SignInFormProps) => {
                                 <Input
                                     type="tel"
                                     autoComplete="off"
-                                    placeholder="Phone number"
+                                    placeholder="Mobile number"
+                                    prefix="+91"
                                     {...field}
                                 />
                             )}
