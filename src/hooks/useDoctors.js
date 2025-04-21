@@ -47,9 +47,9 @@ const useDoctors = ({
 
   useEffect(() => {
     if (autoFetch) {
-      fetchDoctors(initialPage, '');
+      fetchDoctors(currentPage, '');
     }
-  }, [autoFetch, fetchDoctors, initialPage, specialization, showOnlyAvailable]);
+  }, [autoFetch, fetchDoctors, currentPage, specialization]);
 
   const changePage = (page) => {
     setCurrentPage(page);

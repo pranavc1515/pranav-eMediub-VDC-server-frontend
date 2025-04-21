@@ -64,10 +64,10 @@ const statsData = [
 const appointmentsData = [
     {
         id: 1,
-        patientName: 'John Doe',
-        time: '10:00 AM',
-        date: '2024-03-20',
-        status: 'upcoming',
+        patientName: 'API Tester',
+        time: '-',
+        date: '2025-04-19',
+        status: ' waiting',
         problem: 'General Checkup',
     },
     // Add more appointments as needed
@@ -110,9 +110,9 @@ const Home = () => {
     // Effect to refetch data when availability toggle changes
     useEffect(() => {
         if (!isDoctor) {
-            fetchDoctors(1)
+            fetchDoctors(currentPage)
         }
-    }, [showOnlyAvailable, fetchDoctors, isDoctor])
+    }, [])
 
     // Update stats count
     statsData[0].value = count
@@ -211,7 +211,7 @@ const Home = () => {
                                                 borderRadius: '50px',
                                                 padding: '4px 8px',
                                             }}
-                                            className="bg-emerald-500 text-white"
+                                            className="bg-yellow-400 text-white"
                                         >
                                             {appointment.status}
                                         </Badge>
@@ -279,7 +279,7 @@ const Home = () => {
                     <div className="flex flex-col md:flex-row gap-4 items-center">
                         <div className="w-full md:w-1/3">
                             <Input
-                                placeholder="Search doctor or specialty..."
+                                placeholder="Search doctor"
                                 value={searchTerm}
                                 onChange={handleSearchChange}
                                 prefix={

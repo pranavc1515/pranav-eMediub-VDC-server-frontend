@@ -13,22 +13,13 @@ const PatientQueueList = () => {
     const [patientQueue] = useState([
         {
             id: 1,
-            name: 'John Smith',
+            name: 'API Tester',
             age: 45,
             gender: 'Male',
-            appointmentTime: '10:00 AM',
-            reason: 'Follow-up on blood pressure medication',
-            status: 'scheduled'
+            // appointmentTime: '10:00 AM',
+            // reason: 'Follow-up on blood pressure medication',
+            status: 'waiting in lobby'
         },
-        {
-            id: 2,
-            name: 'Anna Johnson',
-            age: 35,
-            gender: 'Female',
-            appointmentTime: '10:30 AM',
-            reason: 'Migraine consultation',
-            status: 'scheduled'
-        }
     ])
 
     const handleJoinCall = (id: number) => {

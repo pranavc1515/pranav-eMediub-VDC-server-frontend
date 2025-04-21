@@ -132,7 +132,7 @@ const VideoCallInterface = ({
             // Ensure the room exists or create it
             try {
                 await VideoService.createRoom({
-                    roomName: 'room-1234',
+                    roomName: 'room-550e8400-e29b-41d4-a716-44665544665',
                 })
                 console.log('Room created or already exists:', roomName)
             } catch (error) {
@@ -168,7 +168,7 @@ const VideoCallInterface = ({
 
             // Connect to room
             const room = await connect(token, {
-                name: 'room-1234',
+                name: 'room-550e8400-e29b-41d4-a716-44665544665',
                 tracks: [videoTrack, audioTrack],
                 dominantSpeaker: true,
                 maxAudioBitrate: 16000, // For better audio quality
@@ -384,7 +384,7 @@ const VideoCallInterface = ({
                         >
                             {!remoteParticipantIdentity && (
                                 <div className="absolute inset-0 flex items-center justify-center text-white">
-                                    Waiting for other participant to join...
+                                    Waiting to join...
                                 </div>
                             )}
                         </div>
@@ -436,9 +436,9 @@ const VideoCallInterface = ({
             </div>
 
             {/* Side Panel */}
-            <div className="w-80 bg-white dark:bg-gray-800 border-l dark:border-gray-700">
+            {/* <div className="w-80 bg-white dark:bg-gray-800 border-l dark:border-gray-700">
                 {children}
-            </div>
+            </div> */}
         </div>
     )
 }

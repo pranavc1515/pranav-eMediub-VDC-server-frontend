@@ -23,32 +23,55 @@ const MedicalReportView = () => {
     const [reports] = useState<Report[]>([
         {
             id: 1,
-            doctorName: 'Dr. John Doe',
+            doctorName: 'Dr. Shubham patle',
             date: '2024-03-20',
             type: 'Blood Test Report',
             summary: 'Complete Blood Count (CBC)',
             findings: [
-                { parameter: 'Hemoglobin', value: '13.5 g/dL', normalRange: '12.0-15.5 g/dL' },
-                { parameter: 'White Blood Cells', value: '7.5 x10^9/L', normalRange: '4.0-11.0 x10^9/L' },
-                { parameter: 'Platelets', value: '250 x10^9/L', normalRange: '150-450 x10^9/L' }
+                {
+                    parameter: 'Hemoglobin',
+                    value: '13.5 g/dL',
+                    normalRange: '12.0-15.5 g/dL',
+                },
+                {
+                    parameter: 'White Blood Cells',
+                    value: '7.5 x10^9/L',
+                    normalRange: '4.0-11.0 x10^9/L',
+                },
+                {
+                    parameter: 'Platelets',
+                    value: '250 x10^9/L',
+                    normalRange: '150-450 x10^9/L',
+                },
             ],
-            conclusion: 'All parameters are within normal range. No significant abnormalities detected.',
-            recommendations: 'Continue with regular health check-ups. Maintain a balanced diet and exercise routine.'
+            conclusion:
+                'All parameters are within normal range. No significant abnormalities detected.',
+            recommendations:
+                'Continue with regular health check-ups. Maintain a balanced diet and exercise routine.',
         },
-        {
-            id: 2,
-            doctorName: 'Dr. Jane Smith',
-            date: '2024-03-15',
-            type: 'X-Ray Report',
-            summary: 'Chest X-Ray Examination',
-            findings: [
-                { parameter: 'Lungs', value: 'Clear', normalRange: 'Normal' },
-                { parameter: 'Heart Size', value: 'Normal', normalRange: 'Normal' },
-                { parameter: 'Diaphragm', value: 'Normal', normalRange: 'Normal' }
-            ],
-            conclusion: 'No significant abnormalities detected in the chest X-ray.',
-            recommendations: 'Follow-up in 6 months if symptoms persist.'
-        }
+        // {
+        //     id: 2,
+        //     doctorName: 'Dr. Jane Smith',
+        //     date: '2024-03-15',
+        //     type: 'X-Ray Report',
+        //     summary: 'Chest X-Ray Examination',
+        //     findings: [
+        //         { parameter: 'Lungs', value: 'Clear', normalRange: 'Normal' },
+        //         {
+        //             parameter: 'Heart Size',
+        //             value: 'Normal',
+        //             normalRange: 'Normal',
+        //         },
+        //         {
+        //             parameter: 'Diaphragm',
+        //             value: 'Normal',
+        //             normalRange: 'Normal',
+        //         },
+        //     ],
+        //     conclusion:
+        //         'No significant abnormalities detected in the chest X-ray.',
+        //     recommendations: 'Follow-up in 6 months if symptoms persist.',
+        // },
     ])
 
     const [selectedReport, setSelectedReport] = useState<Report | null>(null)
@@ -68,8 +91,15 @@ const MedicalReportView = () => {
                     <Card key={report.id} className="p-4">
                         <div className="flex justify-between items-start mb-4">
                             <div>
-                                <h3 className="text-lg font-semibold">{report.doctorName}</h3>
-                                <p className="text-sm text-gray-500">{format(new Date(report.date), 'MMM dd, yyyy')}</p>
+                                <h3 className="text-lg font-semibold">
+                                    {report.doctorName}
+                                </h3>
+                                <p className="text-sm text-gray-500">
+                                    {format(
+                                        new Date(report.date),
+                                        'MMM dd, yyyy',
+                                    )}
+                                </p>
                             </div>
                             <div className="flex gap-2">
                                 <Button
@@ -109,9 +139,15 @@ const MedicalReportView = () => {
                         <div className="p-6">
                             <div className="flex justify-between items-start mb-6">
                                 <div>
-                                    <h2 className="text-xl font-semibold">{selectedReport.type}</h2>
+                                    <h2 className="text-xl font-semibold">
+                                        {selectedReport.type}
+                                    </h2>
                                     <p className="text-sm text-gray-500">
-                                        {selectedReport.doctorName} • {format(new Date(selectedReport.date), 'MMM dd, yyyy')}
+                                        {selectedReport.doctorName} •{' '}
+                                        {format(
+                                            new Date(selectedReport.date),
+                                            'MMM dd, yyyy',
+                                        )}
                                     </p>
                                 </div>
                                 <Button
@@ -125,27 +161,53 @@ const MedicalReportView = () => {
                             </div>
                             <div className="space-y-6">
                                 <div>
-                                    <h3 className="font-medium mb-2">Summary</h3>
-                                    <p className="text-gray-600">{selectedReport.summary}</p>
+                                    <h3 className="font-medium mb-2">
+                                        Summary
+                                    </h3>
+                                    <p className="text-gray-600">
+                                        {selectedReport.summary}
+                                    </p>
                                 </div>
                                 <div>
-                                    <h3 className="font-medium mb-2">Findings</h3>
+                                    <h3 className="font-medium mb-2">
+                                        Findings
+                                    </h3>
                                     <div className="space-y-2">
-                                        {selectedReport.findings.map((finding, index) => (
-                                            <div key={index} className="text-gray-600">
-                                                <span className="font-medium">{finding.parameter}:</span> {finding.value}
-                                                <span className="text-sm text-gray-500"> (Normal: {finding.normalRange})</span>
-                                            </div>
-                                        ))}
+                                        {selectedReport.findings.map(
+                                            (finding, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="text-gray-600"
+                                                >
+                                                    <span className="font-medium">
+                                                        {finding.parameter}:
+                                                    </span>{' '}
+                                                    {finding.value}
+                                                    <span className="text-sm text-gray-500">
+                                                        {' '}
+                                                        (Normal:{' '}
+                                                        {finding.normalRange})
+                                                    </span>
+                                                </div>
+                                            ),
+                                        )}
                                     </div>
                                 </div>
                                 <div>
-                                    <h3 className="font-medium mb-2">Conclusion</h3>
-                                    <p className="text-gray-600">{selectedReport.conclusion}</p>
+                                    <h3 className="font-medium mb-2">
+                                        Conclusion
+                                    </h3>
+                                    <p className="text-gray-600">
+                                        {selectedReport.conclusion}
+                                    </p>
                                 </div>
                                 <div>
-                                    <h3 className="font-medium mb-2">Recommendations</h3>
-                                    <p className="text-gray-600">{selectedReport.recommendations}</p>
+                                    <h3 className="font-medium mb-2">
+                                        Recommendations
+                                    </h3>
+                                    <p className="text-gray-600">
+                                        {selectedReport.recommendations}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -156,4 +218,4 @@ const MedicalReportView = () => {
     )
 }
 
-export default MedicalReportView 
+export default MedicalReportView

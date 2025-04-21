@@ -114,16 +114,16 @@ const navigationConfig: NavigationTree[] = [
         authority: [],
         subMenu: [],
     },
-    {
-        key: 'razerpayTest',
-        path: '/razerpay-test',
-        title: 'Razerpay Test',
-        translateKey: 'nav.razerpayTest',
-        icon: 'credit-card',
-        type: NAV_ITEM_TYPE_ITEM,
-        authority: [],
-        subMenu: [],
-    },
+    // {
+    //     key: 'razerpayTest',
+    //     path: '/razerpay-test',
+    //     title: 'Razerpay Test',
+    //     translateKey: 'nav.razerpayTest',
+    //     icon: 'credit-card',
+    //     type: NAV_ITEM_TYPE_ITEM,
+    //     authority: [],
+    //     subMenu: [],
+    // },
 ]
 
 export default navigationConfig
