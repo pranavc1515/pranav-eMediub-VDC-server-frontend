@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useParams } from 'react-router-dom'
 import Button from '@/components/ui/Button'
 import { useSessionUser } from '@/store/authStore'
 import {
@@ -20,11 +21,11 @@ import {
 } from 'twilio-video'
 import VideoService from '@/services/VideoService'
 import { useAuth } from '@/auth'
-import { io, Socket } from 'socket.io-client'
+import { Socket } from 'socket.io-client'
 import { v4 as uuidv4 } from 'uuid'
+import { initializeSocket, disconnectSocket } from '@/utils/socket'
 
-// Define the API URL using Vite's import.meta.env instead of process.env
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+// const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5173'
 
 interface VideoCallInterfaceProps {
     roomName?: string
@@ -45,10 +46,13 @@ interface QueueStatus {
 
 const VideoCallInterface = ({
     roomName: initialRoomName,
-    doctorId,
+    // doctorId,
     onCallEnd,
     children,
 }: VideoCallInterfaceProps) => {
+    const { id } = useParams<{ doctorId: string }>()
+    const doctorId = id || null
+    console.log('doctorId, hey', id)
     const [isMicOn, setIsMicOn] = useState(true)
     const [isVideoOn, setIsVideoOn] = useState(true)
     const [room, setRoom] = useState<Room | null>(null)
@@ -65,7 +69,7 @@ const VideoCallInterface = ({
     const [queueStatus, setQueueStatus] = useState<QueueStatus | null>(null)
     const [consultationId, setConsultationId] = useState<string | null>(null)
     const [actualRoomName, setActualRoomName] = useState<string>(
-        initialRoomName || `room-${uuidv4()}`
+        initialRoomName || `room-${uuidv4()}`,
     )
     const [isWaiting, setIsWaiting] = useState(true)
 
@@ -77,14 +81,17 @@ const VideoCallInterface = ({
 
     useEffect(() => {
         // Initialize socket connection
-        const socket = io(API_URL)
-        setSocket(socket)
+        console.log('lobby effect in VC interface')
+        console.log('doctor ID', doctorId)
+        // console.log(isBoolean(doctorId))
+        const newSocket = initializeSocket()
+        setSocket(newSocket)
 
         if (isDoctor) {
-            socket.emit('JOIN_DOCTOR_ROOM', { doctorId: user.userId })
+            newSocket.emit('JOIN_DOCTOR_ROOM', { doctorId: user.userId })
         } else if (doctorId) {
             // Patient joining queue
-            socket.emit('PATIENT_JOIN_QUEUE', {
+            newSocket.emit('PATIENT_JOIN_QUEUE', {
                 doctorId,
                 patientId: user.userId,
                 roomName: actualRoomName,
@@ -92,23 +99,23 @@ const VideoCallInterface = ({
         }
 
         // Socket event listeners
-        socket.on('QUEUE_POSITION_UPDATE', (status: QueueStatus) => {
+        newSocket.on('QUEUE_POSITION_UPDATE', (status: QueueStatus) => {
             setQueueStatus(status)
         })
 
-        socket.on('INVITE_PATIENT', async (data) => {
+        newSocket.on('INVITE_PATIENT', async (data) => {
             setConsultationId(data.consultationId)
             setIsWaiting(false)
             await joinRoom()
         })
 
-        socket.on('CONSULTATION_ENDED', () => {
+        newSocket.on('CONSULTATION_ENDED', () => {
             cleanup()
             onCallEnd?.()
         })
 
         return () => {
-            socket.disconnect()
+            disconnectSocket()
         }
     }, [])
 

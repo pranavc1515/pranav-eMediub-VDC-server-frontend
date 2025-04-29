@@ -143,7 +143,7 @@ const SignInForm = (props: SignInFormProps) => {
                     }
                 } else {
                     // For regular users, use the existing flow
-                    const apiEndpoint = 'api/users/register-new'
+                    const apiEndpoint = 'api/patients/register-new'
                     const fullUrl = `/${apiEndpoint}`
                     
                     const response = await ApiService.fetchDataWithAxios({
@@ -203,7 +203,7 @@ const SignInForm = (props: SignInFormProps) => {
                 const apiEndpoint =
                     userType === 'doctor'
                         ? 'api/doctors/validate-otp'
-                        : 'api/users/validate-otp'
+                        : 'api/patients/validate-otp'
                 const fullUrl = `/${apiEndpoint}`
 
                 const response = await ApiService.fetchDataWithAxios({

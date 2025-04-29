@@ -18,7 +18,8 @@ import { io, Socket } from 'socket.io-client'
 import PaymentService from '@/services/PaymentService'
 
 // Define the API URL using Vite's import.meta.env instead of process.env
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+// const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const API_URL = 'http://localhost:5173'
 
 const problemCategories = [
     { value: 'general', label: 'General Health Concerns' },

@@ -78,7 +78,7 @@ const UserService = {
      */
     getProfile() {
         return ApiService.fetchDataWithAxios<UserProfileResponse>({
-            url: '/api/users/profile',
+            url: '/api/patients/profile-details',
             method: 'GET',
         })
     },
@@ -90,7 +90,7 @@ const UserService = {
      */
     updatePersonalDetails(data: UserPersonalDetails) {
         return ApiService.fetchDataWithAxios<UserUpdateResponse>({
-            url: '/api/users/record-personal-details',
+            url: '/api/patients/record-personal-details',
             method: 'PUT',
             data,
         })
@@ -102,7 +102,7 @@ const UserService = {
      */
     getProfileDetails() {
         return ApiService.fetchDataWithAxios<UserProfileDetailsResponse>({
-            url: '/api/users/profile-details',
+            url: '/api/patients/profile-details',
             method: 'GET',
         })
     }
