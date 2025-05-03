@@ -283,6 +283,35 @@ const SignInForm = (props: SignInFormProps) => {
                         userType === 'doctor'
                             ? responseData.token
                             : responseData.token
+
+                    // Store complete user/doctor data in localStorage
+                    if (userType === 'doctor') {
+                        const doctorData = responseData.doctor
+                        if (doctorData) {
+                            localStorage.setItem(
+                                'doctor',
+                                JSON.stringify(doctorData),
+                            )
+                            console.log(
+                                'Doctor data stored in localStorage:',
+                                doctorData,
+                            )
+                        }
+                    } else {
+                        // For user, the data might be in responseData.user or directly in responseData
+                        const userData = responseData.user || responseData
+                        if (userData) {
+                            localStorage.setItem(
+                                'user',
+                                JSON.stringify(userData),
+                            )
+                            console.log(
+                                'User data stored in localStorage:',
+                                userData,
+                            )
+                        }
+                    }
+
                     const doctor = responseData.doctor
                     const user =
                         userType === 'doctor' ? responseData.user : responseData
