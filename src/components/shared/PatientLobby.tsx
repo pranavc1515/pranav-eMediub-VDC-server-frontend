@@ -5,7 +5,7 @@ import { io, Socket } from 'socket.io-client'
 
 // Define the API URL using Vite's import.meta.env
 // const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-const API_URL = 'http://localhost:5173'
+const API_URL = 'http://localhost:3000'
 
 interface PatientLobbyProps {
     doctorId: string
@@ -34,8 +34,14 @@ const PatientLobby: React.FC<PatientLobbyProps> = ({
     const user = useSessionUser((state) => state.user)
 
     useEffect(() => {
+        console.log('patient lobby')
         // Initialize socket connection
-        const socket = io(API_URL)
+        const socket = io(API_URL, {
+            query: {
+                userType: 'patient',
+                userId: user.userId,
+            },
+        })
         setSocket(socket)
 
         // Join queue
@@ -84,7 +90,7 @@ const PatientLobby: React.FC<PatientLobbyProps> = ({
         <div className="flex items-center justify-center min-h-full">
             <Card className="w-full max-w-md p-6">
                 <div className="text-center">
-                    <h2 className="text-2xl font-bold mb-4">
+                    <h2 className="text-2xl font-bold text-white mb-4">
                         Waiting for your consultation
                     </h2>
 

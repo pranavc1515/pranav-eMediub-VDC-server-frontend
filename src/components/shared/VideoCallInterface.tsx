@@ -21,11 +21,10 @@ import {
 } from 'twilio-video'
 import VideoService from '@/services/VideoService'
 import { useAuth } from '@/auth'
-import { Socket } from 'socket.io-client'
+import { io, Socket } from 'socket.io-client'
 import { v4 as uuidv4 } from 'uuid'
-import { initializeSocket, disconnectSocket } from '@/utils/socket'
-
-// const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5173'
+import { initializeSocket } from '@/utils/socket'
+// import { initializeSocket, disconnectSocket } from '@/utils/socket'
 
 interface VideoCallInterfaceProps {
     roomName?: string
@@ -50,9 +49,9 @@ const VideoCallInterface = ({
     onCallEnd,
     children,
 }: VideoCallInterfaceProps) => {
+    const API_URL = 'http://localhost:3000'
     const { id } = useParams<{ doctorId: string }>()
     const doctorId = id || null
-    console.log('doctorId, hey', id)
     const [isMicOn, setIsMicOn] = useState(true)
     const [isVideoOn, setIsVideoOn] = useState(true)
     const [room, setRoom] = useState<Room | null>(null)
@@ -85,6 +84,13 @@ const VideoCallInterface = ({
         console.log('doctor ID', doctorId)
         // console.log(isBoolean(doctorId))
         const newSocket = initializeSocket()
+
+        io(API_URL, {
+            query: {
+                userType: 'patient',
+                userId: user.userId,
+            },
+        })
         setSocket(newSocket)
 
         if (isDoctor) {
@@ -411,7 +417,7 @@ const VideoCallInterface = ({
         return (
             <div className="flex-1 flex items-center justify-center bg-gray-900">
                 <div className="text-center text-white p-8">
-                    <h2 className="text-2xl font-bold mb-4">
+                    <h2 className="text-2xl text-white font-bold mb-4">
                         Waiting for your consultation
                     </h2>
                     {queueStatus && (

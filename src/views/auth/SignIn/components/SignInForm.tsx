@@ -421,7 +421,7 @@ const SignInForm = (props: SignInFormProps) => {
                         try {
                             const checkUserResponse =
                                 await ApiService.fetchDataWithAxios({
-                                    url: '/api/users/checkUserExist',
+                                    url: '/api/patients/checkUserExist',
                                     method: 'post',
                                     data: { phone: phoneNumber },
                                     headers: {
@@ -546,7 +546,7 @@ const SignInForm = (props: SignInFormProps) => {
                             try {
                                 const checkUserResponse =
                                     await ApiService.fetchDataWithAxios({
-                                        url: '/api/users/checkUserExist',
+                                        url: '/api/patients/checkUserExist',
                                         method: 'post',
                                         data: { phone: phoneNumber },
                                         headers: {
@@ -615,7 +615,7 @@ const SignInForm = (props: SignInFormProps) => {
                             try {
                                 const checkUserResponse =
                                     await ApiService.fetchDataWithAxios({
-                                        url: '/api/users/checkUserExist',
+                                        url: '/api/patients/checkUserExist',
                                         method: 'post',
                                         data: { phone: phoneNumber },
                                         headers: {

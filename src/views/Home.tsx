@@ -19,7 +19,7 @@ import PaymentService from '@/services/PaymentService'
 
 // Define the API URL using Vite's import.meta.env instead of process.env
 // const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-const API_URL = 'http://localhost:5173'
+const API_URL = 'http://localhost:3000'
 
 const problemCategories = [
     { value: 'general', label: 'General Health Concerns' },
@@ -135,11 +135,17 @@ const Home = () => {
     useEffect(() => {
         if (isDoctor) {
             // Initialize socket connection for doctor
-            const socket = io(API_URL)
+            const socket = io(API_URL, {
+                query: {
+                    userType: 'doctor',
+                    userId: user.userId,
+                },
+            })
             setSocket(socket)
 
             // Join doctor's room for updates
             socket.emit('JOIN_DOCTOR_ROOM', { doctorId: user.userId })
+            console.log('joined doctor room')
 
             // Listen for queue updates
             socket.on('QUEUE_CHANGED', (updatedQueue: QueuePatient[]) => {
@@ -190,24 +196,24 @@ const Home = () => {
         const handleCreateOrder = async () => {
             try {
                 const response = await PaymentService.createOrder({
-                    amount: 1, 
+                    amount: 1,
                     currency: 'INR',
-                });
+                })
 
                 if (response.success && response.order) {
-                    initializeRazorpay(response.order, doctor.id);
+                    initializeRazorpay(response.order, doctor.id)
                 } else {
-                    console.error('Failed to create payment order');
+                    console.error('Failed to create payment order')
                 }
             } catch (err) {
-                console.error('Payment order creation error:', err);
+                console.error('Payment order creation error:', err)
             }
-        };
+        }
 
         const initializeRazorpay = (order: any, doctorId: string) => {
             if (!(window as any).Razorpay) {
-                console.error('Razorpay SDK failed to load.');
-                return;
+                console.error('Razorpay SDK failed to load.')
+                return
             }
 
             const options = {
@@ -221,24 +227,28 @@ const Home = () => {
                     // Verify payment
                     const verifyPayment = async () => {
                         try {
-                            const verifyResponse = await PaymentService.verifyPayment({
-                                razorpay_order_id: response.razorpay_order_id,
-                                razorpay_payment_id: response.razorpay_payment_id,
-                                razorpay_signature: response.razorpay_signature,
-                            });
+                            const verifyResponse =
+                                await PaymentService.verifyPayment({
+                                    razorpay_order_id:
+                                        response.razorpay_order_id,
+                                    razorpay_payment_id:
+                                        response.razorpay_payment_id,
+                                    razorpay_signature:
+                                        response.razorpay_signature,
+                                })
 
                             if (verifyResponse.success) {
                                 // Redirect to consultation page after successful payment
-                                navigate(`/user/video-consultation/${doctorId}`);
+                                navigate(`/user/video-consultation/${doctorId}`)
                             } else {
-                                console.error('Payment verification failed');
+                                console.error('Payment verification failed')
                             }
                         } catch (err) {
-                            console.error('Payment verification error:', err);
+                            console.error('Payment verification error:', err)
                         }
-                    };
-                    
-                    verifyPayment();
+                    }
+
+                    verifyPayment()
                 },
                 prefill: {
                     name: user.userName || 'Patient',
@@ -248,14 +258,14 @@ const Home = () => {
                 theme: {
                     color: '#3399cc',
                 },
-            };
+            }
 
-            const razorpayInstance = new (window as any).Razorpay(options);
-            razorpayInstance.open();
-        };
+            const razorpayInstance = new (window as any).Razorpay(options)
+            razorpayInstance.open()
+        }
 
         // Start the payment process
-        handleCreateOrder();
+        handleCreateOrder()
     }
 
     const renderDoctorDashboard = () => {
@@ -280,7 +290,11 @@ const Home = () => {
                                     Patients in Queue
                                 </h5>
                                 <div className="text-xl font-bold">
-                                    {patientQueue.filter(p => p.status === 'waiting').length}
+                                    {
+                                        patientQueue.filter(
+                                            (p) => p.status === 'waiting',
+                                        ).length
+                                    }
                                 </div>
                             </div>
                         </div>
@@ -295,7 +309,12 @@ const Home = () => {
                                     Active Consultation
                                 </h5>
                                 <div className="text-xl font-bold">
-                                    {patientQueue.filter(p => p.status === 'in_consultation').length}
+                                    {
+                                        patientQueue.filter(
+                                            (p) =>
+                                                p.status === 'in_consultation',
+                                        ).length
+                                    }
                                 </div>
                             </div>
                         </div>
@@ -324,7 +343,7 @@ const Home = () => {
                                     </td>
                                     <td>
                                         {new Date(
-                                            patient.joinedAt
+                                            patient.joinedAt,
                                         ).toLocaleTimeString()}
                                     </td>
                                     <td>
@@ -340,9 +359,10 @@ const Home = () => {
                                                 patient.status ===
                                                 'in_consultation'
                                                     ? 'bg-primary-500'
-                                                    : patient.status === 'waiting'
-                                                    ? 'bg-emerald-500'
-                                                    : 'bg-gray-500'
+                                                    : patient.status ===
+                                                        'waiting'
+                                                      ? 'bg-emerald-500'
+                                                      : 'bg-gray-500'
                                             }
                                         >
                                             {patient.status}
@@ -355,7 +375,7 @@ const Home = () => {
                                                 size="sm"
                                                 onClick={() =>
                                                     handleStartConsultation(
-                                                        patient.id
+                                                        patient.id,
                                                     )
                                                 }
                                             >
@@ -471,7 +491,6 @@ const Home = () => {
                                     <Button
                                         key={category.value}
                                         className={`${selectedCategory === category.value ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-blue-500 hover:text-white'} rounded-full text-sm px-3 py-1`}
-
                                         variant={
                                             selectedCategory === category.value
                                                 ? 'solid'
@@ -491,36 +510,6 @@ const Home = () => {
                 </Card>
 
                 {/* Banner */}
-                <Card className="mb-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
-                    <div className="flex flex-col md:flex-row items-center">
-                        <div className="md:w-2/3 p-4">
-                            <h4 className="text-xl font-bold mb-2">
-                                Start Your Video Consultation Now
-                            </h4>
-                            <p className="mb-4">
-                                Connect with a doctor instantly and get medical
-                                advice from the comfort of your home.
-                            </p>
-                            {/* <Link to="/video-consultation">
-                                <Button
-                                    variant="solid"
-                                    className="bg-white text-blue-600 hover:bg-gray-100"
-                                >
-                                    <span className="icon-video mr-2"></span>
-                                    Start Consultation
-                                </Button>
-                            </Link> */}
-                        </div>
-                        <div className="md:w-1/3 flex justify-end">
-                            <DoubleSidedImage
-                                src="/img/others/medium-shot-doctor-checking-her-tablet.jpg"
-                                darkModeSrc="/img/others/medium-shot-doctor-checking-her-tablet.jpg"
-                                alt="Video consultation"
-                                className="h-40 object-contain"
-                            />
-                        </div>
-                    </div>
-                </Card>
 
                 {/* Loading and Error States */}
                 {loading && (
