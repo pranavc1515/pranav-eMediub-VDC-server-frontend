@@ -15,6 +15,8 @@ import UserVideoConsultation from '@/views/user/VideoConsultation'
 
 import PatientRecords from '@/views/doctor/PatientRecords'
 import Prescriptions from '@/views/doctor/Prescriptions'
+import UploadPrescription from '@/views/doctor/UploadPrescription'
+import UserPrescriptions from '@/views/user/Prescriptions'
 
 interface ViewsProps {
     pageContainerType?: 'default' | 'gutterless' | 'contained'
@@ -38,16 +40,15 @@ const AllRoutes = (props: AllRoutesProps) => {
                 desc: 'Conduct video consultations with patients',
             },
         },
-
         {
-            key: 'patientRecords',
-            path: '/doctor/patient-records',
-            component: PatientRecords,
+            key: 'uploadPrescription',
+            path: '/doctor/upload-prescription',
+            component: UploadPrescription,
             authority: ['doctor'],
             meta: {
-                label: 'Patient Records',
-                pageTitle: 'Patient Records',
-                desc: 'View and manage patient records',
+                label: 'Upload Prescription',
+                pageTitle: 'Upload Prescription',
+                desc: 'Upload or generate prescriptions for patients',
             },
         },
         {
@@ -76,9 +77,24 @@ const AllRoutes = (props: AllRoutesProps) => {
                 desc: 'Join video consultation with doctor',
             },
         },
+        {
+            key: 'userPrescriptions',
+            path: '/user/prescriptions',
+            component: UserPrescriptions,
+            authority: ['user'],
+            meta: {
+                label: 'My Prescriptions',
+                pageTitle: 'My Prescriptions',
+                desc: 'View and manage your prescriptions',
+            },
+        },
     ]
 
-    const combinedProtectedRoutes = [...appProtectedRoutes, ...doctorRoutes, ...patientRoutes]
+    const combinedProtectedRoutes = [
+        ...appProtectedRoutes,
+        ...doctorRoutes,
+        ...patientRoutes,
+    ]
 
     return (
         <Routes>

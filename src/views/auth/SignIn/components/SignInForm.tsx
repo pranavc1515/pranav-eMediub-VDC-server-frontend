@@ -95,18 +95,26 @@ const SignInForm = (props: SignInFormProps) => {
                 // For doctors, first check if they exist with the given phone number
                 if (userType === 'doctor') {
                     try {
-                        const checkResponse = await DoctorService.checkDoctorExists(formattedPhone)
-                        console.log('Doctor check-exists response:', checkResponse)
-                        
+                        const checkResponse =
+                            await DoctorService.checkDoctorExists(
+                                formattedPhone,
+                            )
+                        console.log(
+                            'Doctor check-exists response:',
+                            checkResponse,
+                        )
+
                         // Store doctor status for later use after OTP verification
                         setIsNewDoctor(!checkResponse.exists)
-                        setIsProfileComplete(checkResponse.data?.isProfileComplete || false)
-                        
+                        setIsProfileComplete(
+                            checkResponse.data?.isProfileComplete || false,
+                        )
+
                         // Determine which API endpoint to use based on doctor existence
-                        const apiEndpoint = checkResponse.exists 
-                            ? 'api/doctors/login' 
+                        const apiEndpoint = checkResponse.exists
+                            ? 'api/doctors/login'
                             : 'api/doctors/register'
-                        
+
                         const response = await ApiService.fetchDataWithAxios({
                             url: `/${apiEndpoint}`,
                             method: 'post',
@@ -115,9 +123,9 @@ const SignInForm = (props: SignInFormProps) => {
                                 'Content-Type': 'application/json',
                             },
                         })
-                        
+
                         console.log('API Response:', response)
-                        
+
                         if (
                             (response && (response as any).status === true) ||
                             (response as any).success === true
@@ -127,52 +135,90 @@ const SignInForm = (props: SignInFormProps) => {
                             resetOtpForm()
                             setOtpValue('')
                             setMessage?.(
-                                (response as any)?.message || 'OTP sent successfully',
+                                (response as any)?.message ||
+                                    'OTP sent successfully',
                             )
                         } else {
                             const errorMessage =
-                                (response as any)?.message || 'Failed to send OTP'
+                                (response as any)?.message ||
+                                'Failed to send OTP'
                             console.error('API Response Error:', response)
                             setMessage?.(errorMessage)
                         }
                     } catch (error) {
                         console.error('Error checking doctor existence:', error)
-                        setMessage?.('Failed to verify doctor account. Please try again.')
+                        setMessage?.(
+                            'Failed to verify doctor account. Please try again.',
+                        )
                         setSubmitting(false)
                         return
                     }
                 } else {
-                    // For regular users, use the existing flow
-                    const apiEndpoint = 'api/patients/register-new'
-                    const fullUrl = `/${apiEndpoint}`
-                    
-                    const response = await ApiService.fetchDataWithAxios({
-                        url: fullUrl,
-                        method: 'post',
-                        data: { phone: formattedPhone },
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                    })
-                    
-                    console.log('API Response:', response)
-                    
-                    if (
-                        (response && (response as any).status === true) ||
-                        (response as any).success === true
-                    ) {
-                        setPhoneNumber(formattedPhone || '')
-                        setShowOtpVerification(true)
-                        resetOtpForm()
-                        setOtpValue('')
-                        setMessage?.(
-                            (response as any)?.message || 'OTP sent successfully',
+                    // For regular users, first check if the user exists
+                    try {
+                        // Check if user exists with the given phone number
+                        const checkUserResponse =
+                            await ApiService.fetchDataWithAxios({
+                                url: '/api/patients/checkUserExist',
+                                method: 'post',
+                                data: { phone: formattedPhone },
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                            })
+
+                        console.log(
+                            'User check-exists response:',
+                            checkUserResponse,
                         )
-                    } else {
-                        const errorMessage =
-                            (response as any)?.message || 'Failed to send OTP'
-                        console.error('API Response Error:', response)
-                        setMessage?.(errorMessage)
+
+                        // Determine which API endpoint to use based on user existence
+                        const apiEndpoint = (checkUserResponse as any)
+                            .isUserExist
+                            ? 'api/patients/do-login'
+                            : 'api/patients/register-new'
+
+                        const fullUrl = `/${apiEndpoint}`
+
+                        const response = await ApiService.fetchDataWithAxios({
+                            url: fullUrl,
+                            method: 'post',
+                            data: (checkUserResponse as any).isUserExist
+                                ? { username: formattedPhone }
+                                : { phone: formattedPhone },
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                        })
+
+                        console.log('API Response:', response)
+
+                        if (
+                            (response && (response as any).status === true) ||
+                            (response as any).success === true
+                        ) {
+                            setPhoneNumber(formattedPhone || '')
+                            setShowOtpVerification(true)
+                            resetOtpForm()
+                            setOtpValue('')
+                            setMessage?.(
+                                (response as any)?.message ||
+                                    'OTP sent successfully',
+                            )
+                        } else {
+                            const errorMessage =
+                                (response as any)?.message ||
+                                'Failed to send OTP'
+                            console.error('API Response Error:', response)
+                            setMessage?.(errorMessage)
+                        }
+                    } catch (error: any) {
+                        console.error('Error checking user existence:', error)
+                        setMessage?.(
+                            'Failed to verify user account. Please try again.',
+                        )
+                        setSubmitting(false)
+                        return
                     }
                 }
             } catch (error: any) {
@@ -237,6 +283,35 @@ const SignInForm = (props: SignInFormProps) => {
                         userType === 'doctor'
                             ? responseData.token
                             : responseData.token
+
+                    // Store complete user/doctor data in localStorage
+                    if (userType === 'doctor') {
+                        const doctorData = responseData.doctor
+                        if (doctorData) {
+                            localStorage.setItem(
+                                'doctor',
+                                JSON.stringify(doctorData),
+                            )
+                            console.log(
+                                'Doctor data stored in localStorage:',
+                                doctorData,
+                            )
+                        }
+                    } else {
+                        // For user, the data might be in responseData.user or directly in responseData
+                        const userData = responseData.user || responseData
+                        if (userData) {
+                            localStorage.setItem(
+                                'user',
+                                JSON.stringify(userData),
+                            )
+                            console.log(
+                                'User data stored in localStorage:',
+                                userData,
+                            )
+                        }
+                    }
+
                     const doctor = responseData.doctor
                     const user =
                         userType === 'doctor' ? responseData.user : responseData
@@ -254,7 +329,7 @@ const SignInForm = (props: SignInFormProps) => {
                     localStorage.setItem('token', token)
                     sessionStorage.setItem('token', token)
                     setToken(token)
-                    
+
                     // For doctors, handle redirect based on registration status
                     if (userType === 'doctor') {
                         // Create and set up profile before attempting navigation
@@ -264,12 +339,14 @@ const SignInForm = (props: SignInFormProps) => {
                             authority: ['doctor'],
                             avatar: '',
                             email: doctor.phoneNumber,
-                        };
-                        
+                        }
+
                         // If doctor is new (registered), redirect to profile setup
                         if (isNewDoctor) {
-                            console.log('New doctor registered, redirecting to profile setup')
-                            
+                            console.log(
+                                'New doctor registered, redirecting to profile setup',
+                            )
+
                             // Sign in first to ensure authentication is set up properly
                             const authResult = await signIn({
                                 email: phoneNumber,
@@ -277,23 +354,28 @@ const SignInForm = (props: SignInFormProps) => {
                                 userType: 'doctor',
                                 profile: docProfile,
                                 token,
-                            });
-                            
+                            })
+
                             if (authResult.status === 'success') {
                                 // Use window.location for hard navigation to bypass router guards
-                                window.location.href = '/profile-setup';
+                                window.location.href = '/profile-setup'
                             } else {
-                                console.error('Failed to authenticate before redirect:', authResult);
+                                console.error(
+                                    'Failed to authenticate before redirect:',
+                                    authResult,
+                                )
                             }
-                            
-                            setSubmitting(false);
-                            return;
+
+                            setSubmitting(false)
+                            return
                         }
-                        
+
                         // If doctor is existing but profile is incomplete, redirect to profile setup
                         if (!isProfileComplete) {
-                            console.log('Doctor profile incomplete, redirecting to profile setup')
-                            
+                            console.log(
+                                'Doctor profile incomplete, redirecting to profile setup',
+                            )
+
                             // Sign in first to ensure authentication is set up properly
                             const authResult = await signIn({
                                 email: phoneNumber,
@@ -301,37 +383,97 @@ const SignInForm = (props: SignInFormProps) => {
                                 userType: 'doctor',
                                 profile: docProfile,
                                 token,
-                            });
-                            
+                            })
+
                             if (authResult.status === 'success') {
                                 // Use window.location for hard navigation to bypass router guards
-                                window.location.href = '/profile-setup';
+                                window.location.href = '/profile-setup'
                             } else {
-                                console.error('Failed to authenticate before redirect:', authResult);
+                                console.error(
+                                    'Failed to authenticate before redirect:',
+                                    authResult,
+                                )
                             }
-                            
-                            setSubmitting(false);
-                            return;
+
+                            setSubmitting(false)
+                            return
                         }
-                        
+
                         // Update doctor.isProfileComplete for authentication profile
-                        doctor.isProfileComplete = isProfileComplete;
+                        doctor.isProfileComplete = isProfileComplete
                     } else if (userType === 'user') {
                         // For users, create user profile
                         const userProfile = {
-                            userId: user.id?.toString() || user.userId?.toString() || '',
+                            userId:
+                                user.id?.toString() ||
+                                user.userId?.toString() ||
+                                '',
                             userName: user.fullName || phoneNumber,
                             authority: ['user'],
                             avatar: user.profilePhoto || '',
                             email: user.email || phoneNumber,
                             phoneNumber: user.phoneNumber || phoneNumber,
                             isProfileComplete: user.isProfileComplete || false,
-                        };
-                        
+                        }
+
+                        // Check if this was a login (existing user) or registration (new user)
+                        // We can check if the initial API endpoint used was do-login
+                        try {
+                            const checkUserResponse =
+                                await ApiService.fetchDataWithAxios({
+                                    url: '/api/users/checkUserExist',
+                                    method: 'post',
+                                    data: { phone: phoneNumber },
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                })
+
+                            const isExistingUser = (checkUserResponse as any)
+                                .isUserExist
+
+                            // If user is existing, bypass profile setup and go directly to home
+                            if (isExistingUser) {
+                                console.log(
+                                    'Existing user, bypassing profile setup',
+                                )
+
+                                // Sign in first to ensure authentication is set up properly
+                                const authResult = await signIn({
+                                    email: phoneNumber,
+                                    password: '',
+                                    userType: 'user',
+                                    profile: userProfile,
+                                    token,
+                                })
+
+                                if (authResult.status === 'success') {
+                                    // Use window.location for hard navigation to bypass router guards
+                                    window.location.href = '/home'
+                                } else {
+                                    console.error(
+                                        'Failed to authenticate before redirect:',
+                                        authResult,
+                                    )
+                                }
+
+                                setSubmitting(false)
+                                return
+                            }
+                        } catch (error) {
+                            console.error(
+                                'Error checking user existence after OTP:',
+                                error,
+                            )
+                            // Continue with normal flow if check fails
+                        }
+
                         // If user profile is not complete, redirect to user profile setup
                         if (!user.isProfileComplete) {
-                            console.log('User profile incomplete, redirecting to user profile setup')
-                            
+                            console.log(
+                                'User profile incomplete, redirecting to user profile setup',
+                            )
+
                             // Sign in first to ensure authentication is set up properly
                             const authResult = await signIn({
                                 email: phoneNumber,
@@ -339,17 +481,20 @@ const SignInForm = (props: SignInFormProps) => {
                                 userType: 'user',
                                 profile: userProfile,
                                 token,
-                            });
-                            
+                            })
+
                             if (authResult.status === 'success') {
                                 // Use window.location for hard navigation to bypass router guards
-                                window.location.href = '/user-profile-setup';
+                                window.location.href = '/user-profile-setup'
                             } else {
-                                console.error('Failed to authenticate before redirect:', authResult);
+                                console.error(
+                                    'Failed to authenticate before redirect:',
+                                    authResult,
+                                )
                             }
-                            
-                            setSubmitting(false);
-                            return;
+
+                            setSubmitting(false)
+                            return
                         }
                     }
 
@@ -396,8 +541,42 @@ const SignInForm = (props: SignInFormProps) => {
                             'Sign in successful, checking profile completion',
                         )
 
+                        // For users, check if they are existing users first
+                        if (userType === 'user') {
+                            try {
+                                const checkUserResponse =
+                                    await ApiService.fetchDataWithAxios({
+                                        url: '/api/users/checkUserExist',
+                                        method: 'post',
+                                        data: { phone: phoneNumber },
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                        },
+                                    })
+
+                                const isExistingUser = (
+                                    checkUserResponse as any
+                                ).isUserExist
+
+                                // Existing users go directly to home
+                                if (isExistingUser) {
+                                    console.log(
+                                        'Existing user, redirecting to home',
+                                    )
+                                    window.location.href = '/home'
+                                    return
+                                }
+                            } catch (error) {
+                                console.error(
+                                    'Error checking user existence:',
+                                    error,
+                                )
+                                // Continue with normal flow if check fails
+                            }
+                        }
+
                         // Check if profile is complete
-                        const profileComplete = 
+                        const profileComplete =
                             userType === 'doctor'
                                 ? doctor?.isProfileComplete
                                 : user?.isProfileComplete
@@ -413,9 +592,9 @@ const SignInForm = (props: SignInFormProps) => {
                             )
                             // Use window.location for hard navigation to bypass router guards
                             if (userType === 'doctor') {
-                                window.location.href = '/profile-setup';
+                                window.location.href = '/profile-setup'
                             } else {
-                                window.location.href = '/user-profile-setup';
+                                window.location.href = '/user-profile-setup'
                             }
                         }
                     } else if (result.status === 'failed') {
@@ -430,9 +609,43 @@ const SignInForm = (props: SignInFormProps) => {
                         console.log(
                             'No explicit status returned, proceeding with token',
                         )
-                        
+
+                        // For users, check if they are existing users first
+                        if (userType === 'user') {
+                            try {
+                                const checkUserResponse =
+                                    await ApiService.fetchDataWithAxios({
+                                        url: '/api/users/checkUserExist',
+                                        method: 'post',
+                                        data: { phone: phoneNumber },
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                        },
+                                    })
+
+                                const isExistingUser = (
+                                    checkUserResponse as any
+                                ).isUserExist
+
+                                // Existing users go directly to home
+                                if (isExistingUser) {
+                                    console.log(
+                                        'Existing user, redirecting to home',
+                                    )
+                                    window.location.href = '/home'
+                                    return
+                                }
+                            } catch (error) {
+                                console.error(
+                                    'Error checking user existence:',
+                                    error,
+                                )
+                                // Continue with normal flow if check fails
+                            }
+                        }
+
                         // Check if profile is complete
-                        const profileComplete = 
+                        const profileComplete =
                             userType === 'doctor'
                                 ? doctor?.isProfileComplete
                                 : user?.isProfileComplete
@@ -448,9 +661,9 @@ const SignInForm = (props: SignInFormProps) => {
                             )
                             // Use window.location for hard navigation to bypass router guards
                             if (userType === 'doctor') {
-                                window.location.href = '/profile-setup';
+                                window.location.href = '/profile-setup'
                             } else {
-                                window.location.href = '/user-profile-setup';
+                                window.location.href = '/user-profile-setup'
                             }
                         }
                     }
