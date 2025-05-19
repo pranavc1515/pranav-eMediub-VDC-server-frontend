@@ -9,7 +9,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.join(__dirname, 'src'),
-    },
+    }
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom']
   },
   server: {
     proxy: {
@@ -23,15 +26,22 @@ export default defineConfig({
   build: {
     outDir: 'build',
     chunkSizeWarningLimit: 1500,
+    sourcemap: false,
+    minify: 'esbuild',
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor': [
-            './node_modules/react/index.js',
-            './node_modules/react-dom/index.js',
-            './node_modules/react-dom/client.js'
-          ],
-          'router': ['./node_modules/react-router-dom/index.js']
+          vendor: [
+            'react',
+            'react-dom',
+            'react-router-dom',
+            'framer-motion',
+            '@floating-ui/react',
+            'axios',
+            'dayjs',
+            'lodash'
+          ]
         }
       }
     }
