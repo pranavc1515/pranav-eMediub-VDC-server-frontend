@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path';
-import dynamicImport from 'vite-plugin-dynamic-import'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -10,8 +9,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.join(__dirname, 'src'),
-      'react': path.resolve('./node_modules/react'),
-      'react-dom': path.resolve('./node_modules/react-dom'),
     },
   },
   server: {
@@ -27,11 +24,14 @@ export default defineConfig({
     outDir: 'build',
     chunkSizeWarningLimit: 1500,
     rollupOptions: {
-      external: ['react-dom/client'],
       output: {
         manualChunks: {
-          'vendor': ['react', 'react-dom'],
-          'router': ['react-router-dom'],
+          'vendor': [
+            './node_modules/react/index.js',
+            './node_modules/react-dom/index.js',
+            './node_modules/react-dom/client.js'
+          ],
+          'router': ['./node_modules/react-router-dom/index.js']
         }
       }
     }
