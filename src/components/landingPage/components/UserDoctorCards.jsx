@@ -1,8 +1,7 @@
-
 import User from '../assets/Users.svg'
 import GroupDoctor from '../assets/GroupDoctor.svg'
 import UserDoctorCard from "../assets/UserDoctorCard.svg"
-import GooglePlay from "../assets/GooglePlay.svg"
+import GooglePlay from "../assets/googlePlay.svg"
 import AppStore from "../assets/AppStore.svg"
 
 const UserDoctorCards = () => {
