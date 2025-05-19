@@ -26,10 +26,24 @@ export default defineConfig({
     chunkSizeWarningLimit: 1500,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          utils: ['/src/utils/'],
-          components: ['/src/components/'],
+        manualChunks(id) {
+          // Bundle React and related packages together
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || 
+                id.includes('react-dom') || 
+                id.includes('react-router') ||
+                id.includes('@remix-run')) {
+              return 'vendor-react';
+            }
+            // Bundle other UI-related packages
+            if (id.includes('@headlessui') || 
+                id.includes('@heroicons') || 
+                id.includes('tailwindcss')) {
+              return 'vendor-ui';
+            }
+            // All other node_modules
+            return 'vendor';
+          }
         }
       }
     }
