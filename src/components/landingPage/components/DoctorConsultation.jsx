@@ -1,7 +1,7 @@
 import React from 'react'
 import Vector2 from '../assets/Vector2.svg'
 import Marketing from '../assets/Marketing.svg'
-import call from '../assets/call.svg'
+import call from '../assets/Call.svg'
 const ConsultationSection = () => {
     return (
         <div className="ConsultationsSection bg-red py-16 px-6 md:px-12 lg:px-20  lg:flex-row items-center justify-between ">
