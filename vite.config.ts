@@ -5,11 +5,13 @@ import dynamicImport from 'vite-plugin-dynamic-import'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), dynamicImport()],
+  plugins: [react()],
   assetsInclude: ['**/*.md'],
   resolve: {
     alias: {
       '@': path.join(__dirname, 'src'),
+      'react': path.resolve('./node_modules/react'),
+      'react-dom': path.resolve('./node_modules/react-dom'),
     },
   },
   server: {
@@ -25,25 +27,11 @@ export default defineConfig({
     outDir: 'build',
     chunkSizeWarningLimit: 1500,
     rollupOptions: {
+      external: ['react-dom/client'],
       output: {
-        manualChunks(id) {
-          // Bundle React and related packages together
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || 
-                id.includes('react-dom') || 
-                id.includes('react-router') ||
-                id.includes('@remix-run')) {
-              return 'vendor-react';
-            }
-            // Bundle other UI-related packages
-            if (id.includes('@headlessui') || 
-                id.includes('@heroicons') || 
-                id.includes('tailwindcss')) {
-              return 'vendor-ui';
-            }
-            // All other node_modules
-            return 'vendor';
-          }
+        manualChunks: {
+          'vendor': ['react', 'react-dom'],
+          'router': ['react-router-dom'],
         }
       }
     }
