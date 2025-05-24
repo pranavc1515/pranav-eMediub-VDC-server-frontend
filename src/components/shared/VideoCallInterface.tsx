@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import Button from '@/components/ui/Button'
 import { useSessionUser } from '@/store/authStore'
+import usePatientQueue from '@/hooks/usePatientQueue'
 import {
     HiMicrophone,
     HiVideoCamera,
@@ -22,15 +23,11 @@ import {
 import VideoService from '@/services/VideoService'
 import { useAuth } from '@/auth'
 import { io, Socket } from 'socket.io-client'
-import { v4 as uuidv4 } from 'uuid'
 import { initializeSocket } from '@/utils/socket'
 // import { initializeSocket, disconnectSocket } from '@/utils/socket'
 
 interface VideoCallInterfaceProps {
-    roomName?: string
-    doctorId?: string
     onCallEnd?: () => void
-    children?: React.ReactNode
 }
 
 interface LocalTracks {
@@ -43,12 +40,7 @@ interface QueueStatus {
     estimatedWait: string
 }
 
-const VideoCallInterface = ({
-    roomName: initialRoomName,
-    // doctorId,
-    onCallEnd,
-    children,
-}: VideoCallInterfaceProps) => {
+const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
     const API_URL = 'http://localhost:3000'
     const { id } = useParams<{ doctorId: string }>()
     const doctorId = id || null
@@ -67,9 +59,8 @@ const VideoCallInterface = ({
     const [socket, setSocket] = useState<Socket | null>(null)
     const [queueStatus, setQueueStatus] = useState<QueueStatus | null>(null)
     const [consultationId, setConsultationId] = useState<string | null>(null)
-    const [actualRoomName, setActualRoomName] = useState<string>(
-        initialRoomName || `room-${uuidv4()}`,
-    )
+    const [actualRoomName, setActualRoomName] = useState<string | null>(null)
+
     const [isWaiting, setIsWaiting] = useState(true)
 
     const localVideoRef = useRef<HTMLDivElement>(null)
@@ -78,11 +69,14 @@ const VideoCallInterface = ({
     const sessionUser = useSessionUser((state) => state.user)
     const isDoctor = user.authority?.includes('doctor') || false
 
+    const { leaveQueue, joinQueue } = usePatientQueue({
+        doctorId: doctorId ? parseInt(doctorId) : 0,
+    })
+
     useEffect(() => {
         // Initialize socket connection
         console.log('lobby effect in VC interface')
         console.log('doctor ID', doctorId)
-        // console.log(isBoolean(doctorId))
         const newSocket = initializeSocket()
 
         io(API_URL, {
@@ -97,11 +91,7 @@ const VideoCallInterface = ({
             newSocket.emit('JOIN_DOCTOR_ROOM', { doctorId: user.userId })
         } else if (doctorId) {
             // Patient joining queue
-            newSocket.emit('PATIENT_JOIN_QUEUE', {
-                doctorId,
-                patientId: user.userId,
-                roomName: actualRoomName,
-            })
+            handleJoinQueue()
         }
 
         // Socket event listeners
@@ -121,9 +111,42 @@ const VideoCallInterface = ({
         })
 
         return () => {
-            disconnectSocket()
+            if (newSocket) {
+                newSocket.disconnect()
+            }
         }
     }, [])
+
+    const handleJoinQueue = async () => {
+        try {
+            console.log('handleJoinQueue')
+            if (!doctorId || !user.userId) return
+
+            const response = await joinQueue({
+                patientId: Number(user.userId),
+            })
+
+            if (response && response.success) {
+                setActualRoomName(response.roomName)
+                setQueueStatus({
+                    position: response.position,
+                    estimatedWait: response.estimatedWait,
+                })
+
+                // Emit socket event to join the room
+                // if (socket) {
+                //     socket.emit('JOIN_QUEUE', {
+                //         patientId: user.userId,
+                //         doctorId,
+                //         roomName: response.roomName,
+                //     })
+                // }
+            }
+        } catch (err) {
+            console.error('Error joining queue:', err)
+            setError('Failed to join queue')
+        }
+    }
 
     // Cleanup function
     const cleanup = () => {
@@ -158,10 +181,11 @@ const VideoCallInterface = ({
         try {
             const userId = sessionUser.userId || '0'
             const identity = isDoctor ? `doctor-${userId}` : `patient-${userId}`
+            const roomNameToUse = actualRoomName || ''
 
             const response = await VideoService.generateToken({
                 identity,
-                roomName: actualRoomName,
+                roomName: roomNameToUse,
             })
 
             return response.token
@@ -186,7 +210,7 @@ const VideoCallInterface = ({
             if (isDoctor) {
                 try {
                     await VideoService.createRoom({
-                        roomName: actualRoomName,
+                        roomName: actualRoomName || '',
                     })
                 } catch (error) {
                     console.log('Room may already exist:', error)
@@ -218,7 +242,7 @@ const VideoCallInterface = ({
             }
 
             const room = await connect(token, {
-                name: actualRoomName,
+                name: actualRoomName || '',
                 tracks: [videoTrack, audioTrack],
                 dominantSpeaker: true,
                 maxAudioBitrate: 16000,
@@ -308,7 +332,7 @@ const VideoCallInterface = ({
                 existingVideos.forEach((video) => {
                     try {
                         remoteVideoRef.current?.removeChild(video)
-                    } catch (err) {
+                    } catch {
                         console.warn(
                             'Could not remove existing video, may already be detached',
                         )
@@ -319,8 +343,8 @@ const VideoCallInterface = ({
             // Add the new element
             remoteVideoRef.current.appendChild(element)
             console.log(`Track ${track.kind} attached with ID: ${track.sid}`)
-        } catch (err) {
-            console.error('Error in handleTrackSubscribed:', err)
+        } catch (error) {
+            console.error('Error in handleTrackSubscribed:', error)
         }
     }
 
@@ -340,14 +364,14 @@ const VideoCallInterface = ({
                     if (element.parentNode) {
                         element.parentNode.removeChild(element)
                     }
-                } catch (err) {
+                } catch {
                     console.warn(
                         'Error removing track element, may already be detached',
                     )
                 }
             })
-        } catch (err) {
-            console.error('Error in handleTrackUnsubscribed:', err)
+        } catch (error) {
+            console.error('Error in handleTrackUnsubscribed:', error)
         }
     }
 
@@ -412,6 +436,26 @@ const VideoCallInterface = ({
         onCallEnd?.()
     }
 
+    const HandleExitQueue = async () => {
+        try {
+            if (!doctorId || !user.userId) return
+
+            // Convert patientId to number explicitly
+            const patientIdNum = Number(user.userId)
+
+            await leaveQueue({
+                patientId: patientIdNum, // ensure this is a number
+            })
+
+            // Optionally emit socket event as needed
+
+            onCallEnd?.()
+        } catch (err) {
+            console.error('Error leaving queue:', err)
+            setError('Failed to leave queue')
+        }
+    }
+
     // Render waiting room for patients
     const renderWaitingRoom = () => {
         return (
@@ -437,13 +481,13 @@ const VideoCallInterface = ({
                         </div>
                     )}
                     <p className="text-gray-400">
-                        Please don't close this window. You'll be connected with
-                        the doctor shortly.
+                        Please don&apos;t close this window. You&apos;ll be
+                        connected with the doctor shortly.
                     </p>
                     <Button
                         variant="solid"
                         className="mt-4 bg-red-500"
-                        onClick={endCall}
+                        onClick={HandleExitQueue}
                     >
                         Leave Queue
                     </Button>

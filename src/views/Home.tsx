@@ -14,6 +14,7 @@ import DoubleSidedImage from '@/components/shared/DoubleSidedImage'
 import { Link, useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useDoctors from '@/hooks/useDoctors'
+import usePatientQueue from '@/hooks/usePatientQueue'
 import { io, Socket } from 'socket.io-client'
 import PaymentService from '@/services/PaymentService'
 
@@ -79,21 +80,11 @@ const appointmentsData = [
     // Add more appointments as needed
 ]
 
-interface QueuePatient {
-    id: string
-    firstName: string
-    lastName: string
-    position: number
-    joinedAt: string
-    status: string
-}
-
 const Home = () => {
     const [selectedCategory, setSelectedCategory] = useState('all')
     const [searchTerm, setSearchTerm] = useState('')
     const [showOnlyAvailable, setShowOnlyAvailable] = useState(true)
     const [currentPage, setCurrentPage] = useState(1)
-    const [patientQueue, setPatientQueue] = useState<QueuePatient[]>([])
     const [socket, setSocket] = useState<Socket | null>(null)
     const navigate = useNavigate()
 
@@ -102,6 +93,11 @@ const Home = () => {
 
     // Determine if user is doctor based on authority
     const isDoctor = user.authority?.includes('doctor') || false
+
+    // Use patient queue hook for doctors
+    const { queue: patientQueue, fetchQueue } = usePatientQueue({
+        doctorId: isDoctor ? user.userId : 0,
+    })
 
     // Use custom hook to get doctors data with the updated props
     const specialization =
@@ -148,15 +144,19 @@ const Home = () => {
             console.log('joined doctor room')
 
             // Listen for queue updates
-            socket.on('QUEUE_CHANGED', (updatedQueue: QueuePatient[]) => {
-                setPatientQueue(updatedQueue)
+            socket.on('QUEUE_CHANGED', () => {
+                // Fetch latest queue when socket event is received
+                fetchQueue()
             })
+
+            // Initial queue fetch
+            fetchQueue()
 
             return () => {
                 socket.disconnect()
             }
         }
-    }, [isDoctor, user.userId])
+    }, [isDoctor, user.userId, fetchQueue])
 
     // Update stats count
     statsData[0].value = count
@@ -323,7 +323,7 @@ const Home = () => {
 
                 {/* Patient Queue */}
                 <Card className="mb-6">
-                    <h4 className="mb-4">Patients in Queue</h4>
+                    <h4 className="mb-4">Patients Queue</h4>
                     <Table>
                         <thead>
                             <tr>
@@ -338,14 +338,8 @@ const Home = () => {
                             {patientQueue.map((patient) => (
                                 <tr key={patient.id}>
                                     <td>{patient.position}</td>
-                                    <td>
-                                        {patient.firstName} {patient.lastName}
-                                    </td>
-                                    <td>
-                                        {new Date(
-                                            patient.joinedAt,
-                                        ).toLocaleTimeString()}
-                                    </td>
+                                    <td>{patient.patient.name}</td>
+                                    <td>{new Date().toLocaleTimeString()}</td>
                                     <td>
                                         <Badge
                                             style={{
@@ -375,7 +369,7 @@ const Home = () => {
                                                 size="sm"
                                                 onClick={() =>
                                                     handleStartConsultation(
-                                                        patient.id,
+                                                        String(patient.id),
                                                     )
                                                 }
                                             >
