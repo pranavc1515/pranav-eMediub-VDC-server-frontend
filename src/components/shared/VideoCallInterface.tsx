@@ -22,10 +22,9 @@ import {
 } from 'twilio-video'
 import VideoService from '@/services/VideoService'
 import { useAuth } from '@/auth'
-import { io, Socket } from 'socket.io-client'
-import { initializeSocket } from '@/utils/socket'
-// import { initializeSocket, disconnectSocket } from '@/utils/socket'
-
+import { useSocketContext } from '@/contexts/SocketContext'
+import { useVideoCall } from '@/contexts/VideoCallContext'
+import useConsultation from '@/hooks/useConsultation'
 interface VideoCallInterfaceProps {
     onCallEnd?: () => void
 }
@@ -41,9 +40,15 @@ interface QueueStatus {
 }
 
 const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
-    const API_URL = 'http://localhost:3000'
+    const { doctorId: docId, patientId, roomName } = useVideoCall()
     const { id } = useParams<{ doctorId: string }>()
-    const doctorId = id || null
+    const doctorId = parseInt(docId) || parseInt(id)
+    // useEffect(() => {
+    //     if (id) {
+    //         setRoomIdParam(id)
+    //     }
+    // }, [])
+
     const [isMicOn, setIsMicOn] = useState(true)
     const [isVideoOn, setIsVideoOn] = useState(true)
     const [room, setRoom] = useState<Room | null>(null)
@@ -56,12 +61,18 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
     const [remoteParticipantIdentity, setRemoteParticipantIdentity] = useState<
         string | null
     >(null)
-    const [socket, setSocket] = useState<Socket | null>(null)
     const [queueStatus, setQueueStatus] = useState<QueueStatus | null>(null)
     const [consultationId, setConsultationId] = useState<string | null>(null)
     const [actualRoomName, setActualRoomName] = useState<string | null>(null)
-
     const [isWaiting, setIsWaiting] = useState(true)
+
+    const { socket } = useSocketContext()
+    const { startConsultation } = useConsultation({
+        doctorId: doctorId ? parseInt(doctorId) : 0,
+    })
+    const { leaveQueue, joinQueue } = usePatientQueue({
+        doctorId: doctorId ? parseInt(doctorId) : 0,
+    })
 
     const localVideoRef = useRef<HTMLDivElement>(null)
     const remoteVideoRef = useRef<HTMLDivElement>(null)
@@ -69,50 +80,51 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
     const sessionUser = useSessionUser((state) => state.user)
     const isDoctor = user.authority?.includes('doctor') || false
 
-    const { leaveQueue, joinQueue } = usePatientQueue({
-        doctorId: doctorId ? parseInt(doctorId) : 0,
-    })
+    // useEffect(() => {
+    //     if (id) {
+    //         setRoomIdParam(id)
+    //     }
+    // }, [id, setRoomIdParam])
 
     useEffect(() => {
-        // Initialize socket connection
         console.log('lobby effect in VC interface')
-        console.log('doctor ID', doctorId)
-        const newSocket = initializeSocket()
 
-        io(API_URL, {
-            query: {
-                userType: 'patient',
-                userId: user.userId,
-            },
-        })
-        setSocket(newSocket)
+        if (!socket) return
 
         if (isDoctor) {
-            newSocket.emit('JOIN_DOCTOR_ROOM', { doctorId: user.userId })
-        } else if (doctorId) {
+            console.log('DOCTOR_IS_READY_XXX', doctorId)
+            console.log('doctor ID', doctorId)
+            startConsultation(patientId).then(() => {
+                joinRoom(roomName, doctorId, patientId)
+            })
+        } else {
             // Patient joining queue
             handleJoinQueue()
         }
 
-        // Socket event listeners
-        newSocket.on('QUEUE_POSITION_UPDATE', (status: QueueStatus) => {
+        // Listen for queue updates
+        socket.on('POSITION_UPDATE', (status: QueueStatus) => {
+            console.log('POSITION_UPDATE', status)
             setQueueStatus(status)
         })
 
-        newSocket.on('INVITE_PATIENT', async (data) => {
-            setConsultationId(data.consultationId)
-            setIsWaiting(false)
-            await joinRoom()
-        })
+        if (!isDoctor) {
+            socket.on('CONSULTATION_STARTED', async (data) => {
+                console.log('CONSULTATION_STARTED', data)
+                setConsultationId(data.consultationId)
+                setIsWaiting(false)
+                await joinRoom(data.roomName, data.doctorId, data.patientId)
+            })
+        }
 
-        newSocket.on('CONSULTATION_ENDED', () => {
+        socket.on('CONSULTATION_ENDED', () => {
             cleanup()
             onCallEnd?.()
         })
 
         return () => {
-            if (newSocket) {
-                newSocket.disconnect()
+            if (socket) {
+                socket.disconnect()
             }
         }
     }, [])
@@ -177,11 +189,15 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
         }
     }
 
-    const getToken = async () => {
+    const getToken = async (
+        roomName: string,
+        doctorId: number,
+        patientId: number,
+    ) => {
         try {
-            const userId = sessionUser.userId || '0'
-            const identity = isDoctor ? `doctor-${userId}` : `patient-${userId}`
-            const roomNameToUse = actualRoomName || ''
+            console.log('getToken', roomName, doctorId, patientId)
+            const identity = isDoctor ? `D-${doctorId}` : `P-${patientId}`
+            const roomNameToUse = roomName || ''
 
             const response = await VideoService.generateToken({
                 identity,
@@ -200,24 +216,17 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
         }
     }
 
-    const joinRoom = async () => {
-        if (isConnecting || (isWaiting && !isDoctor)) return
-        setIsConnecting(true)
-        setError(null)
+    const joinRoom = async (
+        roomName: string,
+        doctorId: number,
+        patientId: number,
+    ) => {
+        // if (isConnecting || (isWaiting && !isDoctor)) return
+        // setIsConnecting(true)
+        // setError(null)
 
         try {
-            // Create room if doctor
-            if (isDoctor) {
-                try {
-                    await VideoService.createRoom({
-                        roomName: actualRoomName || '',
-                    })
-                } catch (error) {
-                    console.log('Room may already exist:', error)
-                }
-            }
-
-            const token = await getToken()
+            const token = await getToken(roomName, doctorId, patientId)
             if (!token) {
                 setError('Failed to get access token')
                 return
@@ -569,8 +578,8 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
             {/* Side Panel */}
             {/* <div className="w-80 bg-white dark:bg-gray-800 border-l dark:border-gray-700">
-                {children}
-            </div> */}
+                    {children}
+                </div> */}
         </div>
     )
 }

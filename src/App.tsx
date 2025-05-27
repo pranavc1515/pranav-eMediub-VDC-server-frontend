@@ -7,6 +7,7 @@ import appConfig from './configs/app.config'
 import './locales'
 import { VideoCallProvider } from '@/contexts/VideoCallContext'
 import VideoCallModal from '@/components/shared/VideoCallModal'
+import { SocketContextProvider } from '@/contexts/SocketContext'
 
 if (appConfig.enableMock) {
     import('./mock')
@@ -17,20 +18,22 @@ function App() {
         <Theme>
             <BrowserRouter>
                 <AuthProvider>
-                    <VideoCallProvider>
-                        <Routes>
-                            <Route
-                                path="/*"
-                                element={
-                                    <Layout>
-                                        <Views />
-                                    </Layout>
-                                }
-                            />
-                        </Routes>
-                        {/* Global video call modal */}
-                        <VideoCallModal />
-                    </VideoCallProvider>
+                    <SocketContextProvider>
+                        <VideoCallProvider>
+                            <Routes>
+                                <Route
+                                    path="/*"
+                                    element={
+                                        <Layout>
+                                            <Views />
+                                        </Layout>
+                                    }
+                                />
+                            </Routes>
+                            {/* Global video call modal */}
+                            <VideoCallModal />
+                        </VideoCallProvider>
+                    </SocketContextProvider>
                 </AuthProvider>
             </BrowserRouter>
         </Theme>

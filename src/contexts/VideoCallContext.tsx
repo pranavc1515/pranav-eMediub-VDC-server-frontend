@@ -4,19 +4,37 @@ import React, {
     useState,
     useCallback,
     ReactNode,
+    useMemo,
+    // useEffect,
 } from 'react'
 import VideoService from '@/services/VideoService'
+
+interface Participant {
+    sid: string
+    identity: string
+}
 
 interface VideoCallContextType {
     isCallActive: boolean
     currentRoomName: string | null
     currentRoomSid: string | null
+
+    doctorId: number | null
+    patientId: number | null
+    // roomIdParam: string | null
+
+    setDoctorId: (id: number | null) => void
+    setPatientId: (id: number | null) => void
+    // setRoomIdParam: (id: string | null) => void
+
     initiateCall: (roomName: string) => Promise<void>
     acceptCall: (roomName: string) => void
     endCall: () => Promise<void>
-    participants: Array<{ sid: string; identity: string }>
+    participants: Participant[]
     isLoading: boolean
     error: string | null
+    roomName: string | null // <-- new
+    setRoomName: (name: string | null) => void // <-- new
 }
 
 const VideoCallContext = createContext<VideoCallContextType | undefined>(
@@ -25,6 +43,7 @@ const VideoCallContext = createContext<VideoCallContextType | undefined>(
 
 interface VideoCallProviderProps {
     children: ReactNode
+    // roomIdParam?: string // <-- new prop for param string
 }
 
 export const VideoCallProvider: React.FC<VideoCallProviderProps> = ({
@@ -33,64 +52,80 @@ export const VideoCallProvider: React.FC<VideoCallProviderProps> = ({
     const [isCallActive, setIsCallActive] = useState(false)
     const [currentRoomName, setCurrentRoomName] = useState<string | null>(null)
     const [currentRoomSid, setCurrentRoomSid] = useState<string | null>(null)
-    const [participants, setParticipants] = useState<
-        Array<{ sid: string; identity: string }>
-    >([])
+    const [participants, setParticipants] = useState<Participant[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    // const [roomIdParam, setRoomIdParam] = useState<string | null>(null)
+    const [roomName, setRoomName] = useState<string | null>(null)
 
-    // Initialize a new call as the caller
-    const initiateCall = useCallback(async (roomName: string) => {
-        setIsLoading(true)
-        setError(null)
+    const [doctorId, setDoctorId] = useState<number | null>(null)
+    const [patientId, setPatientId] = useState<number | null>(null)
 
-        try {
-            // Create a new room
-            const response = await VideoService.createRoom({ roomName })
+    // Parse doctorId and patientId from roomIdParam when it changes
+    // useEffect(() => {
+    //     if (roomIdParam) {
+    //         console.log('roomIdParam', roomIdParam)
+    //         // Expecting format: p{patientId}_d{doctorId} e.g. p186_d445
+    //         const match = roomIdParam.match(/^p(\d+)_d(\d+)$/)
+    //         if (match) {
+    //             setPatientId(parseInt(match[1], 10))
+    //             setDoctorId(parseInt(match[2], 10))
+    //         } else {
+    //             setPatientId(null)
+    //             setDoctorId(null)
+    //         }
+    //     } else {
+    //         setPatientId(null)
+    //         setDoctorId(null)
+    //     }
+    // }, [roomIdParam])
 
-            setCurrentRoomName(roomName)
-            setCurrentRoomSid(response.room.sid)
-            setIsCallActive(true)
+    const fetchParticipants = useCallback(
+        async (roomSid: string): Promise<void> => {
+            try {
+                const response = await VideoService.listParticipants(roomSid)
+                setParticipants(response.participants)
+            } catch (error) {
+                console.error('Error fetching participants:', error)
+            }
+        },
+        [],
+    )
 
-            // Fetch initial participants (should be empty at first)
-            fetchParticipants(response.room.sid)
-        } catch (error) {
-            console.error('Error initiating call:', error)
-            setError('Failed to initiate call. Please try again.')
-        } finally {
-            setIsLoading(false)
-        }
-    }, [])
+    const initiateCall = useCallback(
+        async (roomName: string): Promise<void> => {
+            setIsLoading(true)
+            setError(null)
+            try {
+                const response = await VideoService.createRoom({ roomName })
+                setCurrentRoomName(roomName)
+                setCurrentRoomSid(response.room.sid)
+                setIsCallActive(true)
+                await fetchParticipants(response.room.sid)
+            } catch (err: unknown) {
+                console.error('Error initiating call:', err)
+                setError('Failed to initiate call. Please try again.')
+            } finally {
+                setIsLoading(false)
+            }
+        },
+        [fetchParticipants],
+    )
 
-    // Accept an incoming call as the receiver
-    const acceptCall = useCallback((roomName: string) => {
+    const acceptCall = useCallback((roomName: string): void => {
         setCurrentRoomName(roomName)
         setIsCallActive(true)
     }, [])
 
-    // Fetch participants in a room
-    const fetchParticipants = async (roomSid: string) => {
-        try {
-            const response = await VideoService.listParticipants(roomSid)
-            setParticipants(response.participants)
-        } catch (error) {
-            console.error('Error fetching participants:', error)
-        }
-    }
-
-    // End the current call
-    const endCall = useCallback(async () => {
+    const endCall = useCallback(async (): Promise<void> => {
         setIsLoading(true)
-
         try {
-            // If we have a room SID, try to complete the room
             if (currentRoomSid) {
                 await VideoService.completeRoom(currentRoomSid)
             }
         } catch (error) {
             console.error('Error ending call:', error)
         } finally {
-            // Reset state regardless of API call success
             setIsCallActive(false)
             setCurrentRoomName(null)
             setCurrentRoomSid(null)
@@ -99,17 +134,44 @@ export const VideoCallProvider: React.FC<VideoCallProviderProps> = ({
         }
     }, [currentRoomSid])
 
-    const value = {
-        isCallActive,
-        currentRoomName,
-        currentRoomSid,
-        initiateCall,
-        acceptCall,
-        endCall,
-        participants,
-        isLoading,
-        error,
-    }
+    const value = useMemo(
+        () => ({
+            isCallActive,
+            currentRoomName,
+            currentRoomSid,
+            doctorId,
+            patientId,
+            setDoctorId,
+            setPatientId,
+            // roomIdParam,
+            // setRoomIdParam,
+            initiateCall,
+            acceptCall,
+            endCall,
+            participants,
+            isLoading,
+            error,
+            roomName,
+            setRoomName,
+        }),
+        [
+            isCallActive,
+            currentRoomName,
+            currentRoomSid,
+            doctorId,
+            patientId,
+            setDoctorId,
+            setPatientId,
+            initiateCall,
+            acceptCall,
+            endCall,
+            participants,
+            isLoading,
+            error,
+            roomName,
+            setRoomName,
+        ],
+    )
 
     return (
         <VideoCallContext.Provider value={value}>
@@ -120,7 +182,7 @@ export const VideoCallProvider: React.FC<VideoCallProviderProps> = ({
 
 export const useVideoCall = (): VideoCallContextType => {
     const context = useContext(VideoCallContext)
-    if (context === undefined) {
+    if (!context) {
         throw new Error('useVideoCall must be used within a VideoCallProvider')
     }
     return context

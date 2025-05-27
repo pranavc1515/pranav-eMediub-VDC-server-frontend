@@ -15,12 +15,15 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useDoctors from '@/hooks/useDoctors'
 import usePatientQueue from '@/hooks/usePatientQueue'
+import useConsultation from '@/hooks/useConsultation'
 import { io, Socket } from 'socket.io-client'
 import PaymentService from '@/services/PaymentService'
+import VideoService from '@/services/VideoService'
+import { useVideoCall } from '@/contexts/VideoCallContext'
+import { useSocketContext } from '@/contexts/SocketContext'
 
 // Define the API URL using Vite's import.meta.env instead of process.env
 // const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-const API_URL = 'http://localhost:3000'
 
 const problemCategories = [
     { value: 'general', label: 'General Health Concerns' },
@@ -81,12 +84,13 @@ const appointmentsData = [
 ]
 
 const Home = () => {
+    const { setDoctorId, setPatientId, setRoomName } = useVideoCall()
     const [selectedCategory, setSelectedCategory] = useState('all')
     const [searchTerm, setSearchTerm] = useState('')
     const [showOnlyAvailable, setShowOnlyAvailable] = useState(true)
     const [currentPage, setCurrentPage] = useState(1)
-    const [socket, setSocket] = useState<Socket | null>(null)
     const navigate = useNavigate()
+    const { socket } = useSocketContext()
 
     // Get user from auth store
     const user = useSessionUser((state) => state.user)
@@ -96,7 +100,11 @@ const Home = () => {
 
     // Use patient queue hook for doctors
     const { queue: patientQueue, fetchQueue } = usePatientQueue({
-        doctorId: isDoctor ? user.userId : 0,
+        doctorId: isDoctor ? parseInt(user.userId) : 0,
+    })
+
+    const { startConsultation } = useConsultation({
+        doctorId: isDoctor ? parseInt(user.userId) : 0,
     })
 
     // Use custom hook to get doctors data with the updated props
@@ -129,16 +137,7 @@ const Home = () => {
     }, [showOnlyAvailable, fetchDoctors, isDoctor])
 
     useEffect(() => {
-        if (isDoctor) {
-            // Initialize socket connection for doctor
-            const socket = io(API_URL, {
-                query: {
-                    userType: 'doctor',
-                    userId: user.userId,
-                },
-            })
-            setSocket(socket)
-
+        if (isDoctor && socket) {
             // Join doctor's room for updates
             socket.emit('JOIN_DOCTOR_ROOM', { doctorId: user.userId })
             console.log('joined doctor room')
@@ -156,7 +155,7 @@ const Home = () => {
                 socket.disconnect()
             }
         }
-    }, [isDoctor, user.userId, fetchQueue])
+    }, [isDoctor, user.userId, fetchQueue, socket])
 
     // Update stats count
     statsData[0].value = count
@@ -184,11 +183,37 @@ const Home = () => {
         changePage?.(page)
     }
 
-    const handleStartConsultation = (patientId: string) => {
-        if (socket) {
-            socket.emit('INVITE_NEXT_PATIENT', {
-                doctorId: user.userId,
-            })
+    const createRoom = async (patientId: number, roomName: string) => {
+        try {
+            if (isDoctor) {
+                try {
+                    await VideoService.createRoom({
+                        roomName: roomName || '',
+                    })
+                } catch (error) {
+                    console.log('Room may already exist:', error)
+                }
+            }
+        } catch (error) {
+            console.error('Failed to create room:', error)
+        }
+    }
+
+    const handleStartConsultation = async (
+        patientId: number,
+        roomName: string,
+    ) => {
+        try {
+            if (isDoctor) {
+                setDoctorId(parseInt(user.userId)) // set current doctor user ID
+                setPatientId(patientId) // set selected patient ID
+                setRoomName(roomName)
+                createRoom(patientId, roomName)
+
+                navigate(`/doctor/video-consultation/${patientId}`) // no params needed here
+            }
+        } catch (error) {
+            console.error('Failed to start consultation:', error)
         }
     }
 
@@ -369,7 +394,8 @@ const Home = () => {
                                                 size="sm"
                                                 onClick={() =>
                                                     handleStartConsultation(
-                                                        String(patient.id),
+                                                        patient.patientId,
+                                                        patient.roomName,
                                                     )
                                                 }
                                             >

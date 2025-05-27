@@ -1,3 +1,9 @@
+// This file is now deprecated as we're using the SocketContext
+// You can safely remove this file and use the SocketContext instead
+
+// For reference, import the socket context like this:
+// import { useSocketContext } from '@/contexts/SocketContext'
+
 import { io, Socket } from 'socket.io-client'
 
 // Get API URL from environment or use the backend URL
