@@ -4,16 +4,17 @@ import Button from '@/components/ui/Button'
 import { FormItem, Form } from '@/components/ui/Form'
 import { useAuth } from '@/auth'
 import { useForm, Controller } from 'react-hook-form'
-import type { CommonProps } from '@/@types/common'
-import type { ReactNode } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
-import appConfig from '@/configs/app.config'
 import OtpInput from '@/components/shared/OtpInput'
 import ApiService from '@/services/ApiService'
 import DoctorService from '@/services/DoctorService'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { useToken } from '@/store/authStore'
+import appConfig from '@/configs/app.config'
+
+import type { ReactNode } from 'react'
+import type { CommonProps } from '@/@types/common'
 
 interface SignInFormProps extends CommonProps {
     disableSubmit?: boolean
@@ -22,679 +23,230 @@ interface SignInFormProps extends CommonProps {
     userType: 'user' | 'doctor'
 }
 
-type SignInFormSchema = {
-    phone: string
-}
+const phoneSchema = z.object({
+    phone: z
+        .string()
+        .min(10, 'Please enter a valid phone number')
+        .nonempty('Please enter your phone number'),
+})
 
-type OtpVerificationSchema = {
-    otp: string
-}
+const otpSchema = z.object({
+    otp: z
+        .string()
+        .length(6, 'Please enter a valid 6-digit OTP')
+        .nonempty('Please enter OTP'),
+})
 
-const SignInForm = (props: SignInFormProps) => {
-    const [isSubmitting, setSubmitting] = useState<boolean>(false)
-    const [showOtpVerification, setShowOtpVerification] =
-        useState<boolean>(false)
-    const [phoneNumber, setPhoneNumber] = useState<string>('')
-    const [otpValue, setOtpValue] = useState<string>('')
-    const [isNewDoctor, setIsNewDoctor] = useState<boolean>(false)
-    const [isProfileComplete, setIsProfileComplete] = useState<boolean>(false)
+const SignInForm = ({
+    disableSubmit = false,
+    className,
+    setMessage,
+    userType,
+}: SignInFormProps) => {
+    const [isSubmitting, setSubmitting] = useState(false)
+    const [showOtpVerification, setShowOtpVerification] = useState(false)
+    const [phoneNumber, setPhoneNumber] = useState('')
+    const [otpValue, setOtpValue] = useState('')
+    const [isNewDoctor, setIsNewDoctor] = useState(false)
+    const [isProfileComplete, setIsProfileComplete] = useState(false)
+
     const navigate = useNavigate()
+    const { signIn } = useAuth()
     const { setToken } = useToken()
 
-    const { disableSubmit = false, className, setMessage, userType } = props
-
-    const {
-        handleSubmit,
-        formState: { errors },
-        control,
-    } = useForm<SignInFormSchema>({
-        defaultValues: {
-            phone: '',
-        },
-        resolver: zodResolver(
-            z.object({
-                phone: z
-                    .string()
-                    .min(10, 'Please enter a valid phone number')
-                    .nonempty('Please enter your phone number'),
-            }),
-        ),
+    const phoneForm = useForm({
+        defaultValues: { phone: '' },
+        resolver: zodResolver(phoneSchema),
+    })
+    const otpForm = useForm({
+        defaultValues: { otp: '' },
+        resolver: zodResolver(otpSchema),
     })
 
-    const {
-        handleSubmit: handleOtpSubmit,
-        formState: { errors: otpErrors },
-        control: otpControl,
-        setValue: setOtpFormValue,
-        reset: resetOtpForm,
-    } = useForm<OtpVerificationSchema>({
-        defaultValues: {
-            otp: '',
-        },
-        resolver: zodResolver(
-            z.object({
-                otp: z
-                    .string()
-                    .min(6, 'Please enter a valid 6-digit OTP')
-                    .nonempty('Please enter OTP'),
-            }),
-        ),
-    })
+    const formatPhone = (phone: string) => `+91${phone}`
 
-    const { signIn } = useAuth()
+    const handleSendOtp = async ({ phone }: { phone: string }) => {
+        if (disableSubmit) return
 
-    const onSignIn = async (values: SignInFormSchema) => {
-        const { phone } = values
-        // Add +91 prefix to the phone number for API requests
-        const formattedPhone = `+91${phone}`
+        const formattedPhone = formatPhone(phone)
+        setSubmitting(true)
 
-        if (!disableSubmit) {
-            setSubmitting(true)
+        try {
+            const endpoint =
+                userType === 'doctor'
+                    ? await handleDoctorOtpRequest(formattedPhone)
+                    : await handleUserOtpRequest(formattedPhone)
 
-            try {
-                // For doctors, first check if they exist with the given phone number
-                if (userType === 'doctor') {
-                    try {
-                        const checkResponse =
-                            await DoctorService.checkDoctorExists(
-                                formattedPhone,
-                            )
-                        console.log(
-                            'Doctor check-exists response:',
-                            checkResponse,
-                        )
-
-                        // Store doctor status for later use after OTP verification
-                        setIsNewDoctor(!checkResponse.exists)
-                        setIsProfileComplete(
-                            checkResponse.data?.isProfileComplete || false,
-                        )
-
-                        // Determine which API endpoint to use based on doctor existence
-                        const apiEndpoint = checkResponse.exists
-                            ? 'api/doctors/login'
-                            : 'api/doctors/register'
-
-                        const response = await ApiService.fetchDataWithAxios({
-                            url: `/${apiEndpoint}`,
-                            method: 'post',
-                            data: { phoneNumber: formattedPhone },
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                        })
-
-                        console.log('API Response:', response)
-
-                        if (
-                            (response && (response as any).status === true) ||
-                            (response as any).success === true
-                        ) {
-                            setPhoneNumber(formattedPhone || '')
-                            setShowOtpVerification(true)
-                            resetOtpForm()
-                            setOtpValue('')
-                            setMessage?.(
-                                (response as any)?.message ||
-                                    'OTP sent successfully',
-                            )
-                        } else {
-                            const errorMessage =
-                                (response as any)?.message ||
-                                'Failed to send OTP'
-                            console.error('API Response Error:', response)
-                            setMessage?.(errorMessage)
-                        }
-                    } catch (error) {
-                        console.error('Error checking doctor existence:', error)
-                        setMessage?.(
-                            'Failed to verify doctor account. Please try again.',
-                        )
-                        setSubmitting(false)
-                        return
-                    }
-                } else {
-                    // For regular users, first check if the user exists
-                    try {
-                        // Check if user exists with the given phone number
-                        const checkUserResponse =
-                            await ApiService.fetchDataWithAxios({
-                                url: '/api/patients/checkUserExist',
-                                method: 'post',
-                                data: { phone: formattedPhone },
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                            })
-
-                        console.log(
-                            'User check-exists response:',
-                            checkUserResponse,
-                        )
-
-                        // Determine which API endpoint to use based on user existence
-                        const apiEndpoint = (checkUserResponse as any)
-                            .isUserExist
-                            ? 'api/patients/do-login'
-                            : 'api/patients/register-new'
-
-                        const fullUrl = `/${apiEndpoint}`
-
-                        const response = await ApiService.fetchDataWithAxios({
-                            url: fullUrl,
-                            method: 'post',
-                            data: (checkUserResponse as any).isUserExist
-                                ? { username: formattedPhone }
-                                : { phone: formattedPhone },
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                        })
-
-                        console.log('API Response:', response)
-
-                        if (
-                            (response && (response as any).status === true) ||
-                            (response as any).success === true
-                        ) {
-                            setPhoneNumber(formattedPhone || '')
-                            setShowOtpVerification(true)
-                            resetOtpForm()
-                            setOtpValue('')
-                            setMessage?.(
-                                (response as any)?.message ||
-                                    'OTP sent successfully',
-                            )
-                        } else {
-                            const errorMessage =
-                                (response as any)?.message ||
-                                'Failed to send OTP'
-                            console.error('API Response Error:', response)
-                            setMessage?.(errorMessage)
-                        }
-                    } catch (error: any) {
-                        console.error('Error checking user existence:', error)
-                        setMessage?.(
-                            'Failed to verify user account. Please try again.',
-                        )
-                        setSubmitting(false)
-                        return
-                    }
-                }
-            } catch (error: any) {
-                console.error('API Error Details:', {
-                    message: error.message,
-                    response: error.response,
-                    status: error.response?.status,
-                })
-
-                if (error.response?.data?.message) {
-                    setMessage?.(error.response.data.message)
-                } else {
-                    setMessage?.('Failed to send OTP. Please try again.')
-                }
+            if (endpoint.success) {
+                setPhoneNumber(formattedPhone)
+                setShowOtpVerification(true)
+                setOtpValue('')
+                otpForm.reset()
+                setMessage?.(endpoint.message)
+            } else {
+                setMessage?.(endpoint.message)
             }
-
+        } catch (error) {
+            console.error('Send OTP error:', error)
+            setMessage?.('An error occurred while sending OTP.')
+        } finally {
             setSubmitting(false)
         }
     }
 
-    const onVerifyOtp = async (values: OtpVerificationSchema) => {
-        const { otp } = values
+    const handleDoctorOtpRequest = async (phone: string) => {
+        const check = await DoctorService.checkDoctorExists(phone)
+        setIsNewDoctor(!check.exists)
+        setIsProfileComplete(check.data?.isProfileComplete || false)
 
-        if (!disableSubmit && otp.length === 6) {
-            setSubmitting(true)
+        const endpoint = check.exists
+            ? 'api/doctors/login'
+            : 'api/doctors/register'
+        const response = await ApiService.fetchDataWithAxios({
+            url: `/${endpoint}`,
+            method: 'post',
+            data: { phoneNumber: phone },
+        })
 
-            try {
-                const apiEndpoint =
+        return {
+            success: response?.status || response?.success,
+            message: response?.message || '',
+        }
+    }
+
+    const handleUserOtpRequest = async (phone: string) => {
+        const check = await ApiService.fetchDataWithAxios({
+            url: '/api/patients/checkUserExists',
+            method: 'post',
+            data: { phone },
+        })
+
+        const endpoint = check.isUserExist
+            ? 'api/patients/do-login'
+            : 'api/patients/register-new'
+        const payload = check.isUserExist ? { username: phone } : { phone }
+
+        const response = await ApiService.fetchDataWithAxios({
+            url: `/${endpoint}`,
+            method: 'post',
+            data: payload,
+        })
+
+        return {
+            success: response?.status || response?.success,
+            message: response?.message || '',
+        }
+    }
+
+    const handleOtpVerification = async ({ otp }: { otp: string }) => {
+        if (disableSubmit || otp.length !== 6) return
+
+        setSubmitting(true)
+
+        try {
+            const response = await ApiService.fetchDataWithAxios({
+                url:
                     userType === 'doctor'
-                        ? 'api/doctors/validate-otp'
-                        : 'api/patients/validate-otp'
-                const fullUrl = `/${apiEndpoint}`
+                        ? '/api/doctors/validate-otp'
+                        : '/api/patients/validate-otp',
+                method: 'post',
+                data:
+                    userType === 'doctor'
+                        ? { phoneNumber: phoneNumber, otp }
+                        : { phone: phoneNumber, otp },
+            })
 
-                const response = await ApiService.fetchDataWithAxios({
-                    url: fullUrl,
-                    method: 'post',
-                    data:
-                        userType === 'doctor'
-                            ? { phoneNumber: phoneNumber, otp }
-                            : { phone: phoneNumber, otp },
-                })
-
-                if (
-                    response &&
-                    ((response as any).status === true ||
-                        (response as any).success === true)
-                ) {
-                    // Handle different response structures for doctor and user
-                    const responseData =
-                        userType === 'doctor'
-                            ? (response as any).data
-                            : response
-
-                    if (!responseData) {
-                        console.error('Invalid response data:', response)
-                        setMessage?.('Invalid response from server')
-                        setSubmitting(false)
-                        return
-                    }
-
-                    const token =
-                        userType === 'doctor'
-                            ? responseData.token
-                            : responseData.token
-
-                    // Store complete user/doctor data in localStorage
-                    if (userType === 'doctor') {
-                        const doctorData = responseData.doctor
-                        if (doctorData) {
-                            localStorage.setItem(
-                                'doctor',
-                                JSON.stringify(doctorData),
-                            )
-                            console.log(
-                                'Doctor data stored in localStorage:',
-                                doctorData,
-                            )
-                        }
-                    } else {
-                        // For user, the data might be in responseData.user or directly in responseData
-                        const userData = responseData.user || responseData
-                        if (userData) {
-                            localStorage.setItem(
-                                'user',
-                                JSON.stringify(userData),
-                            )
-                            console.log(
-                                'User data stored in localStorage:',
-                                userData,
-                            )
-                        }
-                    }
-
-                    const doctor = responseData.doctor
-                    const user =
-                        userType === 'doctor' ? responseData.user : responseData
-
-                    if (!token) {
-                        console.error('No token in response:', responseData)
-                        setMessage?.('Authentication failed: No token received')
-                        setSubmitting(false)
-                        return
-                    }
-
-                    console.log('OTP validation successful:', responseData)
-
-                    // Store the token in different ways to ensure it's available
-                    localStorage.setItem('token', token)
-                    sessionStorage.setItem('token', token)
-                    setToken(token)
-
-                    // For doctors, handle redirect based on registration status
-                    if (userType === 'doctor') {
-                        // Create and set up profile before attempting navigation
-                        const docProfile = {
-                            userId: doctor.id.toString(),
-                            userName: `Dr. ${doctor.phoneNumber}`,
-                            authority: ['doctor'],
-                            avatar: '',
-                            email: doctor.phoneNumber,
-                        }
-
-                        // If doctor is new (registered), redirect to profile setup
-                        if (isNewDoctor) {
-                            console.log(
-                                'New doctor registered, redirecting to profile setup',
-                            )
-
-                            // Sign in first to ensure authentication is set up properly
-                            const authResult = await signIn({
-                                email: phoneNumber,
-                                password: '',
-                                userType: 'doctor',
-                                profile: docProfile,
-                                token,
-                            })
-
-                            if (authResult.status === 'success') {
-                                // Use window.location for hard navigation to bypass router guards
-                                window.location.href = '/profile-setup'
-                            } else {
-                                console.error(
-                                    'Failed to authenticate before redirect:',
-                                    authResult,
-                                )
-                            }
-
-                            setSubmitting(false)
-                            return
-                        }
-
-                        // If doctor is existing but profile is incomplete, redirect to profile setup
-                        if (!isProfileComplete) {
-                            console.log(
-                                'Doctor profile incomplete, redirecting to profile setup',
-                            )
-
-                            // Sign in first to ensure authentication is set up properly
-                            const authResult = await signIn({
-                                email: phoneNumber,
-                                password: '',
-                                userType: 'doctor',
-                                profile: docProfile,
-                                token,
-                            })
-
-                            if (authResult.status === 'success') {
-                                // Use window.location for hard navigation to bypass router guards
-                                window.location.href = '/profile-setup'
-                            } else {
-                                console.error(
-                                    'Failed to authenticate before redirect:',
-                                    authResult,
-                                )
-                            }
-
-                            setSubmitting(false)
-                            return
-                        }
-
-                        // Update doctor.isProfileComplete for authentication profile
-                        doctor.isProfileComplete = isProfileComplete
-                    } else if (userType === 'user') {
-                        // For users, create user profile
-                        const userProfile = {
-                            userId:
-                                user.id?.toString() ||
-                                user.userId?.toString() ||
-                                '',
-                            userName: user.fullName || phoneNumber,
-                            authority: ['user'],
-                            avatar: user.profilePhoto || '',
-                            email: user.email || phoneNumber,
-                            phoneNumber: user.phoneNumber || phoneNumber,
-                            isProfileComplete: user.isProfileComplete || false,
-                        }
-
-                        // Check if this was a login (existing user) or registration (new user)
-                        // We can check if the initial API endpoint used was do-login
-                        try {
-                            const checkUserResponse =
-                                await ApiService.fetchDataWithAxios({
-                                    url: '/api/patients/checkUserExist',
-                                    method: 'post',
-                                    data: { phone: phoneNumber },
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                })
-
-                            const isExistingUser = (checkUserResponse as any)
-                                .isUserExist
-
-                            // If user is existing, bypass profile setup and go directly to home
-                            if (isExistingUser) {
-                                console.log(
-                                    'Existing user, bypassing profile setup',
-                                )
-
-                                // Sign in first to ensure authentication is set up properly
-                                const authResult = await signIn({
-                                    email: phoneNumber,
-                                    password: '',
-                                    userType: 'user',
-                                    profile: userProfile,
-                                    token,
-                                })
-
-                                if (authResult.status === 'success') {
-                                    // Use window.location for hard navigation to bypass router guards
-                                    window.location.href = '/home'
-                                } else {
-                                    console.error(
-                                        'Failed to authenticate before redirect:',
-                                        authResult,
-                                    )
-                                }
-
-                                setSubmitting(false)
-                                return
-                            }
-                        } catch (error) {
-                            console.error(
-                                'Error checking user existence after OTP:',
-                                error,
-                            )
-                            // Continue with normal flow if check fails
-                        }
-
-                        // If user profile is not complete, redirect to user profile setup
-                        if (!user.isProfileComplete) {
-                            console.log(
-                                'User profile incomplete, redirecting to user profile setup',
-                            )
-
-                            // Sign in first to ensure authentication is set up properly
-                            const authResult = await signIn({
-                                email: phoneNumber,
-                                password: '',
-                                userType: 'user',
-                                profile: userProfile,
-                                token,
-                            })
-
-                            if (authResult.status === 'success') {
-                                // Use window.location for hard navigation to bypass router guards
-                                window.location.href = '/user-profile-setup'
-                            } else {
-                                console.error(
-                                    'Failed to authenticate before redirect:',
-                                    authResult,
-                                )
-                            }
-
-                            setSubmitting(false)
-                            return
-                        }
-                    }
-
-                    // Create a profile that matches the User type structure in auth.ts
-                    const profile =
-                        userType === 'doctor'
-                            ? {
-                                  userId: doctor.id.toString(),
-                                  userName: `Dr. ${doctor.phoneNumber}`,
-                                  authority: ['doctor'],
-                                  avatar: '',
-                                  email: doctor.phoneNumber,
-                              }
-                            : {
-                                  userId:
-                                      user.id?.toString() ||
-                                      user.userId?.toString() ||
-                                      '',
-                                  userName: user.fullName || phoneNumber,
-                                  authority: ['user'],
-                                  avatar: user.profilePhoto || '',
-                                  email: user.email || phoneNumber,
-                                  phoneNumber: user.phoneNumber || phoneNumber,
-                                  isProfileComplete:
-                                      user.isProfileComplete || false,
-                              }
-
-                    console.log('Created profile for auth:', profile)
-
-                    // Then sign in with the correctly structured profile
-                    const result = await signIn({
-                        email: phoneNumber,
-                        password: '',
-                        userType: userType,
-                        profile,
-                        token,
-                    })
-
-                    console.log('Sign in result:', result)
-
-                    // Only redirect if sign in was successful
-                    if (result.status === 'success') {
-                        console.log(
-                            'Sign in successful, checking profile completion',
-                        )
-
-                        // For users, check if they are existing users first
-                        if (userType === 'user') {
-                            try {
-                                const checkUserResponse =
-                                    await ApiService.fetchDataWithAxios({
-                                        url: '/api/patients/checkUserExist',
-                                        method: 'post',
-                                        data: { phone: phoneNumber },
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                        },
-                                    })
-
-                                const isExistingUser = (
-                                    checkUserResponse as any
-                                ).isUserExist
-
-                                // Existing users go directly to home
-                                if (isExistingUser) {
-                                    console.log(
-                                        'Existing user, redirecting to home',
-                                    )
-                                    window.location.href = '/home'
-                                    return
-                                }
-                            } catch (error) {
-                                console.error(
-                                    'Error checking user existence:',
-                                    error,
-                                )
-                                // Continue with normal flow if check fails
-                            }
-                        }
-
-                        // Check if profile is complete
-                        const profileComplete =
-                            userType === 'doctor'
-                                ? doctor?.isProfileComplete
-                                : user?.isProfileComplete
-
-                        if (profileComplete) {
-                            console.log(
-                                'Profile is complete, redirecting to home',
-                            )
-                            navigate(appConfig.authenticatedEntryPath)
-                        } else {
-                            console.log(
-                                'Profile is incomplete, redirecting to profile setup',
-                            )
-                            // Use window.location for hard navigation to bypass router guards
-                            if (userType === 'doctor') {
-                                window.location.href = '/profile-setup'
-                            } else {
-                                window.location.href = '/user-profile-setup'
-                            }
-                        }
-                    } else if (result.status === 'failed') {
-                        // If sign in failed despite valid OTP
-                        console.error(
-                            'Sign in failed after OTP validation:',
-                            result,
-                        )
-                        setMessage?.(result.message || 'Authentication failed')
-                    } else {
-                        // If no status is returned, consider it a success since we have the token
-                        console.log(
-                            'No explicit status returned, proceeding with token',
-                        )
-
-                        // For users, check if they are existing users first
-                        if (userType === 'user') {
-                            try {
-                                const checkUserResponse =
-                                    await ApiService.fetchDataWithAxios({
-                                        url: '/api/patients/checkUserExist',
-                                        method: 'post',
-                                        data: { phone: phoneNumber },
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                        },
-                                    })
-
-                                const isExistingUser = (
-                                    checkUserResponse as any
-                                ).isUserExist
-
-                                // Existing users go directly to home
-                                if (isExistingUser) {
-                                    console.log(
-                                        'Existing user, redirecting to home',
-                                    )
-                                    window.location.href = '/home'
-                                    return
-                                }
-                            } catch (error) {
-                                console.error(
-                                    'Error checking user existence:',
-                                    error,
-                                )
-                                // Continue with normal flow if check fails
-                            }
-                        }
-
-                        // Check if profile is complete
-                        const profileComplete =
-                            userType === 'doctor'
-                                ? doctor?.isProfileComplete
-                                : user?.isProfileComplete
-
-                        if (profileComplete) {
-                            console.log(
-                                'Profile is complete, redirecting to home',
-                            )
-                            navigate(appConfig.authenticatedEntryPath)
-                        } else {
-                            console.log(
-                                'Profile is incomplete, redirecting to profile setup',
-                            )
-                            // Use window.location for hard navigation to bypass router guards
-                            if (userType === 'doctor') {
-                                window.location.href = '/profile-setup'
-                            } else {
-                                window.location.href = '/user-profile-setup'
-                            }
-                        }
-                    }
-                } else {
-                    setMessage?.('Invalid OTP')
-                }
-            } catch (error) {
-                setMessage?.('An error occurred during OTP verification')
-                console.error('Error verifying OTP:', error)
+            if (response?.status || response?.success) {
+                await processOtpSuccess(response)
+            } else {
+                setMessage?.('Invalid OTP')
             }
-
+        } catch (error) {
+            console.error('OTP verification error:', error)
+            setMessage?.('An error occurred during OTP verification.')
+        } finally {
             setSubmitting(false)
         }
+    }
+
+    const processOtpSuccess = async (response: any) => {
+        const data = userType === 'doctor' ? response.data : response
+        const token = data.token
+        if (!token) return setMessage?.('No token received.')
+
+        setToken(token)
+        localStorage.setItem('token', token)
+
+        const profile = createUserProfile(data, phoneNumber)
+        saveUserToStorage(profile, userType)
+
+        const result = await signIn({
+            email: phoneNumber,
+            password: '',
+            userType,
+            profile,
+            token,
+        })
+
+        if (result.status === 'success') {
+            const isComplete = profile.isProfileComplete
+            const redirectPath = isComplete
+                ? appConfig.authenticatedEntryPath
+                : userType === 'doctor'
+                  ? '/profile-setup'
+                  : '/user-profile-setup'
+
+            navigate(redirectPath)
+        } else {
+            setMessage?.(result.message || 'Authentication failed')
+        }
+    }
+
+    const createUserProfile = (data: any, phone: string) => {
+        if (userType === 'doctor') {
+            const user = data.doctor
+            return {
+                userId: user.id,
+                userName: user.name,
+                authority: ['doctor'],
+                avatar: user.profilePhoto,
+                email: user.email,
+                phoneNumber: user.phoneNumber,
+                isProfileComplete: isProfileComplete,
+            }
+        }
+
+        const user = data.patient
+        return {
+            userId: user.id,
+            userName: user.name,
+            authority: ['user'],
+            avatar: user.profilePhoto,
+            email: user.email,
+            phoneNumber: user.phoneNumber || user.phone,
+            isProfileComplete: user.isProfileComplete,
+        }
+    }
+
+    const saveUserToStorage = (profile: any, userType: string) => {
+        localStorage.setItem(userType, JSON.stringify(profile))
     }
 
     return (
         <div className={className}>
             {!showOtpVerification ? (
-                <Form onSubmit={handleSubmit(onSignIn)}>
+                <Form onSubmit={phoneForm.handleSubmit(handleSendOtp)}>
                     <FormItem
-                        label={`Phone Number`}
-                        invalid={Boolean(errors.phone)}
-                        errorMessage={errors.phone?.message}
+                        label="Phone Number"
+                        invalid={!!phoneForm.formState.errors.phone}
+                        errorMessage={phoneForm.formState.errors.phone?.message}
                     >
                         <Controller
                             name="phone"
-                            control={control}
+                            control={phoneForm.control}
                             render={({ field }) => (
                                 <Input
                                     type="tel"
-                                    autoComplete="off"
                                     placeholder="Mobile number"
                                     prefix="+91"
                                     {...field}
@@ -712,28 +264,25 @@ const SignInForm = (props: SignInFormProps) => {
                     </Button>
                 </Form>
             ) : (
-                <Form onSubmit={handleOtpSubmit(onVerifyOtp)}>
+                <Form onSubmit={otpForm.handleSubmit(handleOtpVerification)}>
                     <FormItem
-                        invalid={Boolean(otpErrors.otp)}
-                        errorMessage={otpErrors.otp?.message}
+                        invalid={!!otpForm.formState.errors.otp}
+                        errorMessage={otpForm.formState.errors.otp?.message}
                     >
                         <Controller
                             name="otp"
-                            control={otpControl}
-                            render={({ field }) => {
-                                return (
-                                    <OtpInput
-                                        placeholder=""
-                                        value={otpValue}
-                                        onChange={(value) => {
-                                            setOtpValue(value)
-                                            setOtpFormValue('otp', value)
-                                        }}
-                                        inputClass="h-[58px]"
-                                        length={6}
-                                    />
-                                )
-                            }}
+                            control={otpForm.control}
+                            render={() => (
+                                <OtpInput
+                                    value={otpValue}
+                                    onChange={(value) => {
+                                        setOtpValue(value)
+                                        otpForm.setValue('otp', value)
+                                    }}
+                                    length={6}
+                                    inputClass="h-[58px]"
+                                />
+                            )}
                         />
                     </FormItem>
                     <Button

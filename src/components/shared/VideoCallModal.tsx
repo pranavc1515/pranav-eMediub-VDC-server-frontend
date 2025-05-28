@@ -32,16 +32,16 @@ const VideoCallModal = ({ children }: VideoCallModalProps) => {
             onClose={() => {}} // Prevent closing by escape key or outside click
             onRequestClose={() => {}} // Prevent closing by escape key or outside click
         >
-            {currentRoomName && (
+            {/* {currentRoomName && (
                 <VideoCallInterface
                     roomName={currentRoomName}
                     onCallEnd={handleCallEnd}
                 >
                     {children}
                 </VideoCallInterface>
-            )}
+            )} */}
         </Dialog>
     )
 }
 
-export default VideoCallModal 
+export default VideoCallModal

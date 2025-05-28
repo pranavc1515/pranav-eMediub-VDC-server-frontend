@@ -119,7 +119,7 @@ const DoctorService = {
             data,
         })
     },
-    
+
     /**
      * Check if a doctor exists by phone number
      * @param phoneNumber The phone number to check
@@ -127,12 +127,12 @@ const DoctorService = {
      */
     checkDoctorExists(phoneNumber: string) {
         return ApiService.fetchDataWithAxios<CheckDoctorExistsResponse>({
-            url: '/api/doctors/check-exists',
+            url: '/api/doctors/checkDoctorExists',
             method: 'POST',
             data: { phoneNumber },
         })
     },
-    
+
     /**
      * Fetch available doctors who are online and have "available" status
      * @param specialization Optional specialization to filter doctors by
@@ -153,10 +153,10 @@ const DoctorService = {
      */
     getDoctors(params: GetDoctorsParams = {}) {
         const { onlyAvailable, specialization, page, limit, search } = params
-        
+
         // Determine which endpoint to use based on availability
         const url = onlyAvailable ? '/api/doctors/available' : '/api/doctors'
-        
+
         return ApiService.fetchDataWithAxios<AvailableDoctorsResponse>({
             url,
             method: 'GET',
@@ -164,11 +164,16 @@ const DoctorService = {
                 ...(specialization && { specialization }),
                 ...(page && { page }),
                 ...(limit && { limit }),
-                ...(search && { search })
-            }
+                ...(search && { search }),
+            },
         })
-    }
+    },
 }
 
-export type { DoctorProfile, AvailableDoctorsResponse, CheckDoctorExistsResponse, GetDoctorsParams }
+export type {
+    DoctorProfile,
+    AvailableDoctorsResponse,
+    CheckDoctorExistsResponse,
+    GetDoctorsParams,
+}
 export default DoctorService

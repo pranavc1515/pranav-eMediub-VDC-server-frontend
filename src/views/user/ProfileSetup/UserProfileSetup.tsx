@@ -15,18 +15,18 @@ const UserProfileSetup = () => {
     const navigate = useNavigate()
     const { token } = useToken()
     const { user } = useAuth()
-    
+
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
     const [userPhone, setUserPhone] = useState<string>('')
-    
+
     // Personal details form state
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        phone: '',  // This will be pre-filled from the auth and disabled
+        phone: '', // This will be pre-filled from the auth and disabled
         age: '',
         dob: '',
         gender: '',
@@ -35,9 +35,9 @@ const UserProfileSetup = () => {
         weight: '',
         diet: '',
         profession: '',
-        image: ''
+        image: '',
     })
-    
+
     useEffect(() => {
         const loadUserProfile = async () => {
             if (!token) {
@@ -45,43 +45,42 @@ const UserProfileSetup = () => {
                 setLoading(false)
                 return
             }
-            
+
             try {
                 // Get the phone number from the authenticated user
                 if (user && user.phoneNumber) {
                     setUserPhone(user.phoneNumber)
-                    setFormData(prev => ({
+                    setFormData((prev) => ({
                         ...prev,
-                        phone: user.phoneNumber
+                        phone: user.phoneNumber,
                     }))
                 }
-                
+
                 // Try to fetch user profile to check if already completed
                 const profileResponse = await UserService.getProfile()
-                
-                if (profileResponse.success && profileResponse.data) {
+                console.log('Profile Response', profileResponse)
+                if (profileResponse.status && profileResponse.data) {
                     const userProfile = profileResponse.data
-                    
                     // Check if profile is already complete
                     if (userProfile.isProfileComplete) {
                         navigate('/home')
                         return
                     }
-                    
+
                     // Pre-fill form with existing data if available
                     setFormData({
-                        name: userProfile.fullName || '',
+                        name: userProfile.name || '',
                         email: userProfile.email || '',
-                        phone: userProfile.phoneNumber || userPhone,
+                        phone: userProfile.phone || userPhone,
                         age: userProfile.age || '',
                         dob: userProfile.dob || '',
                         gender: userProfile.gender || '',
-                        marital_status: userProfile.maritalStatus || '',
-                        height: userProfile.height || '',
-                        weight: userProfile.weight || '',
-                        diet: userProfile.diet || '',
-                        profession: userProfile.profession || '',
-                        image: userProfile.image || ''
+                        marital_status: userProfile.marital_status || '',
+                        height: userProfile.details?.height || '',
+                        weight: userProfile.details?.weight || '',
+                        diet: userProfile.details?.diet || '',
+                        profession: userProfile.details?.profession || '',
+                        image: userProfile.details?.image || '',
                     })
                 }
             } catch (err) {
@@ -91,37 +90,41 @@ const UserProfileSetup = () => {
                 setLoading(false)
             }
         }
-        
+
         loadUserProfile()
-    }, [token, navigate, user, userPhone])
-    
-    const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    }, [])
+
+    const handleInputChange = (
+        e: ChangeEvent<
+            HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+        >,
+    ) => {
         const { name, value } = e.target
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [name]: value
+            [name]: value,
         }))
     }
-    
+
     const handleFormSubmit = async (e: FormEvent) => {
         e.preventDefault()
         setSubmitting(true)
         setError('')
-        
+
         try {
             // Ensure phone number is set
             if (!formData.phone) {
-                setFormData(prev => ({
+                setFormData((prev) => ({
                     ...prev,
-                    phone: userPhone
+                    phone: userPhone,
                 }))
             }
-            
+
             const response = await UserService.updatePersonalDetails(formData)
-            
+
             if (response.status) {
                 setSuccess(response.message || 'Profile updated successfully!')
-                
+
                 // Redirect to home after a short delay
                 setTimeout(() => {
                     navigate('/home')
@@ -131,12 +134,14 @@ const UserProfileSetup = () => {
             }
         } catch (err) {
             console.error('Error updating user profile:', err)
-            setError('An error occurred while updating your profile. Please try again.')
+            setError(
+                'An error occurred while updating your profile. Please try again.',
+            )
         } finally {
             setSubmitting(false)
         }
     }
-    
+
     if (loading) {
         return (
             <Container className="h-full flex items-center justify-center">
@@ -144,7 +149,7 @@ const UserProfileSetup = () => {
             </Container>
         )
     }
-    
+
     if (error && !success) {
         return (
             <Container className="h-full flex items-center justify-center">
@@ -152,38 +157,40 @@ const UserProfileSetup = () => {
                     <Alert type="danger" showIcon className="mb-4">
                         {error}
                     </Alert>
-                    <Button variant="solid" onClick={() => navigate('/sign-in')}>
+                    <Button
+                        variant="solid"
+                        onClick={() => navigate('/sign-in')}
+                    >
                         Back to Login
                     </Button>
                 </div>
             </Container>
         )
     }
-    
+
     return (
         <Container className="py-8">
             <Card className="max-w-3xl mx-auto">
                 <div className="p-6">
-                    <h1 className="text-2xl font-bold mb-6">Complete Your User Profile</h1>
-                    
+                    <h1 className="text-2xl font-bold mb-6">
+                        Complete Your User Profile
+                    </h1>
+
                     {success && (
                         <Alert type="success" showIcon className="mb-4">
                             {success}
                         </Alert>
                     )}
-                    
+
                     {error && (
                         <Alert type="danger" showIcon className="mb-4">
                             {error}
                         </Alert>
                     )}
-                    
+
                     <form onSubmit={handleFormSubmit}>
                         <div className="space-y-4">
-                            <FormItem
-                                label="Full Name"
-                                asterisk={true}
-                            >
+                            <FormItem label="Full Name" asterisk={true}>
                                 <Input
                                     name="name"
                                     value={formData.name}
@@ -192,11 +199,8 @@ const UserProfileSetup = () => {
                                     required
                                 />
                             </FormItem>
-                            
-                            <FormItem
-                                label="Email"
-                                asterisk={true}
-                            >
+
+                            <FormItem label="Email" asterisk={true}>
                                 <Input
                                     name="email"
                                     type="email"
@@ -206,23 +210,20 @@ const UserProfileSetup = () => {
                                     required
                                 />
                             </FormItem>
-                            
-                            <FormItem
-                                label="Phone Number"
-                            >
+
+                            <FormItem label="Phone Number">
                                 <Input
                                     name="phone"
                                     value={formData.phone}
                                     disabled={true}
                                     className="bg-gray-100"
                                 />
-                                <small className="text-gray-500">Phone number cannot be changed</small>
+                                <small className="text-gray-500">
+                                    Phone number cannot be changed
+                                </small>
                             </FormItem>
-                            
-                            <FormItem
-                                label="Age"
-                                asterisk={true}
-                            >
+
+                            <FormItem label="Age" asterisk={true}>
                                 <Input
                                     name="age"
                                     value={formData.age}
@@ -231,11 +232,8 @@ const UserProfileSetup = () => {
                                     required
                                 />
                             </FormItem>
-                            
-                            <FormItem
-                                label="Date of Birth"
-                                asterisk={true}
-                            >
+
+                            <FormItem label="Date of Birth" asterisk={true}>
                                 <input
                                     type="date"
                                     name="dob"
@@ -245,11 +243,8 @@ const UserProfileSetup = () => {
                                     required
                                 />
                             </FormItem>
-                            
-                            <FormItem
-                                label="Gender"
-                                asterisk={true}
-                            >
+
+                            <FormItem label="Gender" asterisk={true}>
                                 <select
                                     name="gender"
                                     value={formData.gender}
@@ -263,25 +258,23 @@ const UserProfileSetup = () => {
                                     <option value="Other">Other</option>
                                 </select>
                             </FormItem>
-                            
-                            <FormItem
-                                label="Marital Status"
-                            >
+
+                            <FormItem label="Marital Status">
                                 <select
                                     name="marital_status"
                                     value={formData.marital_status}
                                     onChange={handleInputChange}
                                     className="w-full rounded-md border border-gray-300 p-2"
                                 >
-                                    <option value="">Select Marital Status</option>
+                                    <option value="">
+                                        Select Marital Status
+                                    </option>
                                     <option value="Single">Single</option>
                                     <option value="Married">Married</option>
                                 </select>
                             </FormItem>
-                            
-                            <FormItem
-                                label="Height"
-                            >
+
+                            <FormItem label="Height">
                                 <Input
                                     name="height"
                                     value={formData.height}
@@ -289,10 +282,8 @@ const UserProfileSetup = () => {
                                     placeholder="e.g., 5.5-cm"
                                 />
                             </FormItem>
-                            
-                            <FormItem
-                                label="Weight"
-                            >
+
+                            <FormItem label="Weight">
                                 <Input
                                     name="weight"
                                     value={formData.weight}
@@ -300,10 +291,8 @@ const UserProfileSetup = () => {
                                     placeholder="e.g., 55-kg"
                                 />
                             </FormItem>
-                            
-                            <FormItem
-                                label="Diet"
-                            >
+
+                            <FormItem label="Diet">
                                 <Input
                                     name="diet"
                                     value={formData.diet}
@@ -311,10 +300,8 @@ const UserProfileSetup = () => {
                                     placeholder="Any dietary preferences"
                                 />
                             </FormItem>
-                            
-                            <FormItem
-                                label="Profession"
-                            >
+
+                            <FormItem label="Profession">
                                 <Input
                                     name="profession"
                                     value={formData.profession}
@@ -322,7 +309,7 @@ const UserProfileSetup = () => {
                                     placeholder="Your occupation"
                                 />
                             </FormItem>
-                            
+
                             <div className="flex justify-end pt-4">
                                 <Button
                                     variant="solid"
@@ -341,4 +328,4 @@ const UserProfileSetup = () => {
     )
 }
 
-export default UserProfileSetup 
+export default UserProfileSetup

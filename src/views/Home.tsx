@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
     Card,
     Input,
@@ -69,19 +69,15 @@ const statsData = [
     //     icon: 'smile'
     // }
 ]
-
-// Add mock appointments data for doctor dashboard
-const appointmentsData = [
-    {
-        id: 1,
-        patientName: 'John Doe',
-        time: '10:00 AM',
-        date: '2024-03-20',
-        status: 'upcoming',
-        problem: 'General Checkup',
-    },
-    // Add more appointments as needed
-]
+function debounce(func: (...args: any[]) => void, wait: number) {
+    let timeout: ReturnType<typeof setTimeout>
+    return function executedFunction(...args: any[]) {
+        clearTimeout(timeout)
+        timeout = setTimeout(() => {
+            func(...args)
+        }, wait)
+    }
+}
 
 const Home = () => {
     const { setDoctorId, setPatientId, setRoomName } = useVideoCall()
@@ -89,6 +85,8 @@ const Home = () => {
     const [searchTerm, setSearchTerm] = useState('')
     const [showOnlyAvailable, setShowOnlyAvailable] = useState(true)
     const [currentPage, setCurrentPage] = useState(1)
+    const [isAvailable, setIsAvailable] = useState(true)
+
     const navigate = useNavigate()
     const { socket } = useSocketContext()
 
@@ -106,6 +104,18 @@ const Home = () => {
     const { startConsultation } = useConsultation({
         doctorId: isDoctor ? parseInt(user.userId) : 0,
     })
+
+    const availabilityRef = useRef(isAvailable)
+    availabilityRef.current = isAvailable
+
+    const emitAvailabilityChange = debounce((available: boolean) => {
+        if (socket && isDoctor) {
+            socket.emit('SWITCH_DOCTOR_AVAILABILITY', {
+                doctorId: user.userId,
+                isAvailable: available,
+            })
+        }
+    }, 300) // 300ms debounce delay
 
     // Use custom hook to get doctors data with the updated props
     const specialization =
@@ -138,10 +148,6 @@ const Home = () => {
 
     useEffect(() => {
         if (isDoctor && socket) {
-            // Join doctor's room for updates
-            socket.emit('JOIN_DOCTOR_ROOM', { doctorId: user.userId })
-            console.log('joined doctor room')
-
             // Listen for queue updates
             socket.on('QUEUE_CHANGED', () => {
                 // Fetch latest queue when socket event is received
@@ -293,14 +299,57 @@ const Home = () => {
         handleCreateOrder()
     }
 
+    useEffect(() => {
+        if (isDoctor && socket) {
+            socket.emit('SWITCH_DOCTOR_AVAILABILITY', {
+                doctorId: user.userId,
+                isAvailable: true,
+            })
+        }
+    }, [isDoctor, socket, user.userId])
+
+    const handleToggleAvailability = () => {
+        setIsAvailable((prev) => {
+            const newAvailability = !prev
+            emitAvailabilityChange(newAvailability) // emit after state change with new value
+            return newAvailability
+        })
+    }
+
     const renderDoctorDashboard = () => {
         return (
             <Container className="h-full">
-                <div className="mb-8">
-                    <h3 className="mb-2">Doctor Dashboard</h3>
-                    <p className="text-gray-500">
-                        Welcome back, {user.userName}
-                    </p>
+                <div className="mb-8 flex justify-between items-center">
+                    <div>
+                        <h3 className="mb-2">Doctor Dashboard</h3>
+                        <p className="text-gray-500">
+                            Welcome back, {user.userName}
+                        </p>
+                    </div>
+                    <div className="flex flex-col items-center">
+                        <span className="text-sm font-medium text-gray-700 mb-1">
+                            {isAvailable ? 'Available' : 'Unavailable'}
+                        </span>
+                        <input
+                            type="checkbox"
+                            id="availability-toggle"
+                            checked={isAvailable}
+                            onChange={handleToggleAvailability}
+                            className="toggle-checkbox hidden"
+                        />
+                        <label
+                            htmlFor="availability-toggle"
+                            className={`toggle-label block w-12 h-6 rounded-full cursor-pointer relative ${
+                                isAvailable ? 'bg-green-500' : 'bg-gray-300'
+                            }`}
+                        >
+                            <span
+                                className={`dot absolute left-1 top-1 w-4 h-4 rounded-full bg-white transition ${
+                                    isAvailable ? 'transform translate-x-6' : ''
+                                }`}
+                            ></span>
+                        </label>
+                    </div>
                 </div>
 
                 {/* Doctor Stats */}
@@ -355,7 +404,16 @@ const Home = () => {
                                 <th>Position</th>
                                 <th>Patient Name</th>
                                 <th>Joined At</th>
-                                <th>Status</th>
+                                <th>Room name</th>
+                                <th
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}
+                                >
+                                    Status
+                                </th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -365,27 +423,20 @@ const Home = () => {
                                     <td>{patient.position}</td>
                                     <td>{patient.patient.name}</td>
                                     <td>{new Date().toLocaleTimeString()}</td>
+                                    <td>{patient.roomName}</td>
                                     <td>
-                                        <Badge
+                                        <div
                                             style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
-                                                borderRadius: '50px',
-                                                padding: '4px 8px',
+                                                // borderRadius: '50px',
+                                                // padding: '4px 8px',
                                             }}
-                                            className={
-                                                patient.status ===
-                                                'in_consultation'
-                                                    ? 'bg-primary-500'
-                                                    : patient.status ===
-                                                        'waiting'
-                                                      ? 'bg-emerald-500'
-                                                      : 'bg-gray-500'
-                                            }
+                                            className={'bg-primary-500'}
                                         >
                                             {patient.status}
-                                        </Badge>
+                                        </div>
                                     </td>
                                     <td>
                                         {patient.status === 'waiting' && (

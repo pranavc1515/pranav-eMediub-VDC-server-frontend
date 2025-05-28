@@ -221,10 +221,6 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
         doctorId: number,
         patientId: number,
     ) => {
-        // if (isConnecting || (isWaiting && !isDoctor)) return
-        // setIsConnecting(true)
-        // setError(null)
-
         try {
             const token = await getToken(roomName, doctorId, patientId)
             if (!token) {
@@ -508,80 +504,102 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
     return !isDoctor && isWaiting ? (
         renderWaitingRoom()
     ) : (
-        <div className="flex h-full">
-            <div className="flex-1 flex flex-col bg-gray-900">
+        <div className="fixed inset-0 flex flex-col bg-gray-900 z-[9999] select-none">
+            <div className="flex-1 flex flex-col bg-gray-900 relative">
                 {error && (
-                    <div className="absolute top-4 left-4 right-4 bg-red-500 text-white p-3 rounded z-50">
+                    <div
+                        role="alert"
+                        className="absolute top-4 left-4 right-4 bg-red-600 text-white p-3 rounded-md shadow-lg z-50 font-semibold text-center"
+                    >
                         {error}
                     </div>
                 )}
 
-                <div className="flex-1 relative">
-                    {/* Remote Video */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <div
-                            ref={remoteVideoRef}
-                            className="w-full h-full bg-gray-800 relative"
-                        >
-                            {!remoteParticipantIdentity && (
-                                <div className="absolute inset-0 flex items-center justify-center text-white">
-                                    Waiting for other participant to join...
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Local Video */}
-                    <div className="absolute bottom-4 right-4 w-48 h-36 bg-gray-700 rounded-lg overflow-hidden shadow-lg">
-                        <div
-                            ref={localVideoRef}
-                            className="w-full h-full"
-                        ></div>
-                        <div className="absolute bottom-2 left-2 text-white text-sm bg-black bg-opacity-50 px-2 py-1 rounded">
-                            You ({isDoctor ? 'Doctor' : 'Patient'})
-                        </div>
+                {/* Remote Video */}
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
+                    <div
+                        ref={remoteVideoRef}
+                        className="w-full h-full relative bg-black rounded-md shadow-inner"
+                    >
+                        {!remoteParticipantIdentity && (
+                            <div className="absolute inset-0 flex items-center justify-center text-white text-lg font-medium">
+                                Waiting for other participant to join...
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Controls */}
-                <div className="h-20 bg-gray-800 flex items-center justify-center gap-4 px-4">
-                    <Button
-                        variant={isMicOn ? 'solid' : 'solid'}
-                        className={`rounded-full p-4 ${!isMicOn ? 'bg-red-500' : ''}`}
-                        onClick={toggleMic}
-                        disabled={isConnecting}
-                    >
-                        <HiMicrophone className="text-xl" />
-                    </Button>
-                    <Button
-                        variant={isVideoOn ? 'solid' : 'solid'}
-                        className={`rounded-full p-4 ${!isVideoOn ? 'bg-red-500' : ''}`}
-                        onClick={toggleVideo}
-                        disabled={isConnecting}
-                    >
-                        {isVideoOn ? (
-                            <HiVideoCamera className="text-xl" />
-                        ) : (
-                            <HiVideoCameraSlash className="text-xl" />
-                        )}
-                    </Button>
-                    <Button
-                        variant="solid"
-                        className="rounded-full p-4 bg-red-500"
-                        onClick={endCall}
-                        disabled={isConnecting}
-                    >
-                        <HiPhone className="text-xl rotate-[135deg]" />
-                    </Button>
+                {/* Local Video Preview */}
+                <div className="absolute bottom-5 right-5 w-52 h-40 bg-gray-700 rounded-lg overflow-hidden shadow-2xl border border-gray-600">
+                    <div ref={localVideoRef} className="w-full h-full" />
+                    <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white text-xs font-medium px-2 py-1 rounded select-text">
+                        You ({isDoctor ? 'Doctor' : 'Patient'})
+                    </div>
                 </div>
             </div>
 
-            {/* Side Panel */}
-            {/* <div className="w-80 bg-white dark:bg-gray-800 border-l dark:border-gray-700">
-                    {children}
-                </div> */}
+            {/* Controls */}
+            <div className="h-20 bg-gray-800 flex items-center justify-center gap-6 px-6 shadow-inner border-t border-gray-700">
+                {/* Mic toggle */}
+                <button
+                    aria-label={
+                        isMicOn ? 'Mute Microphone' : 'Unmute Microphone'
+                    }
+                    onClick={toggleMic}
+                    disabled={isConnecting}
+                    className={`
+          relative rounded-full p-4 transition-colors duration-200
+       
+          ${isMicOn ? 'bg-green-600 hover:bg-green-700 ' : 'bg-red-600 hover:bg-red-700'}
+          disabled:opacity-50 disabled:cursor-not-allowed
+        `}
+                    title={isMicOn ? 'Mute Microphone' : 'Unmute Microphone'}
+                >
+                    {isMicOn ? (
+                        <HiMicrophone className="text-2xl text-white" />
+                    ) : (
+                        <HiMicrophone className="text-2xl text-white" />
+                    )}
+                </button>
+
+                {/* Video toggle */}
+                <button
+                    aria-label={
+                        isVideoOn ? 'Turn off camera' : 'Turn on camera'
+                    }
+                    onClick={toggleVideo}
+                    disabled={isConnecting}
+                    className={`
+          relative rounded-full p-4 transition-colors duration-200
+          ${isVideoOn ? 'bg-green-600 hover:bg-green-700 ' : 'bg-red-600 hover:bg-red-700 '}
+          disabled:opacity-50 disabled:cursor-not-allowed
+        `}
+                    title={isVideoOn ? 'Turn off camera' : 'Turn on camera'}
+                >
+                    {isVideoOn ? (
+                        <HiVideoCamera className="text-2xl text-white" />
+                    ) : (
+                        <HiVideoCameraSlash className="text-2xl text-white" />
+                    )}
+                </button>
+
+                {/* End call */}
+                <button
+                    aria-label="End call"
+                    onClick={endCall}
+                    disabled={isConnecting}
+                    className="
+          relative rounded-full p-4 bg-red-700 hover:bg-red-800 focus:outline-none
+          focus:ring-2 focus:ring-offset-2 focus:ring-red-600 transition-colors duration-200
+          disabled:opacity-50 disabled:cursor-not-allowed
+        "
+                    title="End call"
+                >
+                    <HiPhone className="text-2xl text-white rotate-[135deg]" />
+                    <span className="sr-only">End Call</span>
+                </button>
+            </div>
         </div>
     )
 }
-
 export default VideoCallInterface
