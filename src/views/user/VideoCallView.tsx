@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import VideoCallInterface from '@/components/shared/VideoCallInterface'
+import VideoCallInterface from '@/views/Interface/VideoCallInterface'
 import Tabs from '@/components/ui/Tabs'
 import Card from '@/components/ui/Card'
 import { format } from 'date-fns'

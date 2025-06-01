@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import VideoCallInterface from './VideoCallInterface'
+import VideoCallInterface from '@/views/Interface/VideoCallInterface'
 import { useVideoCall } from '@/contexts/VideoCallContext'
 import { Dialog } from '@/components/ui'
 

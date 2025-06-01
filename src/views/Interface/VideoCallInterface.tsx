@@ -1,14 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
-import Button from '@/components/ui/Button'
 import { useSessionUser } from '@/store/authStore'
-import usePatientQueue from '@/hooks/usePatientQueue'
-import {
-    HiMicrophone,
-    HiVideoCamera,
-    HiPhone,
-    HiVideoCameraSlash,
-} from 'react-icons/hi2'
 import {
     connect,
     createLocalVideoTrack,
@@ -25,6 +17,13 @@ import { useAuth } from '@/auth'
 import { useSocketContext } from '@/contexts/SocketContext'
 import { useVideoCall } from '@/contexts/VideoCallContext'
 import useConsultation from '@/hooks/useConsultation'
+import usePatientQueue from '@/hooks/usePatientQueue'
+import WaitingRoom from '@/components/Interface/WaitingRoom'
+import CallControls from '@/components/Interface/CallControls'
+import PrescriptionDrawer from '@/components/Interface/PrescriptionDrawer'
+import { FaNotesMedical } from 'react-icons/fa'
+import { Button } from '@/components/ui'
+
 interface VideoCallInterfaceProps {
     onCallEnd?: () => void
 }
@@ -40,14 +39,15 @@ interface QueueStatus {
 }
 
 const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
-    const { doctorId: docId, patientId, roomName } = useVideoCall()
+    const {
+        doctorId: docId,
+        patientId,
+        roomName,
+        consultationId,
+        setConsultationId,
+    } = useVideoCall()
     const { id } = useParams<{ doctorId: string }>()
-    const doctorId = parseInt(docId) || parseInt(id)
-    // useEffect(() => {
-    //     if (id) {
-    //         setRoomIdParam(id)
-    //     }
-    // }, [])
+    const doctorId = parseInt(docId || id || '0')
 
     const [isMicOn, setIsMicOn] = useState(true)
     const [isVideoOn, setIsVideoOn] = useState(true)
@@ -62,55 +62,41 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
         string | null
     >(null)
     const [queueStatus, setQueueStatus] = useState<QueueStatus | null>(null)
-    const [consultationId, setConsultationId] = useState<string | null>(null)
     const [actualRoomName, setActualRoomName] = useState<string | null>(null)
     const [isWaiting, setIsWaiting] = useState(true)
+    const [isPrescriptionDrawerOpen, setIsPrescriptionDrawerOpen] =
+        useState(false)
 
     const { socket } = useSocketContext()
     const { startConsultation } = useConsultation({
-        doctorId: doctorId ? parseInt(doctorId) : 0,
+        doctorId: doctorId,
     })
     const { leaveQueue, joinQueue } = usePatientQueue({
-        doctorId: doctorId ? parseInt(doctorId) : 0,
+        doctorId: doctorId,
     })
 
     const localVideoRef = useRef<HTMLDivElement>(null)
     const remoteVideoRef = useRef<HTMLDivElement>(null)
     const { user } = useAuth()
-    const sessionUser = useSessionUser((state) => state.user)
     const isDoctor = user.authority?.includes('doctor') || false
 
-    // useEffect(() => {
-    //     if (id) {
-    //         setRoomIdParam(id)
-    //     }
-    // }, [id, setRoomIdParam])
-
     useEffect(() => {
-        console.log('lobby effect in VC interface')
-
         if (!socket) return
 
         if (isDoctor) {
-            console.log('DOCTOR_IS_READY_XXX', doctorId)
-            console.log('doctor ID', doctorId)
             startConsultation(patientId).then(() => {
                 joinRoom(roomName, doctorId, patientId)
             })
         } else {
-            // Patient joining queue
             handleJoinQueue()
         }
 
-        // Listen for queue updates
         socket.on('POSITION_UPDATE', (status: QueueStatus) => {
-            console.log('POSITION_UPDATE', status)
             setQueueStatus(status)
         })
 
         if (!isDoctor) {
             socket.on('CONSULTATION_STARTED', async (data) => {
-                console.log('CONSULTATION_STARTED', data)
                 setConsultationId(data.consultationId)
                 setIsWaiting(false)
                 await joinRoom(data.roomName, data.doctorId, data.patientId)
@@ -129,38 +115,6 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
         }
     }, [])
 
-    const handleJoinQueue = async () => {
-        try {
-            console.log('handleJoinQueue')
-            if (!doctorId || !user.userId) return
-
-            const response = await joinQueue({
-                patientId: Number(user.userId),
-            })
-
-            if (response && response.success) {
-                setActualRoomName(response.roomName)
-                setQueueStatus({
-                    position: response.position,
-                    estimatedWait: response.estimatedWait,
-                })
-
-                // Emit socket event to join the room
-                // if (socket) {
-                //     socket.emit('JOIN_QUEUE', {
-                //         patientId: user.userId,
-                //         doctorId,
-                //         roomName: response.roomName,
-                //     })
-                // }
-            }
-        } catch (err) {
-            console.error('Error joining queue:', err)
-            setError('Failed to join queue')
-        }
-    }
-
-    // Cleanup function
     const cleanup = () => {
         try {
             if (localTracks.video) {
@@ -189,13 +143,33 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
         }
     }
 
+    const handleJoinQueue = async () => {
+        try {
+            if (!doctorId || !user.userId) return
+
+            const response = await joinQueue({
+                patientId: Number(user.userId),
+            })
+
+            if (response && response.success) {
+                setActualRoomName(response.roomName)
+                setQueueStatus({
+                    position: response.position,
+                    estimatedWait: response.estimatedWait,
+                })
+            }
+        } catch (err) {
+            console.error('Error joining queue:', err)
+            setError('Failed to join queue')
+        }
+    }
+
     const getToken = async (
         roomName: string,
         doctorId: number,
         patientId: number,
     ) => {
         try {
-            console.log('getToken', roomName, doctorId, patientId)
             const identity = isDoctor ? `D-${doctorId}` : `P-${patientId}`
             const roomNameToUse = roomName || ''
 
@@ -266,10 +240,7 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
     }
 
     const handleRoomEvents = (room: Room) => {
-        // Handle existing participants
         room.participants.forEach(handleParticipantConnected)
-
-        // Handle participant connections
         room.on('participantConnected', handleParticipantConnected)
         room.on('participantDisconnected', handleParticipantDisconnected)
         room.on('disconnected', handleRoomDisconnected)
@@ -280,10 +251,8 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
         console.log(`Participant ${participant.identity} connected`)
         setRemoteParticipantIdentity(participant.identity)
 
-        // Handle participant's existing tracks
         participant.tracks.forEach((publication) => {
             if (publication.isSubscribed && publication.track) {
-                // Check track type before handling
                 if (
                     publication.track.kind === 'video' ||
                     publication.track.kind === 'audio'
@@ -297,7 +266,6 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
             }
         })
 
-        // Handle track subscription
         participant.on('trackSubscribed', (track) => {
             if (track.kind === 'video' || track.kind === 'audio') {
                 handleTrackSubscribed(
@@ -322,8 +290,6 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
         try {
             const element = track.attach()
-
-            // Add track ID to the element for later reference
             element.setAttribute('data-track-id', track.sid)
 
             if (track.kind === 'video') {
@@ -331,7 +297,6 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                 element.style.height = '100%'
                 element.style.objectFit = 'cover'
 
-                // Remove any existing video elements to prevent duplicates
                 const existingVideos =
                     remoteVideoRef.current.querySelectorAll('video')
                 existingVideos.forEach((video) => {
@@ -345,7 +310,6 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                 })
             }
 
-            // Add the new element
             remoteVideoRef.current.appendChild(element)
             console.log(`Track ${track.kind} attached with ID: ${track.sid}`)
         } catch (error) {
@@ -360,12 +324,9 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
             console.log(
                 `Unsubscribing from track ${track.kind} with ID: ${track.sid}`,
             )
-
-            // Safely detach the track elements
             const elements = track.detach()
             elements.forEach((element) => {
                 try {
-                    // Verify the element is still in the DOM before removing
                     if (element.parentNode) {
                         element.parentNode.removeChild(element)
                     }
@@ -382,15 +343,10 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
     const handleParticipantDisconnected = (participant: RemoteParticipant) => {
         console.log(`Participant ${participant.identity} disconnected`)
-
-        // Set identity to null first
         setRemoteParticipantIdentity(null)
-
-        // Add delay before cleanup to ensure React has processed state changes
         setTimeout(() => {
             try {
                 if (remoteVideoRef.current) {
-                    // Clear the remote video container instead of trying to remove individual elements
                     remoteVideoRef.current.innerHTML = ''
                 }
             } catch (err) {
@@ -441,19 +397,12 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
         onCallEnd?.()
     }
 
-    const HandleExitQueue = async () => {
+    const handleExitQueue = async () => {
         try {
             if (!doctorId || !user.userId) return
-
-            // Convert patientId to number explicitly
-            const patientIdNum = Number(user.userId)
-
             await leaveQueue({
-                patientId: patientIdNum, // ensure this is a number
+                patientId: Number(user.userId),
             })
-
-            // Optionally emit socket event as needed
-
             onCallEnd?.()
         } catch (err) {
             console.error('Error leaving queue:', err)
@@ -461,50 +410,17 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
         }
     }
 
-    // Render waiting room for patients
-    const renderWaitingRoom = () => {
+    if (!isDoctor && isWaiting) {
         return (
-            <div className="flex-1 flex items-center justify-center bg-gray-900">
-                <div className="text-center text-white p-8">
-                    <h2 className="text-2xl text-white font-bold mb-4">
-                        Waiting for your consultation
-                    </h2>
-                    {queueStatus && (
-                        <div className="mb-4">
-                            <p className="text-lg">
-                                Your position in queue:{' '}
-                                <span className="font-bold">
-                                    {queueStatus.position}
-                                </span>
-                            </p>
-                            <p className="text-lg">
-                                Estimated wait time:{' '}
-                                <span className="font-bold">
-                                    {queueStatus.estimatedWait}
-                                </span>
-                            </p>
-                        </div>
-                    )}
-                    <p className="text-gray-400">
-                        Please don&apos;t close this window. You&apos;ll be
-                        connected with the doctor shortly.
-                    </p>
-                    <Button
-                        variant="solid"
-                        className="mt-4 bg-red-500"
-                        onClick={HandleExitQueue}
-                    >
-                        Leave Queue
-                    </Button>
-                </div>
-            </div>
+            <WaitingRoom
+                queueStatus={queueStatus}
+                onExitQueue={handleExitQueue}
+            />
         )
     }
 
-    return !isDoctor && isWaiting ? (
-        renderWaitingRoom()
-    ) : (
-        <div className="fixed inset-0 flex flex-col bg-gray-900 z-[9999] select-none">
+    return (
+        <div className="fixed inset-0 flex flex-col bg-gray-900 z-[30] select-none">
             <div className="flex-1 flex flex-col bg-gray-900 relative">
                 {error && (
                     <div
@@ -536,70 +452,46 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                         You ({isDoctor ? 'Doctor' : 'Patient'})
                     </div>
                 </div>
+
+                {/* Prescription Button (Only for doctors) */}
+                {isDoctor && remoteParticipantIdentity && (
+                    <div className="absolute top-4 right-4 z-10">
+                        <Button
+                            variant="solid"
+                            icon={<FaNotesMedical />}
+                            onClick={() => {
+                                console.log('Creating prescription')
+                                setIsPrescriptionDrawerOpen(true)
+                            }}
+                            className="bg-primary-500 hover:bg-primary-600 text-white"
+                        >
+                            Create Prescription
+                        </Button>
+                    </div>
+                )}
             </div>
 
-            {/* Controls */}
-            <div className="h-20 bg-gray-800 flex items-center justify-center gap-6 px-6 shadow-inner border-t border-gray-700">
-                {/* Mic toggle */}
-                <button
-                    aria-label={
-                        isMicOn ? 'Mute Microphone' : 'Unmute Microphone'
-                    }
-                    onClick={toggleMic}
-                    disabled={isConnecting}
-                    className={`
-          relative rounded-full p-4 transition-colors duration-200
-       
-          ${isMicOn ? 'bg-green-600 hover:bg-green-700 ' : 'bg-red-600 hover:bg-red-700'}
-          disabled:opacity-50 disabled:cursor-not-allowed
-        `}
-                    title={isMicOn ? 'Mute Microphone' : 'Unmute Microphone'}
-                >
-                    {isMicOn ? (
-                        <HiMicrophone className="text-2xl text-white" />
-                    ) : (
-                        <HiMicrophone className="text-2xl text-white" />
-                    )}
-                </button>
+            <CallControls
+                isMicOn={isMicOn}
+                isVideoOn={isVideoOn}
+                isConnecting={isConnecting}
+                onToggleMic={toggleMic}
+                onToggleVideo={toggleVideo}
+                onEndCall={endCall}
+            />
 
-                {/* Video toggle */}
-                <button
-                    aria-label={
-                        isVideoOn ? 'Turn off camera' : 'Turn on camera'
-                    }
-                    onClick={toggleVideo}
-                    disabled={isConnecting}
-                    className={`
-          relative rounded-full p-4 transition-colors duration-200
-          ${isVideoOn ? 'bg-green-600 hover:bg-green-700 ' : 'bg-red-600 hover:bg-red-700 '}
-          disabled:opacity-50 disabled:cursor-not-allowed
-        `}
-                    title={isVideoOn ? 'Turn off camera' : 'Turn on camera'}
-                >
-                    {isVideoOn ? (
-                        <HiVideoCamera className="text-2xl text-white" />
-                    ) : (
-                        <HiVideoCameraSlash className="text-2xl text-white" />
-                    )}
-                </button>
-
-                {/* End call */}
-                <button
-                    aria-label="End call"
-                    onClick={endCall}
-                    disabled={isConnecting}
-                    className="
-          relative rounded-full p-4 bg-red-700 hover:bg-red-800 focus:outline-none
-          focus:ring-2 focus:ring-offset-2 focus:ring-red-600 transition-colors duration-200
-          disabled:opacity-50 disabled:cursor-not-allowed
-        "
-                    title="End call"
-                >
-                    <HiPhone className="text-2xl text-white rotate-[135deg]" />
-                    <span className="sr-only">End Call</span>
-                </button>
-            </div>
+            {/* Prescription Drawer */}
+            {isDoctor && (
+                <PrescriptionDrawer
+                    isOpen={isPrescriptionDrawerOpen}
+                    onClose={() => setIsPrescriptionDrawerOpen(false)}
+                    consultationId={consultationId}
+                    doctorId={doctorId}
+                    userId={patientId}
+                />
+            )}
         </div>
     )
 }
+
 export default VideoCallInterface

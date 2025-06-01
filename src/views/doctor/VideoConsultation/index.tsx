@@ -3,7 +3,7 @@ import { Card, Button, Tabs, Input } from '@/components/ui'
 import { HiVideoCamera, HiCalendar, HiChat, HiDocumentText } from 'react-icons/hi'
 import { format } from 'date-fns'
 import { useNavigate } from 'react-router-dom'
-import VideoCallInterface from '@/components/shared/VideoCallInterface'
+import VideoCallInterface from '@/views/Interface/VideoCallInterface'
 
 const { TabNav, TabList, TabContent } = Tabs
 

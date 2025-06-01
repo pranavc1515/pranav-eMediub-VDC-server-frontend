@@ -21,10 +21,14 @@ interface VideoCallContextType {
 
     doctorId: number | null
     patientId: number | null
+    consultationId: string | null
+    roomName: string | null
     // roomIdParam: string | null
 
     setDoctorId: (id: number | null) => void
     setPatientId: (id: number | null) => void
+    setConsultationId: (id: string | null) => void
+    setRoomName: (name: string | null) => void
     // setRoomIdParam: (id: string | null) => void
 
     initiateCall: (roomName: string) => Promise<void>
@@ -33,8 +37,6 @@ interface VideoCallContextType {
     participants: Participant[]
     isLoading: boolean
     error: string | null
-    roomName: string | null // <-- new
-    setRoomName: (name: string | null) => void // <-- new
 }
 
 const VideoCallContext = createContext<VideoCallContextType | undefined>(
@@ -55,11 +57,11 @@ export const VideoCallProvider: React.FC<VideoCallProviderProps> = ({
     const [participants, setParticipants] = useState<Participant[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    // const [roomIdParam, setRoomIdParam] = useState<string | null>(null)
-    const [roomName, setRoomName] = useState<string | null>(null)
 
     const [doctorId, setDoctorId] = useState<number | null>(null)
     const [patientId, setPatientId] = useState<number | null>(null)
+    const [roomName, setRoomName] = useState<string | null>(null)
+    const [consultationId, setConsultationId] = useState<string | null>(null)
 
     // Parse doctorId and patientId from roomIdParam when it changes
     // useEffect(() => {
@@ -153,6 +155,8 @@ export const VideoCallProvider: React.FC<VideoCallProviderProps> = ({
             error,
             roomName,
             setRoomName,
+            consultationId,
+            setConsultationId,
         }),
         [
             isCallActive,
@@ -170,6 +174,8 @@ export const VideoCallProvider: React.FC<VideoCallProviderProps> = ({
             error,
             roomName,
             setRoomName,
+            consultationId,
+            setConsultationId,
         ],
     )
 
