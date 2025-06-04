@@ -48,7 +48,7 @@ const navigationConfig: NavigationTree[] = [
         path: '/doctor/upload-prescription',
         title: 'Upload Prescription',
         translateKey: 'nav.uploadPrescription',
-        icon: 'file-plus',
+        icon: 'file-upload',
         type: NAV_ITEM_TYPE_ITEM,
         authority: ['doctor'],
         subMenu: [],
