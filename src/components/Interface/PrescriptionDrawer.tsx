@@ -11,15 +11,8 @@ import {
 } from '@/components/ui'
 import { HiOutlineDocumentAdd, HiOutlineCloudUpload } from 'react-icons/hi'
 import { FaNotesMedical } from 'react-icons/fa'
-import axios from 'axios'
-
-interface Medicine {
-    name: string
-    dosage: string
-    frequency: string
-    duration: string
-    notes: string
-}
+import usePrescription from '@/hooks/usePrescription'
+import type { Medicine } from '@/services/PrescriptionService'
 
 interface PrescriptionDrawerProps {
     isOpen: boolean
@@ -38,7 +31,7 @@ const PrescriptionDrawer = ({
 }: PrescriptionDrawerProps) => {
     const [activeTab, setActiveTab] = useState('upload')
     const [file, setFile] = useState<File | null>(null)
-    const [isUploading, setIsUploading] = useState(false)
+    console.log('ids:', consultationId, doctorId, userId)
 
     // States for custom prescription
     const [medicines, setMedicines] = useState<Medicine[]>([
@@ -51,6 +44,15 @@ const PrescriptionDrawer = ({
         },
     ])
     const [instructions, setInstructions] = useState('')
+
+    const {
+        loading: isUploading,
+        uploadPrescription,
+        createCustomPrescription,
+    } = usePrescription({
+        doctorId,
+        userId: userId || undefined,
+    })
 
     // Handle file upload
     const onFileUpload = (_: File[], fileList: File[]) => {
@@ -72,57 +74,36 @@ const PrescriptionDrawer = ({
             return
         }
 
-        try {
-            setIsUploading(true)
-
-            const formData = new FormData()
-            formData.append('file', file!)
-
-            let url = `/api/prescriptions/upload/${consultationId}`
-
-            // Add query parameters if provided
-            if (doctorId) {
-                url += `?doctorId=${doctorId}`
-
-                if (userId) {
-                    url += `&userId=${userId}`
-                }
-            } else if (userId) {
-                url += `?userId=${userId}`
-            }
-
-            const response = await axios.post(url, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            })
-
-            if (response.status === 201) {
-                toast.push(
-                    <Notification type="success">
-                        <span>Prescription uploaded successfully</span>
-                    </Notification>,
-                    {
-                        placement: 'top-center',
-                    },
-                )
-
-                // Reset form
-                setFile(null)
-                onClose()
-            }
-        } catch (error) {
-            console.error('Error uploading prescription:', error)
+        if (!file) {
             toast.push(
                 <Notification type="danger">
-                    <span>Failed to upload prescription</span>
+                    <span>Please select a file to upload</span>
                 </Notification>,
                 {
                     placement: 'top-center',
                 },
             )
-        } finally {
-            setIsUploading(false)
+            return
+        }
+
+        const result = await uploadPrescription({
+            consultationId,
+            file,
+        })
+
+        if (result) {
+            toast.push(
+                <Notification type="success">
+                    <span>Prescription uploaded successfully</span>
+                </Notification>,
+                {
+                    placement: 'top-center',
+                },
+            )
+
+            // Reset form
+            setFile(null)
+            onClose()
         }
     }
 
@@ -165,70 +146,34 @@ const PrescriptionDrawer = ({
             return
         }
 
-        try {
-            setIsUploading(true)
+        const result = await createCustomPrescription({
+            consultationId,
+            medicines,
+            instructions,
+        })
 
-            const payload = {
-                medicines: medicines.map((medicine) => ({
-                    name: medicine.name,
-                    dosage: medicine.dosage,
-                    frequency: medicine.frequency,
-                    duration: medicine.duration,
-                    notes: medicine.notes,
-                })),
-                instructions,
-            }
-
-            let url = `/api/prescriptions/custom/${consultationId}`
-
-            // Add query parameters if provided
-            if (doctorId) {
-                url += `?doctorId=${doctorId}`
-
-                if (userId) {
-                    url += `&userId=${userId}`
-                }
-            } else if (userId) {
-                url += `?userId=${userId}`
-            }
-
-            const response = await axios.post(url, payload)
-
-            if (response.status === 201) {
-                toast.push(
-                    <Notification type="success">
-                        <span>Custom prescription created successfully</span>
-                    </Notification>,
-                    {
-                        placement: 'top-center',
-                    },
-                )
-
-                // Reset form
-                setMedicines([
-                    {
-                        name: '',
-                        dosage: '',
-                        frequency: '',
-                        duration: '',
-                        notes: '',
-                    },
-                ])
-                setInstructions('')
-                onClose()
-            }
-        } catch (error) {
-            console.error('Error creating custom prescription:', error)
+        if (result) {
             toast.push(
-                <Notification type="danger">
-                    <span>Failed to create custom prescription</span>
+                <Notification type="success">
+                    <span>Custom prescription created successfully</span>
                 </Notification>,
                 {
                     placement: 'top-center',
                 },
             )
-        } finally {
-            setIsUploading(false)
+
+            // Reset form
+            setMedicines([
+                {
+                    name: '',
+                    dosage: '',
+                    frequency: '',
+                    duration: '',
+                    notes: '',
+                },
+            ])
+            setInstructions('')
+            onClose()
         }
     }
 

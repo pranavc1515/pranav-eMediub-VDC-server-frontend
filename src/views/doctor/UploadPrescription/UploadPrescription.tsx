@@ -3,7 +3,6 @@ import {
     Card,
     Button,
     Input,
-    Select,
     FormContainer,
     FormItem,
     Upload,
@@ -12,17 +11,9 @@ import {
     Tabs,
 } from '@/components/ui'
 import Container from '@/components/shared/Container'
-import type { SingleValue } from 'react-select'
 import { HiOutlineDocumentAdd, HiOutlineCloudUpload } from 'react-icons/hi'
-import axios from 'axios'
-
-interface Medicine {
-    name: string
-    dosage: string
-    frequency: string
-    duration: string
-    notes: string
-}
+import usePrescription from '@/hooks/usePrescription'
+import type { Medicine } from '@/services/PrescriptionService'
 
 const { TabNav, TabList, TabContent } = Tabs
 
@@ -32,7 +23,6 @@ const UploadPrescription = () => {
     const [doctorId, setDoctorId] = useState('')
     const [userId, setUserId] = useState('')
     const [file, setFile] = useState<File | null>(null)
-    const [isUploading, setIsUploading] = useState(false)
 
     // States for custom prescription
     const [medicines, setMedicines] = useState<Medicine[]>([
@@ -46,21 +36,24 @@ const UploadPrescription = () => {
     ])
     const [instructions, setInstructions] = useState('')
 
+    const { loading: isUploading, uploadPrescription, createCustomPrescription } = usePrescription({
+        doctorId: doctorId ? parseInt(doctorId) : undefined,
+        userId: userId ? parseInt(userId) : undefined,
+    })
+
     // Handle file upload
-    const onFileUpload = (files: FileList | null) => {
-        if (files && files[0]) {
-            setFile(files[0])
+    const onFileUpload = (_: File[], fileList: File[]) => {
+        if (fileList.length > 0) {
+            setFile(fileList[0])
         }
     }
 
     const handleUploadPrescription = async () => {
         if (!consultationId) {
             toast.push(
-                <Notification
-                    type="danger"
-                    title="Error"
-                    content="Consultation ID is required"
-                />,
+                <Notification type="danger" title="Error">
+                    <span>Consultation ID is required</span>
+                </Notification>,
                 {
                     placement: 'top-center',
                 },
@@ -70,11 +63,9 @@ const UploadPrescription = () => {
 
         if (!file) {
             toast.push(
-                <Notification
-                    type="danger"
-                    title="Error"
-                    content="Please select a file to upload"
-                />,
+                <Notification type="danger" title="Error">
+                    <span>Please select a file to upload</span>
+                </Notification>,
                 {
                     placement: 'top-center',
                 },
@@ -82,63 +73,26 @@ const UploadPrescription = () => {
             return
         }
 
-        try {
-            setIsUploading(true)
+        const result = await uploadPrescription({
+            consultationId,
+            file,
+        })
 
-            const formData = new FormData()
-            formData.append('file', file)
-
-            let url = `/api/prescriptions/upload/${consultationId}`
-
-            // Add query parameters if provided
-            if (doctorId) {
-                url += `?doctorId=${doctorId}`
-
-                if (userId) {
-                    url += `&userId=${userId}`
-                }
-            } else if (userId) {
-                url += `?userId=${userId}`
-            }
-
-            const response = await axios.post(url, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            })
-
-            if (response.status === 201) {
-                toast.push(
-                    <Notification
-                        type="success"
-                        title="Success"
-                        content="Prescription uploaded successfully"
-                    />,
-                    {
-                        placement: 'top-center',
-                    },
-                )
-
-                // Reset form
-                setConsultationId('')
-                setDoctorId('')
-                setUserId('')
-                setFile(null)
-            }
-        } catch (error) {
-            console.error('Error uploading prescription:', error)
+        if (result) {
             toast.push(
-                <Notification
-                    type="danger"
-                    title="Error"
-                    content="Failed to upload prescription"
-                />,
+                <Notification type="success" title="Success">
+                    <span>Prescription uploaded successfully</span>
+                </Notification>,
                 {
                     placement: 'top-center',
                 },
             )
-        } finally {
-            setIsUploading(false)
+
+            // Reset form
+            setConsultationId('')
+            setDoctorId('')
+            setUserId('')
+            setFile(null)
         }
     }
 
@@ -171,11 +125,9 @@ const UploadPrescription = () => {
     const handleCreateCustomPrescription = async () => {
         if (!consultationId) {
             toast.push(
-                <Notification
-                    type="danger"
-                    title="Error"
-                    content="Consultation ID is required"
-                />,
+                <Notification type="danger" title="Error">
+                    <span>Consultation ID is required</span>
+                </Notification>,
                 {
                     placement: 'top-center',
                 },
@@ -183,76 +135,36 @@ const UploadPrescription = () => {
             return
         }
 
-        try {
-            setIsUploading(true)
+        const result = await createCustomPrescription({
+            consultationId,
+            medicines,
+            instructions,
+        })
 
-            const payload = {
-                medicines: medicines.map((medicine) => ({
-                    name: medicine.name,
-                    dosage: medicine.dosage,
-                    frequency: medicine.frequency,
-                    duration: medicine.duration,
-                    notes: medicine.notes,
-                })),
-                instructions,
-            }
-
-            let url = `/api/prescriptions/custom/${consultationId}`
-
-            // Add query parameters if provided
-            if (doctorId) {
-                url += `?doctorId=${doctorId}`
-
-                if (userId) {
-                    url += `&userId=${userId}`
-                }
-            } else if (userId) {
-                url += `?userId=${userId}`
-            }
-
-            const response = await axios.post(url, payload)
-
-            if (response.status === 201) {
-                toast.push(
-                    <Notification
-                        type="success"
-                        title="Success"
-                        content="Custom prescription created successfully"
-                    />,
-                    {
-                        placement: 'top-center',
-                    },
-                )
-
-                // Reset form
-                setConsultationId('')
-                setDoctorId('')
-                setUserId('')
-                setMedicines([
-                    {
-                        name: '',
-                        dosage: '',
-                        frequency: '',
-                        duration: '',
-                        notes: '',
-                    },
-                ])
-                setInstructions('')
-            }
-        } catch (error) {
-            console.error('Error creating custom prescription:', error)
+        if (result) {
             toast.push(
-                <Notification
-                    type="danger"
-                    title="Error"
-                    content="Failed to create custom prescription"
-                />,
+                <Notification type="success" title="Success">
+                    <span>Custom prescription created successfully</span>
+                </Notification>,
                 {
                     placement: 'top-center',
                 },
             )
-        } finally {
-            setIsUploading(false)
+
+            // Reset form
+            setConsultationId('')
+            setDoctorId('')
+            setUserId('')
+            setMedicines([
+                {
+                    name: '',
+                    dosage: '',
+                    frequency: '',
+                    duration: '',
+                    notes: '',
+                },
+            ])
+            setInstructions('')
         }
     }
 
@@ -279,7 +191,6 @@ const UploadPrescription = () => {
                                 <FormItem
                                     label="Consultation ID"
                                     labelClass="font-medium mb-2"
-                                    required
                                 >
                                     <Input
                                         value={consultationId}
@@ -316,7 +227,6 @@ const UploadPrescription = () => {
                                 <FormItem
                                     label="Prescription File"
                                     labelClass="font-medium mb-2"
-                                    required
                                 >
                                     <Upload
                                         onChange={onFileUpload}
@@ -360,7 +270,6 @@ const UploadPrescription = () => {
                                 <FormItem
                                     label="Consultation ID"
                                     labelClass="font-medium mb-2"
-                                    required
                                 >
                                     <Input
                                         value={consultationId}

@@ -84,7 +84,8 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
         if (!socket) return
 
         if (isDoctor) {
-            startConsultation(patientId).then(() => {
+            startConsultation(patientId).then((res) => {
+                setConsultationId(res.consultationId)
                 joinRoom(roomName, doctorId, patientId)
             })
         } else {
@@ -97,7 +98,6 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
         if (!isDoctor) {
             socket.on('CONSULTATION_STARTED', async (data) => {
-                setConsultationId(data.consultationId)
                 setIsWaiting(false)
                 await joinRoom(data.roomName, data.doctorId, data.patientId)
             })
@@ -433,15 +433,22 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
                 {/* Remote Video */}
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
-                    <div
-                        ref={remoteVideoRef}
-                        className="w-full h-full relative bg-black rounded-md shadow-inner"
-                    >
-                        {!remoteParticipantIdentity && (
-                            <div className="absolute inset-0 flex items-center justify-center text-white text-lg font-medium">
-                                Waiting for other participant to join...
-                            </div>
-                        )}
+                    <div className="w-full h-full flex items-center justify-center">
+                        <div
+                            ref={remoteVideoRef}
+                            className="relative bg-black rounded-md shadow-inner"
+                            style={{
+                                width: '100%',
+                                maxWidth: '960px', // Responsive maximum width
+                                aspectRatio: '16 / 9', // Maintain 16:9 ratio
+                            }}
+                        >
+                            {!remoteParticipantIdentity && (
+                                <div className="absolute inset-0 flex items-center justify-center text-white text-lg font-medium">
+                                    Waiting for other participant to join...
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -454,7 +461,8 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                 </div>
 
                 {/* Prescription Button (Only for doctors) */}
-                {isDoctor && remoteParticipantIdentity && (
+                {/* && remoteParticipantIdentity */}
+                {isDoctor && (
                     <div className="absolute top-4 right-4 z-10">
                         <Button
                             variant="solid"
