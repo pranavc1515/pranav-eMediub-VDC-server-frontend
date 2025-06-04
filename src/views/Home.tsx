@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { memo } from 'react'
 import {
     Card,
     Input,
@@ -21,6 +22,12 @@ import PaymentService from '@/services/PaymentService'
 import VideoService from '@/services/VideoService'
 import { useVideoCall } from '@/contexts/VideoCallContext'
 import { useSocketContext } from '@/contexts/SocketContext'
+import ReactMuiTableListView from '@/components/shared/ReactMuiTableListView'
+import type { DoctorProfile } from '@/services/DoctorService'
+import type {
+    JoinQueueResponse,
+    PatientQueueEntry,
+} from '@/services/PatientQueue'
 
 // Define the API URL using Vite's import.meta.env instead of process.env
 // const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
@@ -79,22 +86,118 @@ function debounce(func: (...args: any[]) => void, wait: number) {
     }
 }
 
+interface Column<T = any> {
+    Header: string
+    accessor: keyof T | string
+    Cell?: (props: { value: any; row: T }) => JSX.Element
+}
+
+interface ExtendedPatientQueueEntry {
+    id: number
+    position: number
+    patientId: number
+    status: string
+    roomName: string
+    patient: {
+        firstName: string
+        lastName: string
+    }
+}
+
+interface DoctorWithProfessional {
+    id: string
+    fullName: string
+    profilePhoto?: string
+    isOnline: string
+    DoctorProfessional?: {
+        specialization?: string
+        yearsOfExperience?: number
+    }
+}
+
 const Home = () => {
     const { setDoctorId, setPatientId, setRoomName } = useVideoCall()
     const [selectedCategory, setSelectedCategory] = useState('all')
     const [searchTerm, setSearchTerm] = useState('')
     const [showOnlyAvailable, setShowOnlyAvailable] = useState(true)
     const [currentPage, setCurrentPage] = useState(1)
+    const [pageSize, setPageSize] = useState(15)
     const [isAvailable, setIsAvailable] = useState(true)
 
     const navigate = useNavigate()
     const { socket } = useSocketContext()
-
-    // Get user from auth store
     const user = useSessionUser((state) => state.user)
-
-    // Determine if user is doctor based on authority
     const isDoctor = user.authority?.includes('doctor') || false
+
+    // Memoize specialization value
+    const specialization = useMemo(
+        () => (selectedCategory !== 'all' ? selectedCategory : undefined),
+        [selectedCategory],
+    )
+
+    const {
+        doctors,
+        count,
+        loading,
+        fetchDoctors,
+        totalPages,
+        changePage,
+        search,
+    } = useDoctors({
+        specialization,
+        autoFetch: !isDoctor,
+        showOnlyAvailable,
+        initialPage: currentPage,
+        pageSize,
+    })
+
+    // Memoize handlers
+    const handleCategoryChange = useCallback((category: string) => {
+        setSelectedCategory(category)
+        setCurrentPage(1) // Reset to first page when changing category
+    }, [])
+
+    const debouncedSearch = useRef(
+        debounce((value: string) => {
+            search(value)
+        }, 300),
+    ).current
+
+    const handleSearchChange = useCallback(
+        (value: string) => {
+            setSearchTerm(value)
+            debouncedSearch(value)
+        },
+        [debouncedSearch],
+    )
+
+    const handleAvailabilityToggle = useCallback((checked: boolean) => {
+        setShowOnlyAvailable(checked)
+        setCurrentPage(1) // Reset to first page when toggling availability
+    }, [])
+
+    const handlePageChange = useCallback(
+        (page: number) => {
+            setCurrentPage(page)
+            changePage(page)
+        },
+        [changePage],
+    )
+
+    const handlePageSizeChange = useCallback((newPageSize: number) => {
+        setPageSize(newPageSize)
+        setCurrentPage(1) // Reset to first page when changing page size
+    }, [])
+
+    // Effect for doctor availability
+    useEffect(() => {
+        if (isDoctor && socket) {
+            socket.emit('SWITCH_DOCTOR_AVAILABILITY', {
+                doctorId: user.userId,
+                isAvailable: true,
+            })
+        }
+    }, [isDoctor, socket, user.userId])
 
     // Use patient queue hook for doctors
     const { queue: patientQueue, fetchQueue } = usePatientQueue({
@@ -105,47 +208,7 @@ const Home = () => {
         doctorId: isDoctor ? parseInt(user.userId) : 0,
     })
 
-    const availabilityRef = useRef(isAvailable)
-    availabilityRef.current = isAvailable
-
-    const emitAvailabilityChange = debounce((available: boolean) => {
-        if (socket && isDoctor) {
-            socket.emit('SWITCH_DOCTOR_AVAILABILITY', {
-                doctorId: user.userId,
-                isAvailable: available,
-            })
-        }
-    }, 300) // 300ms debounce delay
-
-    // Use custom hook to get doctors data with the updated props
-    const specialization =
-        selectedCategory !== 'all' ? selectedCategory : undefined
-    const {
-        doctors,
-        count,
-        loading,
-        error,
-        fetchDoctors,
-        filterDoctors,
-        totalPages = 1,
-        currentPage: remotePage = 1,
-        changePage,
-        search,
-    } = useDoctors({
-        specialization,
-        autoFetch: !isDoctor,
-        showOnlyAvailable,
-        initialPage: 1,
-        pageSize: 15,
-    })
-
-    // Effect to refetch data when availability toggle changes
-    useEffect(() => {
-        if (!isDoctor) {
-            fetchDoctors(1)
-        }
-    }, [showOnlyAvailable, fetchDoctors, isDoctor])
-
+    // Effect to handle doctor's queue updates
     useEffect(() => {
         if (isDoctor && socket) {
             // Listen for queue updates
@@ -158,36 +221,25 @@ const Home = () => {
             fetchQueue()
 
             return () => {
-                socket.disconnect()
+                socket.off('QUEUE_CHANGED')
             }
         }
     }, [isDoctor, user.userId, fetchQueue, socket])
 
+    const availabilityRef = useRef(isAvailable)
+    availabilityRef.current = isAvailable
+
+    const emitAvailabilityChange = debounce((available: boolean) => {
+        if (socket && isDoctor) {
+            socket.emit('SWITCH_DOCTOR_AVAILABILITY', {
+                doctorId: user.userId,
+                isAvailable: available,
+            })
+        }
+    }, 500)
+
     // Update stats count
     statsData[0].value = count
-
-    // Handle category change
-    const handleCategoryChange = (category: string) => {
-        setSelectedCategory(category)
-    }
-
-    // Handle search input change
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const term = e.target.value
-        setSearchTerm(term)
-        search(term)
-    }
-
-    // Handle availability toggle
-    const handleAvailabilityToggle = (checked: boolean) => {
-        setShowOnlyAvailable(checked)
-    }
-
-    // Handle pagination
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page)
-        changePage?.(page)
-    }
 
     const createRoom = async (patientId: number, roomName: string) => {
         try {
@@ -299,15 +351,6 @@ const Home = () => {
         handleCreateOrder()
     }
 
-    useEffect(() => {
-        if (isDoctor && socket) {
-            socket.emit('SWITCH_DOCTOR_AVAILABILITY', {
-                doctorId: user.userId,
-                isAvailable: true,
-            })
-        }
-    }, [isDoctor, socket, user.userId])
-
     const handleToggleAvailability = () => {
         setIsAvailable((prev) => {
             const newAvailability = !prev
@@ -316,7 +359,7 @@ const Home = () => {
         })
     }
 
-    const renderDoctorDashboard = () => {
+    const renderDoctorDashboard = useCallback(() => {
         return (
             <Container className="h-full">
                 <div className="mb-8 flex justify-between items-center">
@@ -421,7 +464,8 @@ const Home = () => {
                             {patientQueue.map((patient) => (
                                 <tr key={patient.id}>
                                     <td>{patient.position}</td>
-                                    <td>{patient.patient.name}</td>
+                                    <td>{patient.patient.name}</td>{' '}
+                                    {/* dont make it firstName and lastName */}
                                     <td>{new Date().toLocaleTimeString()}</td>
                                     <td>{patient.roomName}</td>
                                     <td>
@@ -430,8 +474,6 @@ const Home = () => {
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
-                                                // borderRadius: '50px',
-                                                // padding: '4px 8px',
                                             }}
                                             className={'bg-primary-500'}
                                         >
@@ -471,9 +513,95 @@ const Home = () => {
                 </Card>
             </Container>
         )
-    }
+    }, [
+        user.userName,
+        isAvailable,
+        handleToggleAvailability,
+        patientQueue,
+        handleStartConsultation,
+    ])
 
-    const renderPatientDashboard = () => {
+    // Memoize table columns
+    const columns = useMemo<Column<DoctorWithProfessional>[]>(
+        () => [
+            {
+                Header: 'Doctor',
+                accessor: 'fullName',
+                Cell: ({ row }) => (
+                    <div className="flex items-center gap-4">
+                        <Avatar
+                            size={60}
+                            src={
+                                row.profilePhoto ||
+                                '/img/avatars/default-avatar.jpg'
+                            }
+                        />
+                        <div>
+                            <h5 className="font-semibold">{row.fullName}</h5>
+                            <p className="text-gray-500">
+                                {row.DoctorProfessional?.specialization}
+                            </p>
+                            <div className="flex items-center gap-1">
+                                <span>
+                                    {row.DoctorProfessional
+                                        ?.yearsOfExperience ?? 0}{' '}
+                                    years experience
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                ),
+            },
+            {
+                Header: 'Status',
+                accessor: 'isOnline',
+                Cell: ({ value }) => (
+                    <div className="flex justify-center">
+                        <Badge
+                            style={{
+                                borderRadius: '50px',
+                                padding: '4px 8px',
+                            }}
+                            className={
+                                value === 'available'
+                                    ? 'bg-emerald-500 text-white'
+                                    : 'bg-gray-300 text-white'
+                            }
+                        >
+                            {value === 'available'
+                                ? 'Available now'
+                                : 'Offline'}
+                        </Badge>
+                    </div>
+                ),
+            },
+            {
+                Header: 'Action',
+                accessor: 'id',
+                Cell: ({ row }) => (
+                    <div className="flex justify-center">
+                        <Button
+                            variant="solid"
+                            size="sm"
+                            disabled={row.isOnline !== 'available'}
+                            className={
+                                row.isOnline !== 'available'
+                                    ? 'opacity-50 cursor-not-allowed'
+                                    : ''
+                            }
+                            onClick={() => handleConsultNow(row)}
+                        >
+                            <span className="icon-video mr-1"></span>
+                            Consult Now
+                        </Button>
+                    </div>
+                ),
+            },
+        ],
+        [handleConsultNow],
+    )
+
+    const renderPatientDashboard = useCallback(() => {
         return (
             <Container className="h-full">
                 <div className="mb-8">
@@ -504,12 +632,6 @@ const Home = () => {
                                         <span className="text-xl font-bold">
                                             {stat.value}
                                         </span>
-                                        {/* <span
-                                            className={`text-xs ${stat.growth > 0 ? 'text-emerald-500' : 'text-red-500'}`}
-                                        >
-                                            {stat.growth > 0 ? '+' : ''}
-                                            {stat.growth}%
-                                        </span> */}
                                     </div>
                                 </div>
                             </div>
@@ -519,191 +641,87 @@ const Home = () => {
 
                 {/* Search and Problem Selection */}
                 <Card className="mb-6">
-                    <div className="flex flex-col md:flex-row gap-4 items-center">
-                        <div className="w-full md:w-1/3">
-                            <Input
-                                placeholder="Search doctor or specialty..."
-                                value={searchTerm}
-                                onChange={handleSearchChange}
-                                prefix={
-                                    <span className="text-lg icon-search"></span>
-                                }
-                            />
-                        </div>
-                        <div className="w-full md:w-2/3">
-                            <div className="flex justify-between items-center mb-2">
-                                <h6 className="text-sm text-gray-500">
-                                    Select your health concern:
-                                </h6>
-                                <div className="flex items-center">
-                                    <span className="text-sm mr-2">
-                                        Show only available doctors
-                                    </span>
-                                    <Switcher
-                                        checked={showOnlyAvailable}
-                                        onChange={handleAvailabilityToggle}
-                                    />
-                                </div>
+                    <div className="flex flex-col gap-4 w-full">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                            <h6 className="text-sm text-gray-500 mb-2 md:mb-0">
+                                Select your health concern:
+                            </h6>
+                            <div className="flex items-center">
+                                <span className="text-sm mr-2">
+                                    Show only available doctors
+                                </span>
+                                <Switcher
+                                    checked={showOnlyAvailable}
+                                    onChange={handleAvailabilityToggle}
+                                />
                             </div>
-                            <div className="flex flex-wrap gap-2">
+                        </div>
+                        <div className="flex flex-wrap gap-2 w-full">
+                            <Button
+                                className={`${selectedCategory === 'all' ? 'bg-primary-500 text-dark' : 'bg-gray-100'} rounded-full text-sm px-3 py-1`}
+                                variant={
+                                    selectedCategory === 'all'
+                                        ? 'solid'
+                                        : 'default'
+                                }
+                                onClick={() => handleCategoryChange('all')}
+                                size="sm"
+                            >
+                                All
+                            </Button>
+                            {problemCategories.map((category) => (
                                 <Button
-                                    className={`${selectedCategory === 'all' ? 'bg-primary-500 text-dark' : 'bg-gray-100'} rounded-full text-sm px-3 py-1`}
+                                    key={category.value}
+                                    className={`${selectedCategory === category.value ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-blue-500 hover:text-white'} rounded-full text-sm px-3 py-1`}
                                     variant={
-                                        selectedCategory === 'all'
+                                        selectedCategory === category.value
                                             ? 'solid'
                                             : 'default'
                                     }
-                                    onClick={() => handleCategoryChange('all')}
+                                    onClick={() =>
+                                        handleCategoryChange(category.value)
+                                    }
                                     size="sm"
                                 >
-                                    All
+                                    {category.label}
                                 </Button>
-                                {problemCategories.map((category) => (
-                                    <Button
-                                        key={category.value}
-                                        className={`${selectedCategory === category.value ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-blue-500 hover:text-white'} rounded-full text-sm px-3 py-1`}
-                                        variant={
-                                            selectedCategory === category.value
-                                                ? 'solid'
-                                                : 'default'
-                                        }
-                                        onClick={() =>
-                                            handleCategoryChange(category.value)
-                                        }
-                                        size="sm"
-                                    >
-                                        {category.label}
-                                    </Button>
-                                ))}
-                            </div>
+                            ))}
                         </div>
                     </div>
                 </Card>
 
-                {/* Banner */}
-
-                {/* Loading and Error States */}
-                {loading && (
-                    <div className="flex justify-center p-4">
-                        <span className="text-primary-500">
-                            Loading doctors...
-                        </span>
-                    </div>
-                )}
-
-                {error && (
-                    <div className="bg-red-100 text-red-600 p-4 rounded mb-4">
-                        {error}
-                    </div>
-                )}
-
-                {/* Doctors Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    {!loading && doctors && doctors.length > 0
-                        ? doctors.map((doctor) => (
-                              <Card
-                                  key={doctor.id}
-                                  className="hover:shadow-lg transition-shadow"
-                              >
-                                  <div className="flex items-center gap-4 mb-4">
-                                      <Avatar
-                                          size={60}
-                                          src={
-                                              doctor.profilePhoto ||
-                                              '/img/avatars/default-avatar.jpg'
-                                          }
-                                      />
-                                      <div>
-                                          <h5 className="font-semibold">
-                                              {doctor.fullName}
-                                          </h5>
-                                          <p className="text-gray-500">
-                                              {
-                                                  doctor.DoctorProfessional
-                                                      ?.specialization
-                                              }
-                                          </p>
-                                          <div className="flex items-center gap-1">
-                                              <span>
-                                                  {
-                                                      doctor.DoctorProfessional
-                                                          ?.yearsOfExperience
-                                                  }{' '}
-                                                  years experience
-                                              </span>
-                                          </div>
-                                      </div>
-                                  </div>
-                                  <div className="flex justify-between items-center">
-                                      <Badge
-                                          style={{
-                                              borderRadius: '50px',
-                                              padding: '4px 8px',
-                                          }}
-                                          className={
-                                              doctor.isOnline === 'available'
-                                                  ? 'bg-emerald-500 text-white'
-                                                  : 'bg-gray-500 text-white'
-                                          }
-                                      >
-                                          {doctor.isOnline === 'available'
-                                              ? 'Available now'
-                                              : 'Offline'}
-                                      </Badge>
-                                      <Button
-                                          variant="solid"
-                                          size="sm"
-                                          disabled={
-                                              doctor.isOnline !== 'available'
-                                          }
-                                          className={
-                                              doctor.isOnline !== 'available'
-                                                  ? 'opacity-50 cursor-not-allowed'
-                                                  : ''
-                                          }
-                                          onClick={() =>
-                                              handleConsultNow(doctor)
-                                          }
-                                      >
-                                          <span className="icon-video mr-1"></span>
-                                          Consult Now
-                                      </Button>
-                                  </div>
-                              </Card>
-                          ))
-                        : !loading && (
-                              <div className="col-span-full text-center p-8">
-                                  <div className="text-gray-400 text-xl mb-2">
-                                      No doctors available for the selected
-                                      category
-                                  </div>
-                                  <Button
-                                      variant="plain"
-                                      onClick={() =>
-                                          handleCategoryChange('all')
-                                      }
-                                  >
-                                      Show all doctors
-                                  </Button>
-                              </div>
-                          )}
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex justify-center mb-6">
-                        <Pagination
-                            currentPage={currentPage}
-                            total={totalPages}
-                            onChange={handlePageChange}
-                        />
-                    </div>
-                )}
+                {/* Doctors List View */}
+                <ReactMuiTableListView
+                    tableTitle="Doctors List"
+                    columns={columns}
+                    data={doctors}
+                    loading={loading}
+                    enablePagination={true}
+                    currentPage={currentPage}
+                    pageSize={pageSize}
+                    totalItems={count}
+                    onPageChange={handlePageChange}
+                    onPageSizeChange={handlePageSizeChange}
+                    searchTerm={searchTerm}
+                    onSearchChange={handleSearchChange}
+                    viewTypeProp="card"
+                />
             </Container>
         )
-    }
+    }, [
+        columns,
+        doctors,
+        loading,
+        currentPage,
+        pageSize,
+        count,
+        handlePageChange,
+        handlePageSizeChange,
+        searchTerm,
+        handleSearchChange,
+    ])
 
     return isDoctor ? renderDoctorDashboard() : renderPatientDashboard()
 }
 
-export default Home
+export default memo(Home)

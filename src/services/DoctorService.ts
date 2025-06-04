@@ -152,19 +152,17 @@ const DoctorService = {
      * @returns Promise with doctors data
      */
     getDoctors(params: GetDoctorsParams = {}) {
-        const { onlyAvailable, specialization, page, limit, search } = params
-
-        // Determine which endpoint to use based on availability
-        const url = onlyAvailable ? '/api/doctors/available' : '/api/doctors'
+        const { specialization, page, limit, search, onlyAvailable } = params
 
         return ApiService.fetchDataWithAxios<AvailableDoctorsResponse>({
-            url,
+            url: '/api/doctors',
             method: 'GET',
             params: {
                 ...(specialization && { specialization }),
                 ...(page && { page }),
                 ...(limit && { limit }),
                 ...(search && { search }),
+                ...(onlyAvailable !== undefined && { onlyAvailable }),
             },
         })
     },

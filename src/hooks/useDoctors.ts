@@ -1,24 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import DoctorService from '@/services/DoctorService'
-
-// Define types for doctor and service response
-interface Doctor {
-    id: string
-    fullName: string
-    DoctorProfessional?: {
-        specialization?: string
-    }
-    [key: string]: any // for any additional fields
-}
-
-interface DoctorResponse {
-    success: boolean
-    data: Doctor[]
-    count: number
-    totalPages?: number
-    currentPage?: number
-    message?: string
-}
+import type { DoctorProfile } from '@/services/DoctorService'
 
 // Props for the hook
 interface UseDoctorsProps {
@@ -36,77 +18,84 @@ const useDoctors = ({
     initialPage = 1,
     pageSize = 15,
 }: UseDoctorsProps) => {
-    const [doctors, setDoctors] = useState<Doctor[]>([])
+    const [doctors, setDoctors] = useState<DoctorProfile[]>([])
     const [loading, setLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
     const [count, setCount] = useState<number>(0)
     const [totalPages, setTotalPages] = useState<number>(1)
     const [currentPage, setCurrentPage] = useState<number>(initialPage)
     const [searchTerm, setSearchTerm] = useState<string>('')
+    const [lastFetchParams, setLastFetchParams] = useState<string>('')
 
-    const fetchDoctors = useCallback(
-        async (page: number = currentPage, search: string = searchTerm) => {
-            try {
-                setLoading(true)
-                setError(null)
+    // Memoize the fetch parameters
+    const fetchParams = useMemo(() => {
+        return JSON.stringify({
+            specialization,
+            page: currentPage,
+            limit: pageSize,
+            search: searchTerm,
+            onlyAvailable: showOnlyAvailable,
+        })
+    }, [specialization, currentPage, pageSize, searchTerm, showOnlyAvailable])
 
-                const response: DoctorResponse = await DoctorService.getDoctors(
-                    {
-                        specialization,
-                        page,
-                        limit: pageSize,
-                        search,
-                        onlyAvailable: showOnlyAvailable,
-                    },
-                )
+    const fetchDoctors = useCallback(async () => {
+        // Prevent duplicate API calls with same parameters
+        if (lastFetchParams === fetchParams && doctors.length > 0) {
+            return;
+        }
 
-                if (response.success) {
-                    setDoctors(response.data)
-                    setCount(response.count)
-                    setTotalPages(
-                        response.totalPages ??
-                            Math.ceil(response.count / pageSize),
-                    )
-                    setCurrentPage(response.currentPage ?? page)
-                } else {
-                    setError(response.message || 'Error fetching doctors')
+        try {
+            setLoading(true)
+            setError(null)
+
+            const response = await DoctorService.getDoctors({
+                specialization,
+                page: currentPage,
+                limit: pageSize,
+                search: searchTerm,
+                onlyAvailable: showOnlyAvailable,
+            })
+
+            if (response.success) {
+                setDoctors(response.data)
+                setCount(response.count)
+                setTotalPages(response.totalPages || Math.ceil(response.count / pageSize))
+                
+                // Only update current page if it's different
+                if (response.currentPage !== currentPage) {
+                    setCurrentPage(response.currentPage || currentPage)
                 }
-            } catch (err: any) {
-                setError(err?.message || 'Error fetching doctors')
-            } finally {
-                setLoading(false)
+                
+                setLastFetchParams(fetchParams)
+            } else {
+                setError('Error fetching doctors')
             }
-        },
-        [specialization, showOnlyAvailable, pageSize, currentPage, searchTerm],
-    )
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error fetching doctors'
+            setError(errorMessage)
+        } finally {
+            setLoading(false)
+        }
+    }, [fetchParams, currentPage, pageSize, searchTerm, showOnlyAvailable, specialization, doctors.length])
 
     useEffect(() => {
         if (autoFetch) {
-            fetchDoctors(initialPage, '')
+            fetchDoctors()
         }
-    }, [
-        autoFetch,
-        fetchDoctors,
-        initialPage,
-        specialization,
-        showOnlyAvailable,
-    ])
+    }, [autoFetch, fetchDoctors])
 
-    const changePage = (page: number) => {
-        setCurrentPage(page)
-        fetchDoctors(page, searchTerm)
-    }
+    const changePage = useCallback((page: number) => {
+        if (page !== currentPage) {
+            setCurrentPage(page)
+        }
+    }, [currentPage])
 
-    const search = (term: string) => {
+    const search = useCallback((term: string) => {
         setSearchTerm(term)
-        fetchDoctors(1, term)
-    }
+        setCurrentPage(1) // Reset to first page when searching
+    }, [])
 
-    const toggleAvailability = (onlyAvailable: boolean): boolean => {
-        return onlyAvailable
-    }
-
-    const filterDoctors = (term: string): Doctor[] => {
+    const filterDoctors = useCallback((term: string): DoctorProfile[] => {
         if (!term) return doctors
 
         return doctors.filter(
@@ -114,11 +103,12 @@ const useDoctors = ({
                 doctor.fullName?.toLowerCase().includes(term.toLowerCase()) ||
                 doctor.DoctorProfessional?.specialization
                     ?.toLowerCase()
-                    .includes(term.toLowerCase()),
+                    .includes(term.toLowerCase())
         )
-    }
+    }, [doctors])
 
-    return {
+    // Memoize the return value
+    return useMemo(() => ({
         doctors,
         count,
         loading,
@@ -129,9 +119,20 @@ const useDoctors = ({
         currentPage,
         changePage,
         search,
-        toggleAvailability,
         searchTerm,
-    }
+    }), [
+        doctors,
+        count,
+        loading,
+        error,
+        fetchDoctors,
+        filterDoctors,
+        totalPages,
+        currentPage,
+        changePage,
+        search,
+        searchTerm,
+    ])
 }
 
 export default useDoctors
