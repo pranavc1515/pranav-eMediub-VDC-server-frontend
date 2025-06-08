@@ -33,6 +33,7 @@ export interface ReactMuiTableListViewProps<T extends Record<string, unknown>> {
 }
 
 function ReactMuiTableListView<T extends Record<string, unknown>>({
+    tableTitle,
     columns,
     data = [],
     enablePagination = true,
@@ -218,16 +219,27 @@ function ReactMuiTableListView<T extends Record<string, unknown>>({
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                {enableSearch && onSearchChange && (
-                    <div className="w-64">
-                        <Input
-                            prefix={<span className="text-lg icon-search" />}
-                            placeholder="Search..."
-                            value={searchTerm}
-                            onChange={(e) => handleSearchChange(e.target.value)}
-                        />
-                    </div>
-                )}
+                <div className="flex gap-4 items-center">
+                    {tableTitle && (
+                        <h2 className="text-xl font-bold text-gray-800">
+                            {tableTitle}
+                        </h2>
+                    )}
+                    {enableSearch && onSearchChange && (
+                        <div className="w-64">
+                            <Input
+                                prefix={
+                                    <span className="text-lg icon-search" />
+                                }
+                                placeholder="Search..."
+                                value={searchTerm}
+                                onChange={(e) =>
+                                    handleSearchChange(e.target.value)
+                                }
+                            />
+                        </div>
+                    )}
+                </div>
                 {enableTableListview && enableCardView && (
                     <Button
                         icon={

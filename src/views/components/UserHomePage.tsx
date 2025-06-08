@@ -5,7 +5,9 @@ import { useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useDoctors from '@/hooks/useDoctors'
 import PaymentService from '@/services/PaymentService'
-import ReactMuiTableListView, { Column } from '@/components/shared/ReactMuiTableListView'
+import ReactMuiTableListView, {
+    Column,
+} from '@/components/shared/ReactMuiTableListView'
 
 interface ExtendedDoctor extends Record<string, unknown> {
     id: number
@@ -75,20 +77,26 @@ const UserHomePage = () => {
         setCurrentPage(1)
     }, [])
 
-    const handleSearchChange = useCallback((value: string) => {
-        setSearchTerm(value)
-        search(value)
-    }, [search])
+    const handleSearchChange = useCallback(
+        (value: string) => {
+            setSearchTerm(value)
+            search(value)
+        },
+        [search],
+    )
 
     const handleAvailabilityToggle = useCallback((checked: boolean) => {
         setShowOnlyAvailable(checked)
         setCurrentPage(1)
     }, [])
 
-    const handlePageChange = useCallback((page: number) => {
-        setCurrentPage(page)
-        changePage(page)
-    }, [changePage])
+    const handlePageChange = useCallback(
+        (page: number) => {
+            setCurrentPage(page)
+            changePage(page)
+        },
+        [changePage],
+    )
 
     const handlePageSizeChange = useCallback((newPageSize: number) => {
         setPageSize(newPageSize)
@@ -129,11 +137,15 @@ const UserHomePage = () => {
                 handler: function (response: any) {
                     const verifyPayment = async () => {
                         try {
-                            const verifyResponse = await PaymentService.verifyPayment({
-                                razorpay_order_id: response.razorpay_order_id,
-                                razorpay_payment_id: response.razorpay_payment_id,
-                                razorpay_signature: response.razorpay_signature,
-                            })
+                            const verifyResponse =
+                                await PaymentService.verifyPayment({
+                                    razorpay_order_id:
+                                        response.razorpay_order_id,
+                                    razorpay_payment_id:
+                                        response.razorpay_payment_id,
+                                    razorpay_signature:
+                                        response.razorpay_signature,
+                                })
 
                             if (verifyResponse.success) {
                                 navigate(`/user/video-consultation/${doctorId}`)
@@ -174,21 +186,32 @@ const UserHomePage = () => {
                     <div className="flex items-center gap-4">
                         <Avatar
                             size={60}
-                            src={original.profilePhoto || '/img/avatars/default-avatar.jpg'}
+                            src={
+                                original.profilePhoto ||
+                                '/img/avatars/default-avatar.jpg'
+                            }
                         />
                         <div>
-                            <h5 className="font-semibold">{original.fullName}</h5>
+                            <h5 className="font-semibold">
+                                {original.fullName}
+                            </h5>
                             <p className="text-gray-500">
                                 {original.DoctorProfessional?.specialization}
                             </p>
                             <div className="flex items-center gap-1">
                                 <span>
-                                    {original.DoctorProfessional?.yearsOfExperience ?? 0} years
-                                    experience
+                                    {original.DoctorProfessional
+                                        ?.yearsOfExperience ?? 0}{' '}
+                                    years experience
                                 </span>
-                                {original.DoctorProfessional?.consultationFees && (
+                                {original.DoctorProfessional
+                                    ?.consultationFees && (
                                     <span className="text-primary-500">
-                                        ₹{original.DoctorProfessional.consultationFees}
+                                        ₹
+                                        {
+                                            original.DoctorProfessional
+                                                .consultationFees
+                                        }
                                     </span>
                                 )}
                             </div>
@@ -212,7 +235,9 @@ const UserHomePage = () => {
                                     : 'bg-gray-300 text-white'
                             }
                         >
-                            {value === 'available' ? 'Available now' : 'Offline'}
+                            {value === 'available'
+                                ? 'Available now'
+                                : 'Offline'}
                         </Badge>
                     </div>
                 ),
@@ -243,61 +268,70 @@ const UserHomePage = () => {
         [handleConsultNow],
     )
 
-    const renderDoctorCard = useCallback((doctor: ExtendedDoctor) => (
-        <Card className="hover:shadow-md transition-shadow rounded-xl overflow-hidden">
-            <div className="flex flex-col p-4 gap-4">
-                <div className="flex items-center gap-4">
-                    <Avatar
-                        size={60}
-                        src={doctor.profilePhoto || '/img/avatars/default-avatar.jpg'}
-                    />
-                    <div>
-                        <h5 className="font-semibold">{doctor.fullName}</h5>
-                        <p className="text-gray-500">
-                            {doctor.DoctorProfessional?.specialization}
-                        </p>
-                        <div className="flex items-center gap-1">
-                            <span>
-                                {doctor.DoctorProfessional?.yearsOfExperience ?? 0} years
-                                experience
-                            </span>
+    const renderDoctorCard = useCallback(
+        (doctor: ExtendedDoctor) => (
+            <Card className="hover:shadow-md transition-shadow rounded-xl overflow-hidden">
+                <div className="flex flex-col p-4 gap-4">
+                    <div className="flex items-center gap-4">
+                        <Avatar
+                            size={60}
+                            src={
+                                doctor.profilePhoto ||
+                                '/img/avatars/default-avatar.jpg'
+                            }
+                        />
+                        <div>
+                            <h5 className="font-semibold">{doctor.fullName}</h5>
+                            <p className="text-gray-500">
+                                {doctor.DoctorProfessional?.specialization}
+                            </p>
+                            <div className="flex items-center gap-1">
+                                <span>
+                                    {doctor.DoctorProfessional
+                                        ?.yearsOfExperience ?? 0}{' '}
+                                    years experience
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div className="flex justify-between items-center">
-                    <div>
-                        <Badge
-                            style={{
-                                borderRadius: '50px',
-                                padding: '4px 8px',
-                            }}
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <Badge
+                                style={{
+                                    borderRadius: '50px',
+                                    padding: '4px 8px',
+                                }}
+                                className={
+                                    doctor.isOnline === 'available'
+                                        ? 'bg-emerald-500 text-white'
+                                        : 'bg-gray-300 text-white'
+                                }
+                            >
+                                {doctor.isOnline === 'available'
+                                    ? 'Available now'
+                                    : 'Offline'}
+                            </Badge>
+                        </div>
+                        <Button
+                            variant="solid"
+                            size="sm"
+                            disabled={doctor.isOnline !== 'available'}
                             className={
-                                doctor.isOnline === 'available'
-                                    ? 'bg-emerald-500 text-white'
-                                    : 'bg-gray-300 text-white'
+                                doctor.isOnline !== 'available'
+                                    ? 'opacity-50 cursor-not-allowed'
+                                    : ''
                             }
+                            onClick={() => handleConsultNow(doctor)}
                         >
-                            {doctor.isOnline === 'available' ? 'Available now' : 'Offline'}
-                        </Badge>
+                            <span className="icon-video mr-1"></span>
+                            Consult Now
+                        </Button>
                     </div>
-                    <Button
-                        variant="solid"
-                        size="sm"
-                        disabled={doctor.isOnline !== 'available'}
-                        className={
-                            doctor.isOnline !== 'available'
-                                ? 'opacity-50 cursor-not-allowed'
-                                : ''
-                        }
-                        onClick={() => handleConsultNow(doctor)}
-                    >
-                        <span className="icon-video mr-1"></span>
-                        Consult Now
-                    </Button>
                 </div>
-            </div>
-        </Card>
-    ), [handleConsultNow])
+            </Card>
+        ),
+        [handleConsultNow],
+    )
 
     // Update stats count
     statsData[0].value = count
@@ -312,15 +346,24 @@ const UserHomePage = () => {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 gap-4 mb-6">
                 {statsData.map((stat, index) => (
-                    <Card key={index} className="hover:shadow-lg transition-shadow">
+                    <Card
+                        key={index}
+                        className="hover:shadow-lg transition-shadow"
+                    >
                         <div className="flex items-center gap-4">
                             <div className="rounded-full p-3 bg-primary-100 text-primary-600">
-                                <span className={`text-2xl icon-${stat.icon}`}></span>
+                                <span
+                                    className={`text-2xl icon-${stat.icon}`}
+                                ></span>
                             </div>
                             <div>
-                                <h5 className="font-semibold text-sm">{stat.title}</h5>
+                                <h5 className="font-semibold text-sm">
+                                    {stat.title}
+                                </h5>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xl font-bold">{stat.value}</span>
+                                    <span className="text-xl font-bold">
+                                        {stat.value}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -336,7 +379,9 @@ const UserHomePage = () => {
                             Select your health concern:
                         </h6>
                         <div className="flex items-center">
-                            <span className="text-sm mr-2">Show only available doctors</span>
+                            <span className="text-sm mr-2">
+                                Show only available doctors
+                            </span>
                             <Switcher
                                 checked={showOnlyAvailable}
                                 onChange={handleAvailabilityToggle}
@@ -346,7 +391,9 @@ const UserHomePage = () => {
                     <div className="flex flex-wrap gap-2 w-full">
                         <Button
                             className={`${selectedCategory === 'all' ? 'bg-primary-500 text-dark' : 'bg-gray-100'} rounded-full text-sm px-3 py-1`}
-                            variant={selectedCategory === 'all' ? 'solid' : 'default'}
+                            variant={
+                                selectedCategory === 'all' ? 'solid' : 'default'
+                            }
                             onClick={() => handleCategoryChange('all')}
                             size="sm"
                         >
@@ -357,9 +404,13 @@ const UserHomePage = () => {
                                 key={category.value}
                                 className={`${selectedCategory === category.value ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-blue-500 hover:text-white'} rounded-full text-sm px-3 py-1`}
                                 variant={
-                                    selectedCategory === category.value ? 'solid' : 'default'
+                                    selectedCategory === category.value
+                                        ? 'solid'
+                                        : 'default'
                                 }
-                                onClick={() => handleCategoryChange(category.value)}
+                                onClick={() =>
+                                    handleCategoryChange(category.value)
+                                }
                                 size="sm"
                             >
                                 {category.label}
@@ -371,7 +422,7 @@ const UserHomePage = () => {
 
             {/* Doctors List View */}
             <ReactMuiTableListView
-                tableTitle="Doctors List"
+                tableTitle="eMedihub Doctor's Team"
                 columns={columns}
                 data={doctors}
                 loading={loading}
@@ -393,4 +444,4 @@ const UserHomePage = () => {
     )
 }
 
-export default UserHomePage 
+export default UserHomePage

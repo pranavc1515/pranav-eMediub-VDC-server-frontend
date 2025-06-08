@@ -45,6 +45,14 @@ const VideoConsultation = () => {
         }
     }, [getPatientHistory, currentPage, pageSize, patientId])
 
+    // Separate ongoing and completed consultations
+    const ongoingConsultations = consultationHistory.filter(
+        (consultation) => consultation.status === 'ongoing',
+    )
+    const completedConsultations = consultationHistory.filter(
+        (consultation) => consultation.status === 'completed',
+    )
+
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page)
     }, [])
@@ -64,13 +72,16 @@ const VideoConsultation = () => {
     }
 
     const handleDownloadPrescription = (consultationId: number) => {
-        const consultation = consultationHistory.find(c => c.id === consultationId)
+        const consultation = consultationHistory.find(
+            (c) => c.id === consultationId,
+        )
         if (consultation?.prescription) {
             // Create a temporary link element
             const link = document.createElement('a')
             link.href = consultation.prescription
             // Extract filename from URL or use a default name
-            const fileName = consultation.prescription.split('/').pop() || 'prescription.png'
+            const fileName =
+                consultation.prescription.split('/').pop() || 'prescription.png'
             link.setAttribute('download', fileName)
             document.body.appendChild(link)
             link.click()
@@ -148,26 +159,38 @@ const VideoConsultation = () => {
                                 Join
                             </Button>
                         )}
-                        {original.status === 'completed' && original.prescription ? (
+                        {original.status === 'completed' &&
+                        original.prescription ? (
                             <div className="flex gap-2">
                                 <Button
                                     size="sm"
                                     variant="solid"
                                     icon={<HiDownload />}
-                                    onClick={() => handleDownloadPrescription(Number(original.id))}
+                                    onClick={() =>
+                                        handleDownloadPrescription(
+                                            Number(original.id),
+                                        )
+                                    }
                                 >
                                     Download
                                 </Button>
                                 <Button
                                     size="sm"
                                     variant="solid"
-                                    onClick={() => window.open(original.prescription, '_blank')}
+                                    onClick={() =>
+                                        window.open(
+                                            original.prescription,
+                                            '_blank',
+                                        )
+                                    }
                                 >
                                     View
                                 </Button>
                             </div>
                         ) : original.status === 'completed' ? (
-                            <span className="text-gray-500">No prescription added</span>
+                            <span className="text-gray-500">
+                                No prescription added
+                            </span>
                         ) : null}
                     </div>
                 ),
@@ -176,12 +199,50 @@ const VideoConsultation = () => {
         [],
     )
 
+    const cardTemplate = (consultation: ConsultationWithDoctor) => (
+        <Card className="p-4">
+            <div className="flex justify-between items-start mb-4">
+                <div>
+                    <h3 className="text-lg font-semibold">
+                        {consultation.doctor?.fullName || 'Unknown Doctor'}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                        {consultation.doctor?.DoctorProfessional
+                            ?.specialization || 'No specialization'}
+                    </p>
+                </div>
+                <div className="text-right">
+                    <p className="text-sm font-medium">
+                        {consultation.scheduledDate}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                        {consultation.startTime}
+                    </p>
+                </div>
+            </div>
+            <div className="mb-4">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Ongoing
+                </span>
+            </div>
+            <Button
+                size="sm"
+                variant="solid"
+                className="w-full flex items-center justify-center gap-2"
+                icon={<HiVideoCamera />}
+                onClick={() => handleJoinCall(Number(consultation.doctor.id))}
+            >
+                Join Call
+            </Button>
+        </Card>
+    )
+
     return (
         <div className="container mx-auto p-4">
             <div className="mb-6">
                 <h1 className="text-2xl font-bold">Video Consultations</h1>
                 <p className="text-gray-500">
-                    Your scheduled video consultations with doctors
+                    Your familiar video consultations with doctors
                 </p>
             </div>
 
@@ -231,15 +292,31 @@ const VideoConsultation = () => {
                 ))}
             </div>
 
-            <div className="mb-6">
-                <h2 className="text-xl font-bold mb-4">Consultation History</h2>
+            {/* Ongoing Consultations as Cards */}
+            <div className="mb-8">
                 <ReactMuiTableListView
+                    // tableTitle="Ongoing Consultations"
+                    data={ongoingConsultations}
                     columns={columns}
-                    data={consultationHistory as ConsultationWithDoctor[]}
+                    cardTemplate={cardTemplate}
+                    viewTypeProp="card"
+                    enableTableListview={false}
+                    enableCardView={true}
+                    enablePagination={false}
+                    enableSearch={false}
+                />
+            </div>
+
+            {/* Completed Consultations as List */}
+            <div className="mb-6">
+                {/* <h2 className="text-xl font-bold mb-4">Consultation History</h2> */}
+                <ReactMuiTableListView
+                    tableTitle="Consultation History"
+                    columns={columns}
+                    data={completedConsultations}
                     enablePagination={true}
                     enableSearch={true}
                     enableCardView={false}
-                    enableTableListview={true}
                     totalItems={pagination.totalCount}
                     currentPage={currentPage}
                     pageSize={pageSize}
@@ -248,6 +325,7 @@ const VideoConsultation = () => {
                     loading={isLoading}
                     searchTerm={searchTerm}
                     onSearchChange={handleSearchChange}
+                    viewTypeProp="table"
                     rowsPerPageOptions={[10, 15, 25, 50]}
                 />
             </div>

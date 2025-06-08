@@ -10,6 +10,11 @@ type DoctorProfile = {
     status: string
     emailVerified: boolean
     profilePhoto: string | null
+    certificates: Array<{
+        url: string
+        name: string
+        uploadedAt: string
+    }>
     isOnline?: string
     lastSeen?: string
     isProfileComplete?: boolean
@@ -80,16 +85,31 @@ const DoctorService = {
             email: string
             gender: string
             dob: string
-            profilePhoto: string
+            certificates?: File[]
         },
     ) {
+        const formData = new FormData()
+        formData.append('fullName', data.fullName)
+        formData.append('email', data.email)
+        formData.append('gender', data.gender)
+        formData.append('dob', data.dob)
+
+        if (data.certificates) {
+            data.certificates.forEach((file) => {
+                formData.append('certificates', file)
+            })
+        }
+
         return ApiService.fetchDataWithAxios<{
             success: boolean
             data: DoctorProfile
         }>({
             url: `/api/doctors/personal-details/${doctorId}`,
             method: 'PUT',
-            data,
+            data: formData,
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
         })
     },
 

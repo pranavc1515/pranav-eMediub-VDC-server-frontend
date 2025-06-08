@@ -329,7 +329,7 @@ const DoctorHomePage = () => {
                     </span>
                     <input
                         type="checkbox"
-                        id="availability-toggle"
+                        id="availability-toggle"    
                         checked={isAvailable}
                         onChange={handleToggleAvailability}
                         className="toggle-checkbox hidden"
@@ -393,8 +393,9 @@ const DoctorHomePage = () => {
 
             {/* Patient Queue */}
             <Card className="mb-6">
-                <h4 className="mb-4">Patients Queue</h4>
+                {/* <h4 className="mb-4">Patients Queue</h4> */}
                 <ReactMuiTableListView<QueueData>
+                    tableTitle="Patients Queue"
                     columns={patientQueueColumns}
                     data={patientQueueData}
                     enablePagination={true}

@@ -12,6 +12,7 @@ import Input from '@/components/ui/Input'
 import DatePicker from '@/components/ui/DatePicker'
 import Select from '@/components/ui/Select'
 import dayjs from 'dayjs'
+import Badge from '@/components/ui/Badge'
 
 // Common languages in India
 const languageOptions = [
@@ -40,10 +41,15 @@ const Profile = () => {
     // Add state for forms
     const [personalFormLoading, setPersonalFormLoading] = useState(false)
     const [personalFormError, setPersonalFormError] = useState('')
-    const [professionalFormLoading, setProfessionalFormLoading] = useState(false)
+    const [professionalFormLoading, setProfessionalFormLoading] =
+        useState(false)
     const [professionalFormError, setProfessionalFormError] = useState('')
 
-    const [selectedLanguages, setSelectedLanguages] = useState<{value: string; label: string}[]>([])
+    const [selectedLanguages, setSelectedLanguages] = useState<
+        { value: string; label: string }[]
+    >([])
+
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([])
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -66,13 +72,15 @@ const Profile = () => {
     useEffect(() => {
         if (profile?.DoctorProfessional?.communicationLanguages) {
             setSelectedLanguages(
-                profile.DoctorProfessional.communicationLanguages.map(lang => ({
-                    value: lang,
-                    label: lang
-                }))
-            );
+                profile.DoctorProfessional.communicationLanguages.map(
+                    (lang) => ({
+                        value: lang,
+                        label: lang,
+                    }),
+                ),
+            )
         }
-    }, [profile]);
+    }, [profile])
 
     if (loading) {
         return (
@@ -101,29 +109,80 @@ const Profile = () => {
     return (
         <Container className="py-4">
             <div className="flex justify-end mb-4 gap-4">
-                <Button variant="solid" onClick={() => setProfessionalDrawerOpen(true)}>
+                <Button
+                    variant="solid"
+                    onClick={() => setProfessionalDrawerOpen(true)}
+                >
                     Edit Professional Details
                 </Button>
-                <Button variant="solid" onClick={() => setPersonalDrawerOpen(true)}>
+                <Button
+                    variant="solid"
+                    onClick={() => setPersonalDrawerOpen(true)}
+                >
                     Edit Personal Details
                 </Button>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <Card className="lg:col-span-1">
-                    <div className="p-4 flex flex-col items-center">
+                    <div className="p-6 flex flex-col items-center text-center">
+                        {/* Avatar */}
                         <Avatar
                             size={100}
                             shape="circle"
                             src={profile.profilePhoto || ''}
                             icon={<span>👨‍⚕️</span>}
                         />
+
+                        {/* Name */}
                         <h2 className="mt-4 text-2xl font-semibold">
                             {profile.fullName}
                         </h2>
+
+                        {/* Specialization */}
                         <p className="text-gray-600">
                             {profile.DoctorProfessional.specialization ||
                                 'Specialization not set'}
                         </p>
+
+                        {/* Badges */}
+                        <div className="mt-4 flex flex-wrap justify-center gap-2">
+                            {profile.emailVerified ? (
+                                <div className="inline-block rounded-full bg-green-100 text-green-800 text-sm font-semibold px-3 py-1">
+                                    Verified
+                                </div>
+                            ) : (
+                                <div className="inline-block rounded-full bg-red-100 text-red-800 text-sm font-semibold px-3 py-1">
+                                    Unverified
+                                </div>
+                            )}
+                            {profile.status === 'active' ? (
+                                <div className="inline-block rounded-full bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1">
+                                    Active
+                                </div>
+                            ) : (
+                                <div className="inline-block rounded-full bg-red-100 text-red-800 text-sm font-semibold px-3 py-1">
+                                    Inactive
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Certificates */}
+                        <div className="mt-6 w-full">
+                            <p className="text-gray-600 mb-2">Certificates</p>
+                            <div className="flex flex-wrap justify-center gap-2">
+                                {profile?.certificates?.map((cert, index) => (
+                                    <a
+                                        key={index}
+                                        href={cert.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm hover:bg-blue-200"
+                                    >
+                                        <span>{cert.name}</span>
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </Card>
 
@@ -252,7 +311,7 @@ const Profile = () => {
                     </Card>
                 </div>
             </div>
-            
+
             {/* Personal Details Drawer */}
             <Drawer
                 isOpen={personalDrawerOpen}
@@ -272,19 +331,14 @@ const Profile = () => {
                                 defaultValue={profile?.fullName}
                             />
                         </FormItem>
-                        <FormItem
-                            label="Email"
-                        >
+                        <FormItem label="Email">
                             <Input
                                 name="email"
                                 id="email"
                                 defaultValue={profile?.email || ''}
                             />
                         </FormItem>
-                        <FormItem
-                            label="Gender"
-                            asterisk={true}
-                        >
+                        <FormItem label="Gender" asterisk={true}>
                             <select
                                 name="gender"
                                 id="gender"
@@ -297,10 +351,7 @@ const Profile = () => {
                                 <option value="Other">Other</option>
                             </select>
                         </FormItem>
-                        <FormItem
-                            label="Date of Birth"
-                            asterisk={true}
-                        >
+                        <FormItem label="Date of Birth" asterisk={true}>
                             <input
                                 type="date"
                                 name="dob"
@@ -317,46 +368,74 @@ const Profile = () => {
                         <div className="flex gap-2">
                             <Button
                                 variant="default"
-                                onClick={() => setPersonalDrawerOpen(false)}
+                                onClick={() => {
+                                    setPersonalDrawerOpen(false)
+                                    setSelectedFiles([])
+                                }}
                             >
                                 Cancel
                             </Button>
                             <Button
                                 variant="solid"
-                                onClick={(e) => {
-                                    e.preventDefault();
+                                onClick={async (e) => {
+                                    e.preventDefault()
                                     const formData = {
-                                        fullName: (document.getElementById('fullName') as HTMLInputElement).value,
-                                        email: (document.getElementById('email') as HTMLInputElement).value,
-                                        gender: (document.getElementById('gender') as HTMLSelectElement).value,
-                                        dob: (document.getElementById('dob') as HTMLInputElement).value,
-                                        profilePhoto: profile?.profilePhoto || ''
-                                    };
-                                    
-                                    const submitFn = async () => {
-                                        setPersonalFormLoading(true);
-                                        setPersonalFormError('');
-                                        
-                                        try {
-                                            const response = await DoctorService.updatePersonalDetails(
+                                        fullName: (
+                                            document.getElementById(
+                                                'fullName',
+                                            ) as HTMLInputElement
+                                        ).value,
+                                        email: (
+                                            document.getElementById(
+                                                'email',
+                                            ) as HTMLInputElement
+                                        ).value,
+                                        gender: (
+                                            document.getElementById(
+                                                'gender',
+                                            ) as HTMLSelectElement
+                                        ).value,
+                                        dob: (
+                                            document.getElementById(
+                                                'dob',
+                                            ) as HTMLInputElement
+                                        ).value,
+                                        certificates: selectedFiles,
+                                    }
+
+                                    setPersonalFormLoading(true)
+                                    setPersonalFormError('')
+
+                                    try {
+                                        const response =
+                                            await DoctorService.updatePersonalDetails(
                                                 profile?.id,
                                                 formData,
-                                            );
-                                            
-                                            if (response.success) {
-                                                setProfile((prev) => prev ? ({ ...prev, ...response.data }) : null);
-                                                setPersonalDrawerOpen(false);
-                                            } else {
-                                                setPersonalFormError('Failed to update profile. Please try again.');
-                                            }
-                                        } catch (err) {
-                                            setPersonalFormError('Failed to update profile. Please try again.');
-                                        } finally {
-                                            setPersonalFormLoading(false);
+                                            )
+
+                                        if (response.success) {
+                                            setProfile((prev) =>
+                                                prev
+                                                    ? {
+                                                          ...prev,
+                                                          ...response.data,
+                                                      }
+                                                    : null,
+                                            )
+                                            setPersonalDrawerOpen(false)
+                                            setSelectedFiles([])
+                                        } else {
+                                            setPersonalFormError(
+                                                'Failed to update profile. Please try again.',
+                                            )
                                         }
-                                    };
-                                    
-                                    submitFn();
+                                    } catch (err) {
+                                        setPersonalFormError(
+                                            'Failed to update profile. Please try again.',
+                                        )
+                                    } finally {
+                                        setPersonalFormLoading(false)
+                                    }
                                 }}
                                 loading={personalFormLoading}
                                 disabled={personalFormLoading}
@@ -367,7 +446,7 @@ const Profile = () => {
                     </div>
                 </div>
             </Drawer>
-            
+
             {/* Professional Details Drawer */}
             <Drawer
                 isOpen={professionalDrawerOpen}
@@ -376,110 +455,145 @@ const Profile = () => {
             >
                 <div className="p-4">
                     <div className="space-y-4">
-                        <FormItem
-                            label="Qualification"
-                            asterisk={true}
-                        >
+                        <FormItem label="Qualification" asterisk={true}>
                             <Input
                                 name="qualification"
                                 id="qualification"
-                                defaultValue={profile?.DoctorProfessional.qualification || ''}
+                                defaultValue={
+                                    profile?.DoctorProfessional.qualification ||
+                                    ''
+                                }
                             />
                         </FormItem>
-                        <FormItem
-                            label="Specialization"
-                            asterisk={true}
-                        >
+                        <FormItem label="Specialization" asterisk={true}>
                             <Input
                                 name="specialization"
                                 id="specialization"
-                                defaultValue={profile?.DoctorProfessional.specialization || ''}
+                                defaultValue={
+                                    profile?.DoctorProfessional
+                                        .specialization || ''
+                                }
                             />
                         </FormItem>
-                        <FormItem
-                            label="Registration Number"
-                            asterisk={true}
-                        >
+                        <FormItem label="Registration Number" asterisk={true}>
                             <Input
                                 name="registrationNumber"
                                 id="registrationNumber"
-                                defaultValue={profile?.DoctorProfessional.registrationNumber || ''}
+                                defaultValue={
+                                    profile?.DoctorProfessional
+                                        .registrationNumber || ''
+                                }
                             />
                         </FormItem>
-                        <FormItem
-                            label="Registration State"
-                            asterisk={true}
-                        >
+                        <FormItem label="Registration State" asterisk={true}>
                             <Input
                                 name="registrationState"
                                 id="registrationState"
-                                defaultValue={profile?.DoctorProfessional.registrationState || ''}
+                                defaultValue={
+                                    profile?.DoctorProfessional
+                                        .registrationState || ''
+                                }
                             />
                         </FormItem>
-                        <FormItem
-                            label="Expiry Date"
-                        >
+                        <FormItem label="Expiry Date">
                             <input
                                 type="date"
                                 name="expiryDate"
                                 id="expiryDate"
-                                defaultValue={profile?.DoctorProfessional.expiryDate || ''}
+                                defaultValue={
+                                    profile?.DoctorProfessional.expiryDate || ''
+                                }
                                 className="w-full rounded-md border border-gray-300 p-2"
                             />
                         </FormItem>
-                        <FormItem
-                            label="Clinic Name"
-                        >
+                        <FormItem label="Clinic Name">
                             <Input
                                 name="clinicName"
                                 id="clinicName"
-                                defaultValue={profile?.DoctorProfessional.clinicName || ''}
+                                defaultValue={
+                                    profile?.DoctorProfessional.clinicName || ''
+                                }
                             />
                         </FormItem>
-                        <FormItem
-                            label="Years of Experience"
-                        >
+                        <FormItem label="Years of Experience">
                             <Input
                                 name="yearsOfExperience"
                                 id="yearsOfExperience"
                                 type="number"
-                                defaultValue={profile?.DoctorProfessional.yearsOfExperience?.toString() || '0'}
+                                defaultValue={
+                                    profile?.DoctorProfessional.yearsOfExperience?.toString() ||
+                                    '0'
+                                }
                             />
                         </FormItem>
-                        <FormItem
-                            label="Communication Languages"
-                        >
+                        <FormItem label="Certificates">
+                            <input
+                                type="file"
+                                multiple
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                onChange={(e) => {
+                                    const files = Array.from(
+                                        e.target.files || [],
+                                    )
+                                    setSelectedFiles(files)
+                                }}
+                                className="w-full"
+                            />
+                            <p className="text-sm text-gray-500 mt-1">
+                                Upload your certificates (PDF, JPG, JPEG, PNG)
+                            </p>
+                        </FormItem>
+                        <FormItem label="Communication Languages">
                             <Select
                                 id="communicationLanguages"
                                 name="communicationLanguages"
                                 isMulti
                                 options={languageOptions}
                                 value={selectedLanguages}
-                                onChange={(options) => setSelectedLanguages(options as {value: string; label: string}[])}
+                                onChange={(options) =>
+                                    setSelectedLanguages(
+                                        options as {
+                                            value: string
+                                            label: string
+                                        }[],
+                                    )
+                                }
                                 placeholder="Select languages"
                             />
                         </FormItem>
-                        <FormItem
-                            label="Consultation Fees"
-                        >
+                        <FormItem label="Consultation Fees">
                             <Input
                                 name="consultationFees"
                                 id="consultationFees"
                                 type="number"
-                                defaultValue={profile?.DoctorProfessional.consultationFees?.toString() || '0'}
+                                defaultValue={
+                                    profile?.DoctorProfessional.consultationFees?.toString() ||
+                                    '0'
+                                }
                             />
                         </FormItem>
-                        <FormItem
-                            label="Available Days"
-                        >
+                        <FormItem label="Available Days">
                             <div className="grid grid-cols-2 gap-2">
-                                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
-                                    <label key={day} className="flex items-center space-x-2">
-                                        <input 
-                                            type="checkbox" 
+                                {[
+                                    'Monday',
+                                    'Tuesday',
+                                    'Wednesday',
+                                    'Thursday',
+                                    'Friday',
+                                    'Saturday',
+                                    'Sunday',
+                                ].map((day) => (
+                                    <label
+                                        key={day}
+                                        className="flex items-center space-x-2"
+                                    >
+                                        <input
+                                            type="checkbox"
                                             name={`day-${day}`}
                                             id={`day-${day}`}
-                                            defaultChecked={profile?.DoctorProfessional.availableDays.includes(day)}
+                                            defaultChecked={profile?.DoctorProfessional.availableDays.includes(
+                                                day,
+                                            )}
                                             className="rounded border-gray-300"
                                         />
                                         <span>{day}</span>
@@ -502,64 +616,124 @@ const Profile = () => {
                             <Button
                                 variant="solid"
                                 onClick={(e) => {
-                                    e.preventDefault();
-                                    
+                                    e.preventDefault()
+
                                     // Get values from the component state
-                                    const communicationLanguages = selectedLanguages.map(option => option.value);
-                                    
+                                    const communicationLanguages =
+                                        selectedLanguages.map(
+                                            (option) => option.value,
+                                        )
+
                                     // Get selected available days
-                                    const availableDays: string[] = [];
-                                    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-                                    days.forEach(day => {
-                                        const checkbox = document.getElementById(`day-${day}`) as HTMLInputElement;
+                                    const availableDays: string[] = []
+                                    const days = [
+                                        'Monday',
+                                        'Tuesday',
+                                        'Wednesday',
+                                        'Thursday',
+                                        'Friday',
+                                        'Saturday',
+                                        'Sunday',
+                                    ]
+                                    days.forEach((day) => {
+                                        const checkbox =
+                                            document.getElementById(
+                                                `day-${day}`,
+                                            ) as HTMLInputElement
                                         if (checkbox && checkbox.checked) {
-                                            availableDays.push(day);
+                                            availableDays.push(day)
                                         }
-                                    });
-                                    
+                                    })
+
                                     const formData = {
-                                        qualification: (document.getElementById('qualification') as HTMLInputElement).value,
-                                        specialization: (document.getElementById('specialization') as HTMLInputElement).value,
-                                        registrationNumber: (document.getElementById('registrationNumber') as HTMLInputElement).value,
-                                        registrationState: (document.getElementById('registrationState') as HTMLInputElement).value,
-                                        expiryDate: (document.getElementById('expiryDate') as HTMLInputElement).value,
-                                        clinicName: (document.getElementById('clinicName') as HTMLInputElement).value,
-                                        yearsOfExperience: Number((document.getElementById('yearsOfExperience') as HTMLInputElement).value),
+                                        qualification: (
+                                            document.getElementById(
+                                                'qualification',
+                                            ) as HTMLInputElement
+                                        ).value,
+                                        specialization: (
+                                            document.getElementById(
+                                                'specialization',
+                                            ) as HTMLInputElement
+                                        ).value,
+                                        registrationNumber: (
+                                            document.getElementById(
+                                                'registrationNumber',
+                                            ) as HTMLInputElement
+                                        ).value,
+                                        registrationState: (
+                                            document.getElementById(
+                                                'registrationState',
+                                            ) as HTMLInputElement
+                                        ).value,
+                                        expiryDate: (
+                                            document.getElementById(
+                                                'expiryDate',
+                                            ) as HTMLInputElement
+                                        ).value,
+                                        clinicName: (
+                                            document.getElementById(
+                                                'clinicName',
+                                            ) as HTMLInputElement
+                                        ).value,
+                                        yearsOfExperience: Number(
+                                            (
+                                                document.getElementById(
+                                                    'yearsOfExperience',
+                                                ) as HTMLInputElement
+                                            ).value,
+                                        ),
                                         communicationLanguages,
-                                        consultationFees: Number((document.getElementById('consultationFees') as HTMLInputElement).value),
-                                        availableDays
-                                    };
-                                    
+                                        consultationFees: Number(
+                                            (
+                                                document.getElementById(
+                                                    'consultationFees',
+                                                ) as HTMLInputElement
+                                            ).value,
+                                        ),
+                                        availableDays,
+                                    }
+
                                     const submitFn = async () => {
-                                        setProfessionalFormLoading(true);
-                                        setProfessionalFormError('');
-                                        
+                                        setProfessionalFormLoading(true)
+                                        setProfessionalFormError('')
+
                                         try {
-                                            const response = await DoctorService.updateProfessionalDetails(
-                                                profile?.id,
-                                                formData,
-                                            );
-                                            
+                                            const response =
+                                                await DoctorService.updateProfessionalDetails(
+                                                    profile?.id,
+                                                    formData,
+                                                )
+
                                             if (response.success) {
-                                                setProfile((prev) => prev ? {
-                                                    ...prev,
-                                                    DoctorProfessional: {
-                                                        ...prev.DoctorProfessional,
-                                                        ...response.data
-                                                    }
-                                                } : null);
-                                                setProfessionalDrawerOpen(false);
+                                                setProfile((prev) =>
+                                                    prev
+                                                        ? {
+                                                              ...prev,
+                                                              DoctorProfessional:
+                                                                  {
+                                                                      ...prev.DoctorProfessional,
+                                                                      ...response.data,
+                                                                  },
+                                                          }
+                                                        : null,
+                                                )
+                                                setProfessionalDrawerOpen(false)
                                             } else {
-                                                setProfessionalFormError('Failed to update professional details. Please try again.');
+                                                setProfessionalFormError(
+                                                    'Failed to update professional details. Please try again.',
+                                                )
                                             }
                                         } catch (err) {
-                                            setProfessionalFormError('Failed to update professional details. Please try again.');
+                                            setProfessionalFormError(
+                                                'Failed to update professional details. Please try again.',
+                                            )
                                         } finally {
-                                            setProfessionalFormLoading(false);
+                                            setProfessionalFormLoading(false)
                                         }
-                                    };
-                                    
-                                    submitFn();
+                                    }
+
+                                    submitFn()
                                 }}
                                 loading={professionalFormLoading}
                                 disabled={professionalFormLoading}

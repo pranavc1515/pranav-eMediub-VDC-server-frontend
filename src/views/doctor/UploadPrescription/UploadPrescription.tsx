@@ -10,6 +10,7 @@ import {
     toast,
     Tabs,
 } from '@/components/ui'
+import { useSessionUser } from '@/store/authStore'
 import Container from '@/components/shared/Container'
 import { HiOutlineDocumentAdd, HiOutlineCloudUpload } from 'react-icons/hi'
 import usePrescription from '@/hooks/usePrescription'
@@ -18,9 +19,11 @@ import type { Medicine } from '@/services/PrescriptionService'
 const { TabNav, TabList, TabContent } = Tabs
 
 const UploadPrescription = () => {
+    const user = useSessionUser((state) => state.user)
+    const docId = user.userId
     const [activeTab, setActiveTab] = useState('upload')
     const [consultationId, setConsultationId] = useState('')
-    const [doctorId, setDoctorId] = useState('')
+    const [doctorId, setDoctorId] = useState(docId)
     const [userId, setUserId] = useState('')
     const [file, setFile] = useState<File | null>(null)
 
@@ -36,7 +39,11 @@ const UploadPrescription = () => {
     ])
     const [instructions, setInstructions] = useState('')
 
-    const { loading: isUploading, uploadPrescription, createCustomPrescription } = usePrescription({
+    const {
+        loading: isUploading,
+        uploadPrescription,
+        createCustomPrescription,
+    } = usePrescription({
         doctorId: doctorId ? parseInt(doctorId) : undefined,
         userId: userId ? parseInt(userId) : undefined,
     })
@@ -205,6 +212,7 @@ const UploadPrescription = () => {
                                     labelClass="font-medium mb-2"
                                 >
                                     <Input
+                                        disabled
                                         value={doctorId}
                                         onChange={(e) =>
                                             setDoctorId(e.target.value)

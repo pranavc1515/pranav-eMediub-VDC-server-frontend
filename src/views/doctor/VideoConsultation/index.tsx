@@ -3,7 +3,9 @@ import { Card, Button } from '@/components/ui'
 import { HiVideoCamera, HiDownload } from 'react-icons/hi'
 import { useNavigate } from 'react-router-dom'
 import VideoCallInterface from '@/views/Interface/VideoCallInterface'
-import ReactMuiTableListView from '@/components/shared/ReactMuiTableListView'
+import ReactMuiTableListView, {
+    Column,
+} from '@/components/shared/ReactMuiTableListView'
 import useConsultation from '@/hooks/useConsultation'
 // import { useAuth } from '@/hooks/useAuth'
 import { useSessionUser } from '@/store/authStore'
@@ -32,6 +34,11 @@ interface ConsultationWithPatient extends ConsultationRecord {
         email: string
         phone: string
     }
+    prescription?: string
+    patientId: number
+    scheduledDate: string
+    startTime: string
+    status: string
 }
 
 // List view component
@@ -40,7 +47,7 @@ const PatientQueueList = () => {
     // const { session } = useAuth()
     const user = useSessionUser((state) => state.user)
     console.log('user', user)
-    const doctorId = user?.userId
+    const doctorId = user?.userId ? Number(user.userId) : 0
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(15)
     const [searchTerm, setSearchTerm] = useState('')
@@ -82,15 +89,31 @@ const PatientQueueList = () => {
         document.body.removeChild(link)
     }
 
-    const columns: Column<ConsultationWithPatient>[] = [
+    // Separate ongoing and completed consultations
+    const ongoingConsultations = consultationHistory.filter(
+        (consultation) => consultation.status === 'ongoing',
+    )
+    const completedConsultations = consultationHistory.filter(
+        (consultation) => consultation.status === 'completed',
+    )
+
+    const columns = [
         {
             Header: 'Consultation ID',
             accessor: 'id',
         },
         {
+            Header: 'Patient ID',
+            accessor: 'patientId',
+        },
+        {
             Header: 'Patient',
-            accessor: (row) => row.patient?.name || '',
-            Cell: ({ row: { original } }) => (
+            accessor: (row: ConsultationWithPatient) => row.patient?.name || '',
+            Cell: ({
+                row: { original },
+            }: {
+                row: { original: ConsultationWithPatient }
+            }) => (
                 <div>
                     <div>{original.patient?.name ?? 'Unknown'}</div>
                     <div className="text-sm text-gray-500">
@@ -100,39 +123,31 @@ const PatientQueueList = () => {
             ),
         },
         {
-            Header: 'Status',
-            accessor: 'status',
-            Cell: ({ value }) => (
-                <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        value === 'completed'
-                            ? 'bg-green-100 text-green-800'
-                            : value === 'ongoing'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-800'
-                    }`}
-                >
-                    {value.charAt(0).toUpperCase() + value.slice(1)}
-                </span>
+            Header: 'Date & Time',
+            accessor: (row: ConsultationWithPatient) => row.scheduledDate,
+            Cell: ({
+                row: { original },
+            }: {
+                row: { original: ConsultationWithPatient }
+            }) => (
+                <div>
+                    <div>{original.scheduledDate}</div>
+                    <div className="text-sm text-gray-500">
+                        {original.startTime}
+                    </div>
+                </div>
             ),
         },
         {
             Header: 'Actions',
             accessor: 'id',
-            Cell: ({ row: { original } }) => (
+            Cell: ({
+                row: { original },
+            }: {
+                row: { original: ConsultationWithPatient }
+            }) => (
                 <div className="flex gap-2 justify-center">
-                    {original.status === 'ongoing' && (
-                        <Button
-                            size="sm"
-                            variant="solid"
-                            icon={<HiVideoCamera />}
-                            onClick={() => handleJoinCall(original.patientId)}
-                        >
-                            Join
-                        </Button>
-                    )}
-                    {original.status === 'completed' &&
-                    original.prescription ? (
+                    {original.prescription ? (
                         <div className="flex gap-2">
                             <Button
                                 size="sm"
@@ -156,73 +171,84 @@ const PatientQueueList = () => {
                                 View
                             </Button>
                         </div>
-                    ) : original.status === 'completed' ? (
+                    ) : (
                         <span className="text-gray-500">
                             No prescription added
                         </span>
-                    ) : null}
+                    )}
                 </div>
             ),
         },
     ]
 
+    const cardTemplate = (consultation: ConsultationWithPatient) => (
+        <Card className="p-4">
+            <div className="flex justify-between items-start mb-4">
+                <div>
+                    <h3 className="text-lg font-semibold">
+                        {consultation.patient?.name || 'Unknown Patient'}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                        {consultation.patient?.email || 'No email'}
+                    </p>
+                </div>
+                <div className="text-right">
+                    <p className="text-sm font-medium">
+                        {consultation.scheduledDate}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                        {consultation.startTime}
+                    </p>
+                </div>
+            </div>
+            <div className="mb-4">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Ongoing
+                </span>
+            </div>
+            <Button
+                size="sm"
+                variant="solid"
+                className="w-full flex items-center justify-center gap-2"
+                icon={<HiVideoCamera />}
+                onClick={() => handleJoinCall(consultation.patientId)}
+            >
+                Join Call
+            </Button>
+        </Card>
+    )
+
     return (
         <div className="container mx-auto p-4">
             <div className="mb-6">
-                <h1 className="text-2xl font-bold">On Going Call</h1>
-                <p className="text-gray-500">Patients in consultation</p>
+                <h1 className="text-2xl font-bold">Video Consultations</h1>
+                <p className="text-gray-500">All your consultations</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                {patientQueue.map((patient) => (
-                    <Card key={patient.id} className="p-4">
-                        <div className="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 className="text-lg font-semibold">
-                                    {patient.name}
-                                </h3>
-                                <p className="text-sm text-gray-500">
-                                    {patient.age} years, {patient.gender}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="mb-4">
-                            <p className="text-sm text-gray-600">
-                                {patient.reason}
-                            </p>
-                        </div>
-                        <div className="mb-4">
-                            <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    patient.status === 'scheduled'
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-yellow-100 text-yellow-800'
-                                }`}
-                            >
-                                {patient.status.charAt(0).toUpperCase() +
-                                    patient.status.slice(1)}
-                            </span>
-                        </div>
-                        <Button
-                            size="sm"
-                            variant="solid"
-                            className="w-full flex items-center justify-center gap-2"
-                            onClick={() => handleJoinCall(patient.id)}
-                        >
-                            <HiVideoCamera />
-                            <span>Join Call</span>
-                        </Button>
-                    </Card>
-                ))}
-            </div>
-
-            <div className="mb-6">
-                <h2 className="text-xl font-bold mb-4">Consultation History</h2>
+            {/* Ongoing Consultations as Cards */}
+            <div className="mb-8">
                 <ReactMuiTableListView
+                    tableTitle="Active Consultations"
+                    data={ongoingConsultations}
                     columns={columns}
-                    data={consultationHistory}
-                    enablePagination={true}
+                    cardTemplate={cardTemplate}
+                    viewTypeProp="card"
+                    enableTableListview={false}
+                    enableCardView={true}
+                    enablePagination={false}
                     enableSearch={false}
+                />
+            </div>
+
+            {/* Completed Consultations as List */}
+            <div className="mb-6">
+                {/* <h2 className="text-xl font-bold mb-4">Consultation History</h2> */}
+                <ReactMuiTableListView
+                    tableTitle="Consultation History"
+                    columns={columns}
+                    data={completedConsultations}
+                    enablePagination={true}
+                    enableSearch={true}
                     enableCardView={false}
                     totalItems={pagination.totalCount}
                     currentPage={currentPage}
@@ -232,6 +258,7 @@ const PatientQueueList = () => {
                     loading={isLoading}
                     searchTerm={searchTerm}
                     onSearchChange={setSearchTerm}
+                    viewTypeProp="table"
                 />
             </div>
         </div>
