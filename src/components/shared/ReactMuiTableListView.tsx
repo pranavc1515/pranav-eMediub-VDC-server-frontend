@@ -1,20 +1,19 @@
 import { useState, useCallback, memo } from 'react'
 import { Table, Input, Button, Pagination } from '@/components/ui'
-import { Card } from '@/components/ui'
 import { HiViewGrid, HiViewList } from 'react-icons/hi'
 import { motion } from 'framer-motion'
-import type { DoctorProfile } from '@/services/DoctorService'
+import type { ReactNode } from 'react'
 
-interface Column<T = any> {
+export interface Column<T extends Record<string, unknown>> {
     Header: string
-    accessor: keyof T
-    Cell?: (props: { value: T[keyof T]; row: T }) => JSX.Element
+    accessor: keyof T | ((row: T) => string | number | null | undefined)
+    Cell?: (props: { value: unknown; row: { original: T } }) => ReactNode
 }
 
-interface ReactMuiTableListViewProps {
+export interface ReactMuiTableListViewProps<T extends Record<string, unknown>> {
     tableTitle?: string
-    columns: Column<DoctorProfile>[]
-    data: DoctorProfile[]
+    columns: Column<T>[]
+    data: T[]
     enablePagination?: boolean
     rowsPerPageOptions?: number[]
     initialPageSize?: number
@@ -27,212 +26,209 @@ interface ReactMuiTableListViewProps {
     viewTypeProp?: 'table' | 'card'
     searchTerm?: string
     onSearchChange?: (value: string) => void
+    cardTemplate?: (item: T) => ReactNode
+    enableTableListview?: boolean
+    enableCardView?: boolean
+    enableSearch?: boolean
 }
 
-const ReactMuiTableListView = memo(
-    ({
-        tableTitle,
-        columns,
-        data = [],
-        enablePagination = true,
-        rowsPerPageOptions = [5, 10, 15],
-        initialPageSize = 10,
-        onPageChange,
-        onPageSizeChange,
-        totalItems = 0,
-        currentPage = 1,
-        pageSize = initialPageSize,
-        loading = false,
-        viewTypeProp = 'table',
-        searchTerm = '',
-        onSearchChange,
-    }: ReactMuiTableListViewProps) => {
-        const [viewType, setViewType] = useState(viewTypeProp)
+function ReactMuiTableListView<T extends Record<string, unknown>>({
+    columns,
+    data = [],
+    enablePagination = true,
+    rowsPerPageOptions = [5, 10, 15],
+    initialPageSize = 10,
+    onPageChange,
+    onPageSizeChange,
+    totalItems = 0,
+    currentPage = 1,
+    pageSize = initialPageSize,
+    loading = false,
+    viewTypeProp = 'table',
+    searchTerm = '',
+    onSearchChange,
+    cardTemplate,
+    enableTableListview = true,
+    enableCardView = true,
+    enableSearch = true,
+}: ReactMuiTableListViewProps<T>) {
+    const [viewType, setViewType] = useState(viewTypeProp)
 
-        const handlePageChange = useCallback(
-            (page: number) => {
-                onPageChange?.(page)
-            },
-            [onPageChange],
-        )
+    const handlePageChange = useCallback(
+        (page: number) => {
+            onPageChange?.(page)
+        },
+        [onPageChange],
+    )
 
-        const handlePageSizeChange = useCallback(
-            (newPageSize: number) => {
-                onPageSizeChange?.(newPageSize)
-            },
-            [onPageSizeChange],
-        )
+    const handlePageSizeChange = useCallback(
+        (newPageSize: number) => {
+            onPageSizeChange?.(newPageSize)
+        },
+        [onPageSizeChange],
+    )
 
-        const handleSearchChange = useCallback(
-            (value: string) => {
-                onSearchChange?.(value)
-            },
-            [onSearchChange],
-        )
+    const handleSearchChange = useCallback(
+        (value: string) => {
+            onSearchChange?.(value)
+        },
+        [onSearchChange],
+    )
 
-        const toggleViewType = useCallback(() => {
-            setViewType((prev) => (prev === 'table' ? 'card' : 'table'))
-        }, [])
+    const toggleViewType = useCallback(() => {
+        setViewType((prev) => (prev === 'table' ? 'card' : 'table'))
+    }, [])
 
-        const renderTable = useCallback(
-            () => (
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.1 }}
-                >
-                    <Table hoverable className="table-fixed w-full">
-                        <thead>
-                            <tr>
-                                {columns.map((column, index) => (
-                                    <th
-                                        key={index}
-                                        className="text-center align-middle px-4 py-3"
-                                        style={{
-                                            width:
-                                                column.accessor === 'fullName'
-                                                    ? '50%'
-                                                    : column.accessor ===
-                                                        'isOnline'
-                                                      ? '25%'
-                                                      : '25%',
-                                            verticalAlign: 'middle',
-                                        }}
-                                    >
-                                        <div className="w-full text-center">
-                                            {column.Header}
-                                        </div>
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {data.map((row, rowIndex) => (
-                                <tr key={rowIndex}>
-                                    {columns.map((column, colIndex) => (
+    const getCellValue = (row: T, column: Column<T>): unknown => {
+        if (typeof column.accessor === 'function') {
+            return column.accessor(row)
+        }
+
+        // Handle nested object paths (e.g., 'user.name', 'address.city')
+        const path = (column.accessor as string).split('.')
+        let value: unknown = row
+        for (const key of path) {
+            if (value === null || value === undefined) break
+            value = (value as Record<string, unknown>)?.[key]
+        }
+        return value
+    }
+
+    const renderTableView = useCallback(
+        () => (
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+            >
+                <Table hoverable className="table-fixed w-full">
+                    <thead>
+                        <tr>
+                            {columns.map((column, index) => (
+                                <th
+                                    key={index}
+                                    className="text-center align-middle px-4 py-3"
+                                    style={{
+                                        width: '25%',
+                                        verticalAlign: 'middle',
+                                    }}
+                                >
+                                    <div className="w-full text-center">
+                                        {column.Header}
+                                    </div>
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.map((row, rowIndex) => (
+                            <tr key={rowIndex}>
+                                {columns.map((column, colIndex) => {
+                                    const value = getCellValue(row, column)
+                                    return (
                                         <td
                                             key={colIndex}
                                             className="text-center px-4 py-2 align-middle"
                                             style={{
-                                                width:
-                                                    column.accessor ===
-                                                    'fullName'
-                                                        ? '50%'
-                                                        : column.accessor ===
-                                                            'isOnline'
-                                                          ? '25%'
-                                                          : '25%',
+                                                width: '25%',
                                             }}
                                         >
                                             {column.Cell
                                                 ? column.Cell({
-                                                      value: row[
-                                                          column.accessor
-                                                      ],
-                                                      row,
+                                                      value,
+                                                      row: { original: row },
                                                   })
-                                                : row[column.accessor]}
+                                                : value !== null &&
+                                                    value !== undefined
+                                                  ? String(value)
+                                                  : ''}
                                         </td>
-                                    ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </Table>
-                </motion.div>
-            ),
-            [columns, data],
-        )
+                                    )
+                                })}
+                            </tr>
+                        ))}
+                        {data.length === 0 && (
+                            <tr>
+                                <td
+                                    colSpan={columns.length}
+                                    className="text-center py-4"
+                                >
+                                    No data available
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </Table>
+            </motion.div>
+        ),
+        [columns, data],
+    )
 
-        const renderCard = useCallback(
-            () => (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {data.map((row, index) => (
-                        <motion.div
-                            key={index}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.3, delay: index * 0.05 }}
-                        >
-                            <Card className="hover:shadow-md transition-shadow rounded-xl overflow-hidden">
-                                <div className="flex flex-col p-4 gap-4">
-                                    <div className="flex items-center gap-4">
-                                        <img
-                                            src={
-                                                row.profilePhoto ||
-                                                '/img/avatars/default-avatar.jpg'
-                                            }
-                                            alt={row.fullName}
-                                            className="w-14 h-14 rounded-full object-cover"
-                                        />
-                                        <div>
-                                            <h5 className="font-semibold text-lg">
-                                                {row.fullName}
-                                            </h5>
-                                            <p className="text-sm text-gray-500">
-                                                {
-                                                    row.DoctorProfessional
-                                                        ?.specialization
-                                                }
-                                            </p>
-                                            <p className="text-sm text-gray-400">
-                                                {row.DoctorProfessional
-                                                    ?.yearsOfExperience ??
-                                                    0}{' '}
-                                                years experience
-                                            </p>
+    const renderCardView = useCallback(
+        () => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {data.map((item, index) => (
+                    <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                    >
+                        {cardTemplate ? (
+                            cardTemplate(item)
+                        ) : (
+                            <div className="bg-white rounded-lg shadow-sm p-4">
+                                {columns.map((column, colIndex) => {
+                                    const value = getCellValue(item, column)
+                                    return (
+                                        <div key={colIndex} className="mb-2">
+                                            <div className="font-semibold">
+                                                {column.Header}
+                                            </div>
+                                            <div>
+                                                {column.Cell
+                                                    ? column.Cell({
+                                                          value,
+                                                          row: {
+                                                              original: item,
+                                                          },
+                                                      })
+                                                    : value !== null &&
+                                                        value !== undefined
+                                                      ? String(value)
+                                                      : ''}
+                                            </div>
                                         </div>
-                                    </div>
+                                    )
+                                })}
+                            </div>
+                        )}
+                    </motion.div>
+                ))}
+                {data.length === 0 && (
+                    <div className="col-span-full text-center py-8 bg-white rounded-lg shadow-sm">
+                        <h6>No data available</h6>
+                    </div>
+                )}
+            </div>
+        ),
+        [data, cardTemplate, columns],
+    )
 
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            {columns
-                                                .find(
-                                                    (c) =>
-                                                        c.accessor ===
-                                                        'isOnline',
-                                                )
-                                                ?.Cell?.({
-                                                    value: row['isOnline'],
-                                                    row,
-                                                })}
-                                        </div>
-                                        <div>
-                                            {columns
-                                                .find(
-                                                    (c) => c.accessor === 'id',
-                                                )
-                                                ?.Cell?.({
-                                                    value: row['id'],
-                                                    row,
-                                                })}
-                                        </div>
-                                    </div>
-                                </div>
-                            </Card>
-                        </motion.div>
-                    ))}
-                </div>
-            ),
-            [columns, data],
-        )
-
-        return (
-            <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                    {onSearchChange && (
-                        <div className="w-64">
-                            <Input
-                                prefix={
-                                    <span className="text-lg icon-search" />
-                                }
-                                placeholder="Search..."
-                                value={searchTerm}
-                                onChange={(e) =>
-                                    handleSearchChange(e.target.value)
-                                }
-                            />
-                        </div>
-                    )}
+    return (
+        <div className="space-y-4">
+            <div className="flex justify-between items-center">
+                {enableSearch && onSearchChange && (
+                    <div className="w-64">
+                        <Input
+                            prefix={<span className="text-lg icon-search" />}
+                            placeholder="Search..."
+                            value={searchTerm}
+                            onChange={(e) => handleSearchChange(e.target.value)}
+                        />
+                    </div>
+                )}
+                {enableTableListview && enableCardView && (
                     <Button
                         icon={
                             viewType === 'table' ? (
@@ -245,51 +241,51 @@ const ReactMuiTableListView = memo(
                     >
                         {viewType === 'table' ? 'Card View' : 'Table View'}
                     </Button>
-                </div>
-
-                {loading ? (
-                    <div className="flex justify-center items-center min-h-[200px]">
-                        <div className="animate-spin">
-                            <span className="text-2xl icon-loading" />
-                        </div>
-                    </div>
-                ) : data.length === 0 ? (
-                    <Card className="text-center py-8">
-                        <h6>No data found</h6>
-                    </Card>
-                ) : viewType === 'table' ? (
-                    renderTable()
-                ) : (
-                    renderCard()
-                )}
-
-                {enablePagination && totalItems > 0 && (
-                    <div className="flex justify-between items-center">
-                        <select
-                            className="form-select"
-                            value={pageSize}
-                            onChange={(e) =>
-                                handlePageSizeChange(Number(e.target.value))
-                            }
-                        >
-                            {rowsPerPageOptions.map((size) => (
-                                <option key={size} value={size}>
-                                    {size} per page
-                                </option>
-                            ))}
-                        </select>
-                        <Pagination
-                            currentPage={currentPage}
-                            total={Math.ceil(totalItems / pageSize)}
-                            onChange={handlePageChange}
-                        />
-                    </div>
                 )}
             </div>
-        )
-    },
-)
+
+            {loading ? (
+                <div className="flex justify-center items-center min-h-[200px]">
+                    <div className="animate-spin">
+                        <span className="text-2xl icon-loading" />
+                    </div>
+                </div>
+            ) : data.length === 0 ? (
+                <div className="text-center py-8 bg-white rounded-lg shadow-sm">
+                    <h6>No data found</h6>
+                </div>
+            ) : viewType === 'table' && enableTableListview ? (
+                renderTableView()
+            ) : enableCardView ? (
+                renderCardView()
+            ) : null}
+
+            {enablePagination && totalItems > 0 && (
+                <div className="flex justify-between items-center">
+                    <select
+                        className="form-select"
+                        value={pageSize}
+                        onChange={(e) =>
+                            handlePageSizeChange(Number(e.target.value))
+                        }
+                    >
+                        {rowsPerPageOptions.map((size) => (
+                            <option key={size} value={size}>
+                                {size} per page
+                            </option>
+                        ))}
+                    </select>
+                    <Pagination
+                        currentPage={currentPage}
+                        total={Math.ceil(totalItems / pageSize)}
+                        onChange={handlePageChange}
+                    />
+                </div>
+            )}
+        </div>
+    )
+}
 
 ReactMuiTableListView.displayName = 'ReactMuiTableListView'
 
-export default ReactMuiTableListView
+export default memo(ReactMuiTableListView) as typeof ReactMuiTableListView

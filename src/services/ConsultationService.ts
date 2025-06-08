@@ -36,7 +36,8 @@ export type ConsultationHistoryResponse = {
     count: number
     totalPages: number
     currentPage: number
-    data: ConsultationRecord[]
+    pageSize: number
+    consultations: ConsultationRecord[]
 }
 
 /**
@@ -103,6 +104,30 @@ const ConsultationService = {
             data: { notes },
         }
         return ApiService.fetchDataWithAxios<ConsultationResponse>(config)
+    },
+
+    /**
+     * Get consultation history for a doctor
+     */
+    getDoctorConsultationHistory(doctorId: number, page: number = 1, limit: number = 15) {
+        const config: AxiosRequestConfig = {
+            method: 'GET',
+            url: `/api/consultation/doctor/${doctorId}/history`,
+            params: { page, limit },
+        }
+        return ApiService.fetchDataWithAxios<ConsultationHistoryResponse>(config)
+    },
+
+    /**
+     * Get consultation history for a patient
+     */
+    getPatientConsultationHistory(patientId: number, page: number = 1, limit: number = 15) {
+        const config: AxiosRequestConfig = {
+            method: 'GET',
+            url: `/api/consultation/patient/${patientId}/history`,
+            params: { page, limit },
+        }
+        return ApiService.fetchDataWithAxios<ConsultationHistoryResponse>(config)
     },
 }
 

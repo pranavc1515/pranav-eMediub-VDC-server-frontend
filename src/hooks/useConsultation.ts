@@ -27,7 +27,8 @@ interface UseConsultationReturn {
     pagination: PaginationInfo
     startConsultation: (patientId: number) => Promise<ConsultationResponse>
     nextConsultation: () => Promise<ConsultationResponse>
-    getHistory: (page?: number, limit?: number) => Promise<void>
+    getDoctorHistory: (page?: number, limit?: number) => Promise<void>
+    getPatientHistory: (patientId: number, page?: number, limit?: number) => Promise<void>
     cancelConsultation: (
         consultationId: string,
         reason: string,
@@ -92,22 +93,55 @@ const useConsultation = ({
         }
     }
 
-    const getHistory = useCallback(
-        async (page: number = 1, limit: number = 10): Promise<void> => {
+    const getDoctorHistory = useCallback(
+        async (page: number = 1, limit: number = 15): Promise<void> => {
             try {
                 setIsLoading(true)
                 setError(null)
-                const response =
-                    await ConsultationService.getConsultationHistory(
-                        page,
-                        limit,
-                    )
-                setConsultationHistory(response.data)
-                setPagination({
-                    currentPage: response.currentPage,
-                    totalPages: response.totalPages,
-                    totalCount: response.count,
-                })
+                const response = await ConsultationService.getDoctorConsultationHistory(
+                    doctorId,
+                    page,
+                    limit,
+                )
+                if (response.success) {
+                    setConsultationHistory(response.consultations)
+                    setPagination({
+                        currentPage: response.currentPage,
+                        totalPages: response.totalPages,
+                        totalCount: response.count,
+                    })
+                } else {
+                    setError('Failed to fetch consultation history')
+                }
+            } catch (err) {
+                handleError(err as AxiosError<ApiErrorData>)
+            } finally {
+                setIsLoading(false)
+            }
+        },
+        [doctorId],
+    )
+
+    const getPatientHistory = useCallback(
+        async (patientId: number, page: number = 1, limit: number = 15): Promise<void> => {
+            try {
+                setIsLoading(true)
+                setError(null)
+                const response = await ConsultationService.getPatientConsultationHistory(
+                    patientId,
+                    page,
+                    limit,
+                )
+                if (response.success) {
+                    setConsultationHistory(response.consultations)
+                    setPagination({
+                        currentPage: response.currentPage,
+                        totalPages: response.totalPages,
+                        totalCount: response.count,
+                    })
+                } else {
+                    setError('Failed to fetch patient consultation history')
+                }
             } catch (err) {
                 handleError(err as AxiosError<ApiErrorData>)
             } finally {
@@ -164,7 +198,8 @@ const useConsultation = ({
         pagination,
         startConsultation,
         nextConsultation,
-        getHistory,
+        getDoctorHistory,
+        getPatientHistory,
         cancelConsultation,
         endConsultation,
     }

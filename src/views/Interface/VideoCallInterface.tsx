@@ -215,7 +215,8 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                 const videoElement = videoTrack.attach()
                 videoElement.style.width = '100%'
                 videoElement.style.height = '100%'
-                videoElement.style.objectFit = 'cover'
+                videoElement.style.objectFit = 'contain' // This avoids cropping
+                videoElement.style.position = 'relative' // Stay within bounds
                 localVideoRef.current.innerHTML = ''
                 localVideoRef.current.appendChild(videoElement)
             }
@@ -433,18 +434,21 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
                 {/* Remote Video */}
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
-                    <div className="w-full h-full flex items-center justify-center">
+                    <div className="flex-1 flex items-center justify-center overflow-hidden bg-gray-800">
                         <div
                             ref={remoteVideoRef}
-                            className="relative bg-black rounded-md shadow-inner"
+                            className="relative bg-black shadow-inner rounded-md"
                             style={{
                                 width: '100%',
-                                maxWidth: '960px', // Responsive maximum width
-                                aspectRatio: '16 / 9', // Maintain 16:9 ratio
+                                maxWidth: '1000px',
+                                maxHeight: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                             }}
                         >
                             {!remoteParticipantIdentity && (
-                                <div className="absolute inset-0 flex items-center justify-center text-white text-lg font-medium">
+                                <div className="absolute inset-0 flex items-center justify-center text-white text-lg font-medium z-10">
                                     Waiting for other participant to join...
                                 </div>
                             )}

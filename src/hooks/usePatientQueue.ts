@@ -32,7 +32,7 @@ const usePatientQueue = ({ doctorId }: UsePatientQueueProps) => {
             setLoading(true)
             const response = await PatientQueueService.getPatientQueue(doctorId)
             if (response.success) {
-                setQueue(response.data)
+                setQueue(response.data.queue)
                 setError(null)
             } else {
                 setError(response.message || 'Failed to load queue')

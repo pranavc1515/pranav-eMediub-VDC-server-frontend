@@ -1,20 +1,59 @@
 import { useState, useEffect } from 'react'
-import { Card, Button, Tabs, Input } from '@/components/ui'
-import {
-    HiVideoCamera,
-    HiCalendar,
-    HiChat,
-    HiDocumentText,
-} from 'react-icons/hi'
-import { format } from 'date-fns'
+import { Card, Button } from '@/components/ui'
+import { HiVideoCamera, HiDownload } from 'react-icons/hi'
 import { useNavigate } from 'react-router-dom'
 import VideoCallInterface from '@/views/Interface/VideoCallInterface'
+import ReactMuiTableListView from '@/components/shared/ReactMuiTableListView'
+import useConsultation from '@/hooks/useConsultation'
+// import { useAuth } from '@/hooks/useAuth'
+import { useSessionUser } from '@/store/authStore'
+import type { ConsultationRecord } from '@/services/ConsultationService'
+import { Console } from 'console'
 
-const { TabNav, TabList, TabContent } = Tabs
+interface TableRowData extends ConsultationRecord {
+    patient?: {
+        firstName: string
+        lastName: string
+        email: string
+    }
+}
+
+interface TableColumn {
+    Header: string
+    accessor: string
+    Cell?: (
+        props: { row: { original: TableRowData } } | { value: string },
+    ) => JSX.Element
+}
+
+interface ConsultationWithPatient extends ConsultationRecord {
+    patient: {
+        name: string
+        email: string
+        phone: string
+    }
+}
 
 // List view component
 const PatientQueueList = () => {
     const navigate = useNavigate()
+    // const { session } = useAuth()
+    const user = useSessionUser((state) => state.user)
+    console.log('user', user)
+    const doctorId = user?.userId
+    const [currentPage, setCurrentPage] = useState(1)
+    const [pageSize, setPageSize] = useState(15)
+    const [searchTerm, setSearchTerm] = useState('')
+
+    const { consultationHistory, pagination, isLoading, getDoctorHistory } =
+        useConsultation({ doctorId })
+
+    useEffect(() => {
+        if (doctorId) {
+            getDoctorHistory(currentPage, pageSize)
+        }
+    }, [getDoctorHistory, currentPage, pageSize, doctorId])
+
     const [patientQueue] = useState([
         {
             id: 1,
@@ -23,53 +62,115 @@ const PatientQueueList = () => {
             gender: 'Male',
             appointmentTime: '10:00 AM',
             reason: '',
-            status: 'waiting in lobby',
+            status: 'in call',
         },
     ])
-
-    const [consultations, setConsultations] = useState([])
-    const [loading, setLoading] = useState(false)
-
-    // Fetch consultation history
-    useEffect(() => {
-        const fetchConsultations = async () => {
-            setLoading(true)
-            try {
-                const response = await fetch(
-                    'http://localhost:3000/api/consultation/doctor?doctorId=69&page=1&limit=10&status=completed&consultationType=video&sortBy=scheduledDate&sortOrder=DESC',
-                    {
-                        headers: {
-                            accept: 'application/json',
-                            Authorization:
-                                'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NjksInBob25lTnVtYmVyIjoiKzkxODgwNTA0Nzk2OCIsInR5cGUiOiJkb2N0b3IiLCJpYXQiOjE3NDkwNjU1NDcsImV4cCI6MTc0OTE1MTk0N30.M0HfCowbVaqUifaZr2c2MK0HhpX5qoRj87PIdsx_Sis',
-                        },
-                    },
-                )
-                const data = await response.json()
-                if (data.success && data.data && data.data.consultations) {
-                    setConsultations(data.data.consultations)
-                }
-            } catch (error) {
-                console.error('Error fetching consultations:', error)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        fetchConsultations()
-    }, [])
 
     const handleJoinCall = (id: number) => {
         navigate(`/doctor/video-consultation/${id}`)
     }
 
+    const handleDownloadPrescription = (prescriptionUrl: string) => {
+        // Create a temporary link element
+        const link = document.createElement('a')
+        link.href = prescriptionUrl
+        // Extract filename from URL or use a default name
+        const fileName = prescriptionUrl.split('/').pop() || 'prescription.png'
+        link.setAttribute('download', fileName)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
+
+    const columns: Column<ConsultationWithPatient>[] = [
+        {
+            Header: 'Consultation ID',
+            accessor: 'id',
+        },
+        {
+            Header: 'Patient',
+            accessor: (row) => row.patient?.name || '',
+            Cell: ({ row: { original } }) => (
+                <div>
+                    <div>{original.patient?.name ?? 'Unknown'}</div>
+                    <div className="text-sm text-gray-500">
+                        {original.patient?.email ?? 'No email'}
+                    </div>
+                </div>
+            ),
+        },
+        {
+            Header: 'Status',
+            accessor: 'status',
+            Cell: ({ value }) => (
+                <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        value === 'completed'
+                            ? 'bg-green-100 text-green-800'
+                            : value === 'ongoing'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
+                    }`}
+                >
+                    {value.charAt(0).toUpperCase() + value.slice(1)}
+                </span>
+            ),
+        },
+        {
+            Header: 'Actions',
+            accessor: 'id',
+            Cell: ({ row: { original } }) => (
+                <div className="flex gap-2 justify-center">
+                    {original.status === 'ongoing' && (
+                        <Button
+                            size="sm"
+                            variant="solid"
+                            icon={<HiVideoCamera />}
+                            onClick={() => handleJoinCall(original.patientId)}
+                        >
+                            Join
+                        </Button>
+                    )}
+                    {original.status === 'completed' &&
+                    original.prescription ? (
+                        <div className="flex gap-2">
+                            <Button
+                                size="sm"
+                                variant="solid"
+                                icon={<HiDownload />}
+                                onClick={() =>
+                                    handleDownloadPrescription(
+                                        original.prescription,
+                                    )
+                                }
+                            >
+                                Download
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="solid"
+                                onClick={() =>
+                                    window.open(original.prescription, '_blank')
+                                }
+                            >
+                                View
+                            </Button>
+                        </div>
+                    ) : original.status === 'completed' ? (
+                        <span className="text-gray-500">
+                            No prescription added
+                        </span>
+                    ) : null}
+                </div>
+            ),
+        },
+    ]
+
     return (
         <div className="container mx-auto p-4">
             <div className="mb-6">
-                <h1 className="text-2xl font-bold">Patient Queue</h1>
-                <p className="text-gray-500">
-                    Patients waiting for video consultation
-                </p>
+                <h1 className="text-2xl font-bold">On Going Call</h1>
+                <p className="text-gray-500">Patients in consultation</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -115,173 +216,24 @@ const PatientQueueList = () => {
                 ))}
             </div>
 
-            {/* Consultation History Section */}
             <div className="mb-6">
                 <h2 className="text-xl font-bold mb-4">Consultation History</h2>
-                {loading ? (
-                    <div className="text-center py-4">
-                        Loading consultation history...
-                    </div>
-                ) : (
-                    <Card className="overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Patient
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Date & Time
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Type
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Symptoms
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Diagnosis
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {consultations.length > 0 ? (
-                                        consultations.map((consultation) => (
-                                            <tr key={consultation.id}>
-                                                <td className="px-4 py-4 whitespace-nowrap">
-                                                    <div>
-                                                        <div className="text-sm font-medium text-gray-900">
-                                                            {consultation
-                                                                .patient
-                                                                ?.fullName ||
-                                                                'N/A'}
-                                                        </div>
-                                                        <div className="text-sm text-gray-500">
-                                                            {
-                                                                consultation
-                                                                    .patient
-                                                                    ?.age
-                                                            }{' '}
-                                                            years,{' '}
-                                                            {
-                                                                consultation
-                                                                    .patient
-                                                                    ?.gender
-                                                            }
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    <div>
-                                                        <div>
-                                                            {
-                                                                consultation.scheduledDate
-                                                            }
-                                                        </div>
-                                                        <div className="text-xs text-gray-500">
-                                                            {
-                                                                consultation.startTime
-                                                            }{' '}
-                                                            -{' '}
-                                                            {
-                                                                consultation.endTime
-                                                            }
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-4 whitespace-nowrap">
-                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                        {
-                                                            consultation.consultationType
-                                                        }
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-4 whitespace-nowrap">
-                                                    <span
-                                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                            consultation.status ===
-                                                            'completed'
-                                                                ? 'bg-green-100 text-green-800'
-                                                                : consultation.status ===
-                                                                    'scheduled'
-                                                                  ? 'bg-yellow-100 text-yellow-800'
-                                                                  : 'bg-gray-100 text-gray-800'
-                                                        }`}
-                                                    >
-                                                        {consultation.status}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-4 text-sm text-gray-900">
-                                                    <div className="max-w-xs truncate">
-                                                        {consultation.symptoms ||
-                                                            'N/A'}
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-4 text-sm text-gray-900">
-                                                    <div className="max-w-xs truncate">
-                                                        {consultation.diagnosis ||
-                                                            'N/A'}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td
-                                                colSpan={6}
-                                                className="px-4 py-4 text-center text-gray-500"
-                                            >
-                                                No consultation history found
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </Card>
-                )}
+                <ReactMuiTableListView
+                    columns={columns}
+                    data={consultationHistory}
+                    enablePagination={true}
+                    enableSearch={false}
+                    enableCardView={false}
+                    totalItems={pagination.totalCount}
+                    currentPage={currentPage}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPage}
+                    onPageSizeChange={setPageSize}
+                    loading={isLoading}
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                />
             </div>
-        </div>
-    )
-}
-
-// Video call view components
-const UpcomingConsultations = () => {
-    const consultations = [
-        {
-            id: 1,
-            name: 'Sarah Williams',
-            age: 28,
-            appointmentTime: '11:30 AM',
-            reason: 'Anxiety follow-up',
-        },
-        {
-            id: 2,
-            name: 'Michael Brown',
-            age: 60,
-            appointmentTime: '12:00 PM',
-            reason: 'Diabetes management review',
-        },
-    ]
-
-    return (
-        <div className="p-4">
-            {consultations.map((consultation) => (
-                <Card key={consultation.id} className="mb-4 p-4">
-                    <h4 className="font-semibold">{consultation.name}</h4>
-                    <p className="text-sm text-gray-500">
-                        {consultation.age} years
-                    </p>
-                    <p className="text-sm mt-2">{consultation.reason}</p>
-                    <p className="text-sm text-gray-500 mt-2">
-                        {consultation.appointmentTime}
-                    </p>
-                </Card>
-            ))}
         </div>
     )
 }
@@ -292,7 +244,7 @@ const VideoConsultation = () => {
     const isVideoCall = pathname.includes('/video-consultation/') // Check if we're in a video call
 
     if (isVideoCall) {
-        return <VideoCallInterface></VideoCallInterface>
+        return <VideoCallInterface />
     }
 
     return <PatientQueueList />
