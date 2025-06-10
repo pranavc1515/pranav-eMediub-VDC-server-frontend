@@ -19,7 +19,7 @@ const OurServicesCardForth = () => {
         </p>
        
         <button className="mt-4 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]">
-          Book an appointment
+          Join boot camp
         </button>
       </div>
 
@@ -62,7 +62,7 @@ const OurServicesCardForth = () => {
     
 
         <button className="mt-8 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]">
-          Book an appointment
+          Take fitness challenge
         </button>
       </div>
     </div>

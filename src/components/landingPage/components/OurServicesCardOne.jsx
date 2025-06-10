@@ -41,7 +41,7 @@ function OurServicesCardOne() {
               </p>
              
               <button className="mt-4 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]">
-                Book an appointment
+                Book your appointment
               </button>
             </div>
     
@@ -97,7 +97,7 @@ function OurServicesCardOne() {
               </ul>
     
               <button className="mt-8 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]">
-                Book an appointment
+                Consult a doctor online
               </button>
             </div>
           </div>

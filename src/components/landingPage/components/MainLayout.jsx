@@ -6,6 +6,8 @@ import images2 from '../assets/image2.svg'
 import images3 from '../assets/image3.svg'
 import images4 from '../assets/image4.svg'
 import vector from '../assets/Vector.svg'
+import GooglePlay from '../assets/googlePlay.svg'
+import AppStore from '../assets/AppStore.svg'
 import Navbar from './Navbar'
 import FooterSection from './FooterSection'
 
@@ -27,7 +29,7 @@ const MainLayout = ({ children }) => {
 
     const toggleMenu = () => setMenuOpen(!menuOpen)
     return (
-        <div className=" w-full ">
+        <div className="w-full relative">
             <header
                 className="headerSection 
       bg-cover bg-center h-[600px]  transition-all duration-[2500ms] 
@@ -64,6 +66,18 @@ const MainLayout = ({ children }) => {
                 </div>
             </header>
             <main className="px-0 py-0">{children}</main>
+
+            {/* Sticky App Store Buttons */}
+            <div className="fixed bottom-0 right-0 z-50 flex items-center gap-4 bg-white/80 backdrop-blur-sm p-3 rounded-tl-lg shadow-lg">
+                <span className="text-sm font-semibold text-gray-700">Download Our App:</span>
+                <a href="#" className="transition-transform hover:scale-105">
+                    <img src={GooglePlay} alt="Google Play" className="h-10" />
+                </a>
+                <a href="#" className="transition-transform hover:scale-105">
+                    <img src={AppStore} alt="App Store" className="h-10" />
+                </a>
+            </div>
+
             <footer>
                 <FooterSection />
             </footer>

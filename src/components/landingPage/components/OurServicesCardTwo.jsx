@@ -23,7 +23,7 @@ function OurServicesCardTwo() {
         </p>
        
         <button className="mt-4 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]">
-          Book an appointment
+          Order medicines
         </button>
       </div>
 
@@ -71,7 +71,7 @@ function OurServicesCardTwo() {
     
 
         <button className="mt-8 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]">
-          Book an appointment
+          Book lab test
         </button>
       </div>
     </div>

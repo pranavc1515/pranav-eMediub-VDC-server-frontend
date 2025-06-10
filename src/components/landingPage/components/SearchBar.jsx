@@ -1,6 +1,6 @@
-// import { FaMapMarkerAlt, FaSearch } from "react-icons/fa";
-import Location from '../assets/location.svg'
-import Search from '../assets/Search.svg'
+import React from 'react';
+import Location from '../assets/location.svg';
+import Search from '../assets/Search.svg';
 
 const SearchBar = () => {
     return (
@@ -15,7 +15,7 @@ const SearchBar = () => {
                 <div className="w-[1px] h-6 bg-gray-300 mx-3"></div>
                 {/* Search Input */}
                 <div className="flex items-center w-full">
-                    <img src={Search} alt="Location" />
+                    <img src={Search} alt="Search" />
                     <input
                         type="text"
                         placeholder="Search For Nearby Clinic, Hospital Or Specialist"
@@ -24,7 +24,7 @@ const SearchBar = () => {
                 </div>
             </div>
         </div>
-    )
-}
-export default SearchBar
-//
+    );
+};
+
+export default SearchBar;

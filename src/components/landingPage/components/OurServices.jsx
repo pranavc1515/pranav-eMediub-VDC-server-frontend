@@ -1,17 +1,18 @@
-import OurServicesCardForth from './OurServicesCardForth'
-import OurServicesCardOne from './OurServicesCardOne'
-import OurServicesCardthree from './OurServicesCardthree'
-import OurServicesCardTwo from './OurServicesCardTwo'
+import React from 'react';
+import OurServicesCardOne from './OurServicesCardOne';
+import OurServicesCardTwo from './OurServicesCardTwo';
+import OurServicesCardThree from './OurServicesCardthree';
+import OurServicesCardForth from './OurServicesCardForth';
 
 const OurServices = () => {
     return (
         <>
             <OurServicesCardOne />
             <OurServicesCardTwo />
-            <OurServicesCardthree />
+            <OurServicesCardThree />
             <OurServicesCardForth />
         </>
-    )
-}
+    );
+};
 
-export default OurServices
+export default OurServices;
