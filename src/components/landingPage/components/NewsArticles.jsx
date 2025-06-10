@@ -9,38 +9,40 @@ const NewsArticles = () => {
     {
       image: Healthhygenic,
       author: "Anita Jackson",
-      title: "Health and Hygiene",
-      description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, tempor incididunt.",
+      title: "Health and Hygiene Tips",
+      description: "Essential hygiene practices and health tips for maintaining optimal wellbeing in everyday life.",
     },
     {
       image: SaltRichDiet,
       author: "Anita Jackson",
-      title: "Salt-rich diet gets a lashing",
-      description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, tempor incididunt.",
+      title: "Salt-Rich Diet Risks",
+      description: "New research shows the potential dangers of consuming excessive salt and how it affects your health.",
     },
     {
       image: MuchGoOnDiet,
       author: "Anita Jackson",
-      title: "Much go on diet",
-      description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, tempor incididunt.",
+      title: "Nutritional Meal Planning",
+      description: "Expert guidance on creating balanced meal plans that support your health goals and lifestyle.",
     },
   ];
 
   return (
     <div className="py-16 px-6 md:px-12 lg:px-20 text-center">
-      <h2 className="NewsArticlesText font-inter font-semibold text-[42px] leading-1 text-[#011632] tracking-normal text-center capitalize">News & Articles</h2>
+      <h2 className="font-semibold text-[42px] leading-tight text-[#011632] tracking-normal text-center">News & Articles</h2>
       <img src={Vector2} alt="Divider" className="w-[322px] mx-auto mb-5" />
-      <p className="font-inter font-normal text-[18px] text-[#3C4959] mx-auto mb-10 text-center capitalize xl:w-[650px]">
-        We use only the best quality materials on the market in order to provide the best products to our patients.
+      <p className="font-normal text-[18px] text-[#3C4959] mx-auto mb-10 text-center xl:w-[650px]">
+        We share the latest medical insights and health information to keep you informed about advancements in healthcare.
       </p>
       <div className="grid md:grid-cols-3 gap-8">
         {articles.map((article, index) => (
-          <div key={index} className="NewsArticles bg-[#E6F6FE] rounded-[12px] shadow-md pb-3">
+          <div key={index} className="bg-[#E6F6FE] rounded-[12px] shadow-md pb-3 hover:shadow-lg transition-shadow">
             <img src={article.image} alt={article.title} className="w-full pl-9 pt-9 pr-9 rounded-[10px] mb-4" />
-            <p className="text-[#011632] font-normal text-[16px] mt-6 mb-6 mr-7 text-right">~{article.author}</p>
-            <h3 className="text-[18px] font-[500] font-inter text-[#011632] mb-2 text-left ml-7">{article.title}</h3>
-            <p className="NewsArticlesPtag text-[#3C4959] w-[250px] mb-4 text-left ml-7">{article.description}</p>
-            <button className="bg-[#011632] w-[286px] font-[500] text-center text-[16px] h-[35px] text-[#FFFFFF] px-6 py-1 rounded-[5px]">Know More</button>
+            <p className="text-[#011632] font-normal text-[16px] mt-4 mb-4 mr-7 text-right italic">~{article.author}</p>
+            <h3 className="text-[20px] font-medium text-[#011632] mb-2 text-left ml-7">{article.title}</h3>
+            <p className="text-[#3C4959] w-[250px] mb-6 text-left ml-7 text-[15px]">{article.description}</p>
+            <button className="bg-[#011632] w-[286px] font-medium text-center text-[16px] h-[40px] text-[#FFFFFF] px-6 py-1 rounded-[5px] hover:bg-[#0a2254] transition-colors">
+              Read More
+            </button>
           </div>
         ))}
       </div>
