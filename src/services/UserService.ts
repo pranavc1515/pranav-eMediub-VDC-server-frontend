@@ -28,7 +28,6 @@ type UserPersonalDetails = {
     name: string
     email: string
     phone: string
-    age: string
     dob: string
     gender: string
     marital_status: string

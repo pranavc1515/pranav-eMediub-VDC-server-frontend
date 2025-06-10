@@ -11,6 +11,39 @@ import UserService from '@/services/UserService'
 import { useToken } from '@/store/authStore'
 import { useAuth } from '@/auth'
 
+// Helper function to calculate age from date of birth
+const calculateAge = (dob: string): string => {
+    if (!dob) return ''
+    
+    console.log('Calculating age from DOB:', dob)
+    
+    try {
+        const birthDate = new Date(dob)
+        
+        // Check if date is valid
+        if (isNaN(birthDate.getTime())) {
+            console.error('Invalid date format:', dob)
+            return ''
+        }
+        
+        console.log('Birth date parsed as:', birthDate.toISOString())
+        
+        const today = new Date()
+        let age = today.getFullYear() - birthDate.getFullYear()
+        const monthDiff = today.getMonth() - birthDate.getMonth()
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--
+        }
+        
+        console.log('Calculated age:', age)
+        return age > 0 ? age.toString() : ''
+    } catch (error) {
+        console.error('Error calculating age:', error)
+        return ''
+    }
+}
+
 const UserProfileSetup = () => {
     const navigate = useNavigate()
     const { token } = useToken()
@@ -59,7 +92,7 @@ const UserProfileSetup = () => {
                 // Try to fetch user profile to check if already completed
                 const profileResponse = await UserService.getProfile()
                 console.log('Profile Response', profileResponse)
-                if (profileResponse.status && profileResponse.data) {
+                if (profileResponse.success && profileResponse.data) {
                     const userProfile = profileResponse.data
                     // Check if profile is already complete
                     if (userProfile.isProfileComplete) {
@@ -68,20 +101,44 @@ const UserProfileSetup = () => {
                     }
 
                     // Pre-fill form with existing data if available
-                    setFormData({
-                        name: userProfile.name || '',
+                    const formValues = {
+                        name: userProfile.fullName || '',
                         email: userProfile.email || '',
-                        phone: userProfile.phone || userPhone,
-                        age: userProfile.age || '',
-                        dob: userProfile.dob || '',
+                        phone: userProfile.phoneNumber || userPhone,
+                        dob: '',
                         gender: userProfile.gender || '',
-                        marital_status: userProfile.marital_status || '',
-                        height: userProfile.details?.height || '',
-                        weight: userProfile.details?.weight || '',
-                        diet: userProfile.details?.diet || '',
-                        profession: userProfile.details?.profession || '',
-                        image: userProfile.details?.image || '',
-                    })
+                        marital_status: userProfile.maritalStatus || '',
+                        height: userProfile.height || '',
+                        weight: userProfile.weight || '',
+                        diet: userProfile.diet || '',
+                        profession: userProfile.profession || '',
+                        image: userProfile.image || '',
+                        age: ''
+                    }
+                    
+                    // Format and set date of birth if available
+                    if (userProfile.dob) {
+                        try {
+                            // Format date as YYYY-MM-DD for the input
+                            const dobDate = new Date(userProfile.dob)
+                            
+                            if (!isNaN(dobDate.getTime())) {
+                                const formattedDob = dobDate.toISOString().split('T')[0]
+                                console.log('Formatting DOB from API:', userProfile.dob, 'to:', formattedDob)
+                                formValues.dob = formattedDob
+                                
+                                // Calculate age
+                                formValues.age = calculateAge(formattedDob)
+                                console.log('Initial age calculation:', formValues.age)
+                            } else {
+                                console.error('Invalid DOB from API:', userProfile.dob)
+                            }
+                        } catch (error) {
+                            console.error('Error formatting DOB:', error)
+                        }
+                    }
+                    
+                    setFormData(formValues)
                 }
             } catch (err) {
                 console.error('Error loading user profile:', err)
@@ -100,10 +157,31 @@ const UserProfileSetup = () => {
         >,
     ) => {
         const { name, value } = e.target
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }))
+        
+        // Special handling for date of birth to ensure proper format
+        if (name === 'dob' && value) {
+            console.log('DOB input changed to:', value)
+            setFormData(prev => {
+                const updatedData = {
+                    ...prev,
+                    [name]: value
+                }
+                
+                // Calculate age immediately on DOB change
+                const calculatedAge = calculateAge(value)
+                console.log('Updated age to:', calculatedAge)
+                
+                return {
+                    ...updatedData,
+                    age: calculatedAge
+                }
+            })
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value,
+            }))
+        }
     }
 
     const handleFormSubmit = async (e: FormEvent) => {
@@ -214,7 +292,9 @@ const UserProfileSetup = () => {
                             <FormItem label="Phone Number">
                                 <Input
                                     name="phone"
-                                    value={formData.phone}
+                                    value={formData.phone ? (formData.phone.startsWith('+') ? 
+                                        `+${formData.phone.substring(1, 3)} ${formData.phone.substring(3)}` : 
+                                        `+${formData.phone.substring(0, 2)} ${formData.phone.substring(2)}`) : ''}
                                     disabled={true}
                                     className="bg-gray-100"
                                 />
@@ -223,25 +303,30 @@ const UserProfileSetup = () => {
                                 </small>
                             </FormItem>
 
-                            <FormItem label="Age" asterisk={true}>
-                                <Input
-                                    name="age"
-                                    value={formData.age}
-                                    onChange={handleInputChange}
-                                    placeholder="e.g., 25-year"
-                                    required
-                                />
-                            </FormItem>
-
                             <FormItem label="Date of Birth" asterisk={true}>
-                                <input
+                                <Input
                                     type="date"
                                     name="dob"
                                     value={formData.dob}
                                     onChange={handleInputChange}
-                                    className="w-full rounded-md border border-gray-300 p-2"
+                                    className="w-full"
                                     required
                                 />
+                                <small className="text-gray-500">
+                                    Format: YYYY-MM-DD
+                                </small>
+                            </FormItem>
+
+                            <FormItem label="Age">
+                                <Input
+                                    name="age"
+                                    value={formData.age}
+                                    disabled={true}
+                                    className="bg-gray-100"
+                                />
+                                <small className="text-gray-500">
+                                    Age is automatically calculated based on date of birth
+                                </small>
                             </FormItem>
 
                             <FormItem label="Gender" asterisk={true}>
