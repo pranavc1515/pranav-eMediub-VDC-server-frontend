@@ -41,7 +41,7 @@ const TestimonialsSlider = () => {
 
   return (
     <section
-      className="flex flex-col items-center justify-center h-[772px] mt-4"
+      className="flex flex-col items-center justify-center h-[700px] py-12"
       style={{
         backgroundImage: `url(${testimonial})`,
         backgroundSize: "cover",
@@ -49,16 +49,16 @@ const TestimonialsSlider = () => {
       }}
     >
       {/* Section Title */}
-      <h2 className="text-[42px] font-semibold text-[#011632] mb-2 z-50">
+      <h2 className="text-3xl md:text-4xl font-semibold text-[#011632] mb-3 z-50">
         Testimonials
       </h2>
-      <p className="text-[#3C4959] w-[80%] xl:w-[450px] text-[18px] font-normal xl:mb-8 text-center">
+      <p className="text-[#3C4959] w-[80%] xl:w-[450px] text-base md:text-lg font-normal mb-10 text-center">
         Hear from our satisfied clients! Real experiences that inspire trust and
         confidence in our healthcare services.
       </p>
 
       {/* Slider Container - Desktop */}
-      <div className="relative w-[80%] h-[392px] hidden lg:block mt-[70px] bg-[#011632] rounded-[10px]">
+      <div className="relative w-[90%] md:w-[80%] h-[380px] hidden lg:block mt-8 bg-[#011632] rounded-[10px] shadow-lg">
         {/* Testimonial Card Wrapper */}
         <div className="overflow-hidden relative h-full">
           {testimonials.map((item, index) => (
@@ -71,32 +71,32 @@ const TestimonialsSlider = () => {
               `}
             >
               {/* Testimonial Card */}
-              <div className="flex justify-between w-full h-full p-10 flex-col md:flex-row font-semibold text-[#FFFFFF] rounded-lg">
+              <div className="flex justify-between w-full h-full p-8 md:p-10 flex-col md:flex-row font-semibold text-[#FFFFFF] rounded-lg">
                 <div className="flex flex-col">
-                  <h3 className="font-semibold text-[42px] mb-1 transition-all delay-[4000ms] duration-[4000ms] ease-in text-[#FFFFFF]">
+                  <h3 className="font-semibold text-3xl md:text-4xl mb-1 transition-all duration-[3000ms] ease-in text-[#FFFFFF]">
                     {item.name}
                   </h3>
-                  <p className="text-[18px] text-blue-300 mb-4">{item.profession}</p>
-                  <p className="text-[24px] lg:w-[388px] xl:w-[60%] font-medium text-[#FFFFFF] italic mb-5 transition-all delay-[3000ms] duration-[4000ms]">
+                  <p className="text-base md:text-lg text-blue-300 mb-4">{item.profession}</p>
+                  <p className="text-xl md:text-2xl lg:w-[388px] xl:w-[60%] font-medium text-[#FFFFFF] italic mb-6 transition-all duration-[3000ms]">
                     "{item.quote}"
                   </p>
-                  <button className="bg-[#0190CA] items-center w-[150px] h-[50px] text-[#FFFFFF] rounded-[5px] transition-all hover:bg-[#0177a7] font-medium">
+                  <button className="bg-[#0190CA] items-center w-[140px] h-[45px] text-[#FFFFFF] rounded-[5px] transition-all hover:bg-[#0177a7] font-medium">
                     View Story
                   </button>
                   {/* Dot Indicators */}
-                  <div className="flex ml-[30px] space-x-3 mt-4">
+                  <div className="flex ml-[30px] space-x-3 mt-6">
                     {testimonials.map((_, dotIndex) => (
                       <span
                         key={dotIndex}
                         onClick={() => setCurrentIndex(dotIndex)}
-                        className={`cursor-pointer bg-[#CFCFCF] mt-3 h-3 w-3 rounded-full transition-colors duration-[3000ms] 
+                        className={`cursor-pointer bg-[#CFCFCF] mt-3 h-2.5 w-2.5 rounded-full transition-colors duration-[3000ms] 
                           ${currentIndex === dotIndex ? "bg-blue-500" : ""}
                         `}
                       />
                     ))}
                   </div>
                 </div>
-                <div className="w-[351px] h-full flex-shrink-0 relative">
+                <div className="w-[320px] h-full flex-shrink-0 relative">
                   <img
                     src={Ellipse}
                     alt="Background Ellipse"
@@ -105,7 +105,7 @@ const TestimonialsSlider = () => {
                   <img
                     src={item.image}
                     alt={`${item.name} testimonial`}
-                    className="w-full rounded-full absolute z-50 h-[370px] top-[0px] mb-2"
+                    className="w-full rounded-full absolute z-50 h-[350px] top-[0px] mb-2"
                   />
                 </div>
               </div>
@@ -115,7 +115,7 @@ const TestimonialsSlider = () => {
       </div>
 
       {/* Slider Container - Mobile */}
-      <div className="w-full md:w-[80%] h-full lg:hidden mt-[70px] bg-[#011632] rounded-[10px]">
+      <div className="w-[90%] md:w-[80%] h-full lg:hidden mt-8 bg-[#011632] rounded-[10px] shadow-lg">
         <div>
           {testimonials.map((item, index) => (
             <div
@@ -128,35 +128,35 @@ const TestimonialsSlider = () => {
             >
               {/* Testimonial Card */}
               <div className="relative flex flex-col font-semibold text-[#FFFFFF] rounded-lg">
-                <div className="w-full mb-6 pt-5 flex justify-center items-center">
+                <div className="w-full mb-4 pt-5 flex justify-center items-center">
                   <img
                     src={Ellipse}
                     alt="Background Ellipse"
-                    className="object-cover absolute h-[250px] rounded-full mb-2"
+                    className="object-cover absolute h-[220px] rounded-full mb-2"
                   />
                   <img
                     src={item.image}
                     alt={`${item.name} testimonial`}
-                    className="h-[250px] relative rounded-full"
+                    className="h-[220px] relative rounded-full"
                   />
                 </div>
-                <div className="flex flex-col w-full mb-6 text-center">
-                  <h3 className="font-semibold text-[28px] md:text-[42px] mb-1 text-[#FFFFFF]">
+                <div className="flex flex-col w-full mb-5 text-center px-4">
+                  <h3 className="font-semibold text-2xl md:text-3xl mb-1 text-[#FFFFFF]">
                     {item.name}
                   </h3>
-                  <p className="text-[16px] text-blue-300 mb-3">{item.profession}</p>
-                  <p className="text-[18px] pl-[1rem] pr-[1rem] font-medium text-[#FFFFFF] italic mb-5">
+                  <p className="text-sm md:text-base text-blue-300 mb-3">{item.profession}</p>
+                  <p className="text-base md:text-lg px-2 font-medium text-[#FFFFFF] italic mb-5">
                     "{item.quote}"
                   </p>
-                  <button className="bg-[#0190CA] items-center w-[150px] h-[50px] mx-auto text-[#FFFFFF] rounded-[5px] mb-4 hover:bg-[#0177a7] font-medium">
+                  <button className="bg-[#0190CA] items-center w-[140px] h-[45px] mx-auto text-[#FFFFFF] rounded-[5px] mb-4 hover:bg-[#0177a7] font-medium">
                     View Story
                   </button>
-                  <div className="flex justify-center space-x-3">
+                  <div className="flex justify-center space-x-3 mb-6">
                     {testimonials.map((_, dotIndex) => (
                       <span
                         key={dotIndex}
                         onClick={() => setCurrentIndex(dotIndex)}
-                        className={`cursor-pointer bg-[#CFCFCF] mt-3 h-3 w-3 rounded-full transition-colors duration-[3000ms] 
+                        className={`cursor-pointer bg-[#CFCFCF] mt-3 h-2.5 w-2.5 rounded-full transition-colors duration-[3000ms] 
                           ${currentIndex === dotIndex ? "bg-blue-500" : ""}`}
                       />
                     ))}

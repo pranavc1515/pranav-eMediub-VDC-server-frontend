@@ -27,22 +27,24 @@ const NewsArticles = () => {
   ];
 
   return (
-    <div className="py-16 px-6 md:px-12 lg:px-20 text-center">
-      <h2 className="font-semibold text-[42px] leading-tight text-[#011632] tracking-normal text-center">News & Articles</h2>
-      <img src={Vector2} alt="Divider" className="w-[322px] mx-auto mb-5" />
-      <p className="font-normal text-[18px] text-[#3C4959] mx-auto mb-10 text-center xl:w-[650px]">
+    <div className="py-12 md:py-16 px-4 md:px-6 text-center">
+      <h2 className="font-semibold text-3xl md:text-4xl leading-tight text-[#011632] tracking-normal text-center mb-3">News & Articles</h2>
+      <img src={Vector2} alt="Divider" className="w-[280px] md:w-[320px] mx-auto mb-5" />
+      <p className="font-normal text-base md:text-lg text-[#3C4959] mx-auto mb-8 md:mb-10 text-center max-w-2xl">
         We share the latest medical insights and health information to keep you informed about advancements in healthcare.
       </p>
-      <div className="grid md:grid-cols-3 gap-8">
+      <div className="grid md:grid-cols-3 gap-6 md:gap-8">
         {articles.map((article, index) => (
-          <div key={index} className="bg-[#E6F6FE] rounded-[12px] shadow-md pb-3 hover:shadow-lg transition-shadow">
-            <img src={article.image} alt={article.title} className="w-full pl-9 pt-9 pr-9 rounded-[10px] mb-4" />
-            <p className="text-[#011632] font-normal text-[16px] mt-4 mb-4 mr-7 text-right italic">~{article.author}</p>
-            <h3 className="text-[20px] font-medium text-[#011632] mb-2 text-left ml-7">{article.title}</h3>
-            <p className="text-[#3C4959] w-[250px] mb-6 text-left ml-7 text-[15px]">{article.description}</p>
-            <button className="bg-[#011632] w-[286px] font-medium text-center text-[16px] h-[40px] text-[#FFFFFF] px-6 py-1 rounded-[5px] hover:bg-[#0a2254] transition-colors">
-              Read More
-            </button>
+          <div key={index} className="bg-[#E6F6FE] rounded-lg shadow-md pb-4 hover:shadow-lg transition-shadow">
+            <img src={article.image} alt={article.title} className="w-full p-6 rounded-t-lg mb-2" />
+            <p className="text-[#011632] font-normal text-sm md:text-base mt-2 mb-2 px-6 text-right italic">~{article.author}</p>
+            <h3 className="text-lg md:text-xl font-medium text-[#011632] mb-2 text-left px-6">{article.title}</h3>
+            <p className="text-[#3C4959] px-6 mb-5 text-left text-sm md:text-base">{article.description}</p>
+            <div className="px-6">
+              <button className="bg-[#011632] w-full font-medium text-center text-sm md:text-base h-[40px] text-[#FFFFFF] px-4 py-1 rounded-md hover:bg-[#0a2254] transition-colors">
+                Read More
+              </button>
+            </div>
           </div>
         ))}
       </div>
