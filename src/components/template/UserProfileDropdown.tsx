@@ -3,7 +3,7 @@ import Dropdown from '@/components/ui/Dropdown'
 import withHeaderItem from '@/utils/hoc/withHeaderItem'
 import { useSessionUser } from '@/store/authStore'
 import { Link } from 'react-router-dom'
-import { PiUserDuotone, PiSignOutDuotone } from 'react-icons/pi'
+import { PiUserDuotone, PiSignOutDuotone, PiGearDuotone, PiUserCircleDuotone } from 'react-icons/pi'
 import { useAuth } from '@/auth'
 
 type DropdownList = {
@@ -14,9 +14,14 @@ type DropdownList = {
 
 const dropdownItemList: DropdownList[] = [
     {
-        label: 'Profile',
+        label: 'My Profile',
         path: '/user/profile',
-        icon: <PiUserDuotone />,
+        icon: <PiUserCircleDuotone />,
+    },
+    {
+        label: 'Account Settings',
+        path: '/user/settings',
+        icon: <PiGearDuotone />,
     }
 ]
 
