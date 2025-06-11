@@ -5,9 +5,10 @@
 // import { useSocketContext } from '@/contexts/SocketContext'
 
 import { io, Socket } from 'socket.io-client'
+import { ENV } from '@/configs/environment'
 
 // Get API URL from environment or use the backend URL
-const SOCKET_URL = 'http://localhost:3000'
+const SOCKET_URL = ENV.BACKEND_URL
 
 let socket: Socket | null = null
 

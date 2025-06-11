@@ -228,7 +228,7 @@ const PatientQueueList = () => {
             {/* Ongoing Consultations as Cards */}
             <div className="mb-8">
                 <ReactMuiTableListView
-                    tableTitle="Active Consultations"
+                    tableTitle="On going call"
                     data={ongoingConsultations}
                     columns={columns}
                     cardTemplate={cardTemplate}
@@ -248,7 +248,7 @@ const PatientQueueList = () => {
                     columns={columns}
                     data={completedConsultations}
                     enablePagination={true}
-                    enableSearch={true}
+                    enableSearch={false}
                     enableCardView={false}
                     totalItems={pagination.totalCount}
                     currentPage={currentPage}

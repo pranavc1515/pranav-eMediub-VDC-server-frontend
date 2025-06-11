@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useContext } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { useAuth } from '@/auth'
+import { ENV } from '@/configs/environment'
 
 // Define the context type
 interface SocketContextType {
@@ -11,7 +12,7 @@ interface SocketContextType {
 const SocketContext = createContext<SocketContextType | undefined>(undefined)
 
 // API URL - should match your configuration
-const API_URL = 'http://localhost:3000'
+const API_URL = ENV.BACKEND_URL
 
 // Custom hook to use socket context
 export const useSocketContext = () => {

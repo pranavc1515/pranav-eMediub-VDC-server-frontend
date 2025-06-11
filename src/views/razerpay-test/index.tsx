@@ -12,6 +12,7 @@ import PaymentService from '@/services/PaymentService'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth'
 import appConfig from '@/configs/app.config'
+import { ENV } from '@/configs/environment'
 
 interface OrderResponse {
     success: boolean
@@ -95,7 +96,7 @@ const RazerpayTest = () => {
         }
 
         const options = {
-            key: 'rzp_test_6pdNA8n5Gcoe3D', // Razorpay test key
+            key: ENV.RAZORPAY_KEY, // Razorpay test key
             amount: order.amount,
             currency: order.currency,
             name: 'eMediub',
@@ -193,7 +194,7 @@ const RazerpayTest = () => {
                     </p>
                     <code className="block mt-2 p-2 bg-gray-100 rounded">
                         &lt;script
-                        src="https://checkout.razorpay.com/v1/checkout.js"&gt;&lt;/script&gt;
+                        src="{ENV.RAZORPAY_CHECKOUT_URL}"&gt;&lt;/script&gt;
                     </code>
                 </div>
             </Card>

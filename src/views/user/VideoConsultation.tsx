@@ -295,7 +295,7 @@ const VideoConsultation = () => {
             {/* Ongoing Consultations as Cards */}
             <div className="mb-8">
                 <ReactMuiTableListView
-                    // tableTitle="Ongoing Consultations"
+                    tableTitle="On going call"
                     data={ongoingConsultations}
                     columns={columns}
                     cardTemplate={cardTemplate}
@@ -315,7 +315,7 @@ const VideoConsultation = () => {
                     columns={columns}
                     data={completedConsultations}
                     enablePagination={true}
-                    enableSearch={true}
+                    enableSearch={false}
                     enableCardView={false}
                     totalItems={pagination.totalCount}
                     currentPage={currentPage}
