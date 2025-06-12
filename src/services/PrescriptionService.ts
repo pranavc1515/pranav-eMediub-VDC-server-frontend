@@ -11,11 +11,17 @@ export type Medicine = {
 export type Prescription = {
     id: string
     consultationId: string
+    patientId: number
     doctorId: number
-    userId: number
-    medicines: Medicine[]
-    instructions: string
-    fileUrl?: string
+    prescriptionUrl: string
+    prescriptionType: 'file' | 'custom'
+    s3Key: string
+    filename: string
+    fileType: string
+    customPrescription: string | null
+    medicines: string[] | null
+    instructions: string | null
+    isDeleted: boolean
     createdAt: string
     updatedAt: string
 }
@@ -60,7 +66,7 @@ const PrescriptionService = {
             url += `?userId=${userId}`
         }
 
-        return ApiService.fetchDataWithAxios<PrescriptionResponse>({
+        return ApiService.fetchDataWithAxios<PrescriptionResponse, FormData>({
             url,
             method: 'POST',
             data: formData,

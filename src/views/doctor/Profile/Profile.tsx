@@ -146,13 +146,14 @@ const Profile = () => {
 
                         {/* Badges */}
                         <div className="mt-4 flex flex-wrap justify-center gap-2">
-                            {profile.emailVerified ? (
-                                <div className="inline-block rounded-full bg-green-100 text-green-800 text-sm font-semibold px-3 py-1">
-                                    Verified
+                            {profile.DoctorProfessional.status ===
+                            'Verified' ? (
+                                <div className="inline-block rounded-full  bg-green-100 text-green-800 text-sm font-semibold px-3 py-1">
+                                    {profile.DoctorProfessional.status}
                                 </div>
                             ) : (
-                                <div className="inline-block rounded-full bg-red-100 text-red-800 text-sm font-semibold px-3 py-1">
-                                    Unverified
+                                <div className="inline-block rounded-full    bg-red-100  text-red-800 text-sm font-semibold px-3 py-1">
+                                    {profile.DoctorProfessional.status}
                                 </div>
                             )}
                             {profile.status === 'active' ? (
