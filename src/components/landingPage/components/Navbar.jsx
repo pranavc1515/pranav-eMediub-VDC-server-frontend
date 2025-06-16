@@ -5,6 +5,25 @@ import CloseButton from '../assets/icons8-close.svg'
 
 const Navbar = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false)
+    const [selectedLanguage, setSelectedLanguage] = useState('English')
+
+    // Indian languages list
+    const indianLanguages = [
+        { code: 'en', name: 'English', nativeName: 'English' },
+        { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
+        { code: 'bn', name: 'Bengali', nativeName: 'বাংলা' },
+        { code: 'te', name: 'Telugu', nativeName: 'తెలుగు' },
+        { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
+        { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்' },
+        { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી' },
+        { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ' },
+        { code: 'ml', name: 'Malayalam', nativeName: 'മലയാളം' },
+        { code: 'or', name: 'Odia', nativeName: 'ଓଡ଼ିଆ' },
+        { code: 'pa', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ' },
+        { code: 'as', name: 'Assamese', nativeName: 'অসমীয়া' },
+        { code: 'ur', name: 'Urdu', nativeName: 'اردو' }
+    ]
 
     const toggleMobileMenu = () => {
         setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -12,6 +31,18 @@ const Navbar = () => {
 
     const closeMobileMenu = () => {
         setIsMobileMenuOpen(false)
+    }
+
+    const toggleLanguageDropdown = (e) => {
+        e.preventDefault()
+        setIsLanguageDropdownOpen(!isLanguageDropdownOpen)
+    }
+
+    const selectLanguage = (language) => {
+        setSelectedLanguage(language.name)
+        setIsLanguageDropdownOpen(false)
+        // You can add language change logic here
+        console.log(`Language changed to: ${language.name} (${language.code})`)
     }
 
     // Smooth scroll function
@@ -61,10 +92,37 @@ const Navbar = () => {
                         Login / Signup
                     </a>
                 </li>
-                <li>
-                    <a href="#language" className="text-xl mr-[40px]">
-                        🌐
-                    </a>
+                <li className="relative mr-[40px]">
+                    <button
+                        onClick={toggleLanguageDropdown}
+                        className="text-xl flex items-center gap-1 hover:text-[#0190CA] transition-colors"
+                    >
+                        🌐 <span className="text-sm">▼</span>
+                    </button>
+                    
+                    {/* Language Dropdown */}
+                    {isLanguageDropdownOpen && (
+                        <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                            <div className="py-1">
+                                {indianLanguages.map((language) => (
+                                    <button
+                                        key={language.code}
+                                        onClick={() => selectLanguage(language)}
+                                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                                            selectedLanguage === language.name 
+                                                ? 'bg-blue-50 text-[#0190CA] font-semibold' 
+                                                : 'text-gray-700'
+                                        }`}
+                                    >
+                                        <span className="font-medium">{language.name}</span>
+                                        {language.nativeName !== language.name && (
+                                            <span className="text-gray-500 ml-2">({language.nativeName})</span>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </li>
             </ul>
 
@@ -109,10 +167,37 @@ const Navbar = () => {
                                 Login / Signup
                             </a>
                         </li>
-                        <li>
-                            <a href="#language" className="text-xl">
-                                🌐
-                            </a>
+                        <li className="relative">
+                            <button
+                                onClick={toggleLanguageDropdown}
+                                className="text-xl flex items-center gap-1 justify-center hover:text-[#0190CA] transition-colors"
+                            >
+                                🌐 <span className="text-sm">▼</span>
+                            </button>
+                            
+                            {/* Mobile Language Dropdown */}
+                            {isLanguageDropdownOpen && (
+                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                                    <div className="py-1">
+                                        {indianLanguages.map((language) => (
+                                            <button
+                                                key={language.code}
+                                                onClick={() => selectLanguage(language)}
+                                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                                                    selectedLanguage === language.name 
+                                                        ? 'bg-blue-50 text-[#0190CA] font-semibold' 
+                                                        : 'text-gray-700'
+                                                }`}
+                                            >
+                                                <span className="font-medium">{language.name}</span>
+                                                {language.nativeName !== language.name && (
+                                                    <span className="text-gray-500 ml-2">({language.nativeName})</span>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </li>
                     </ul>
                 </div>
