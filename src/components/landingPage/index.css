@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Add smooth scrolling to the root element */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Ensure proper offset for fixed navbar */
+section {
+    scroll-margin-top: 120px; /* Adjust based on navbar height */
+}
+
 @media (max-width: 480px) {
     /* Styles for small smartphones */
     .headerSection {

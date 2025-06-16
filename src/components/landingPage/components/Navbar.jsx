@@ -14,6 +14,22 @@ const Navbar = () => {
         setIsMobileMenuOpen(false)
     }
 
+    // Smooth scroll function
+    const handleSmoothScroll = (e, targetId) => {
+        e.preventDefault()
+        const targetElement = document.getElementById(targetId)
+        if (targetElement) {
+            targetElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            })
+        }
+        // Close mobile menu if open
+        if (isMobileMenuOpen) {
+            closeMobileMenu()
+        }
+    }
+
     return (
         <nav className="navbar flex justify-between gap-[50px] items-center  h-[120px] bg-transparent z-50 w-full">
             <div className="navbarImage text-blue-600 text-2xl ml-[40px] font-bold">
@@ -23,19 +39,19 @@ const Navbar = () => {
             {/* Desktop Menu */}
             <ul className="hidden lg:flex justify-between gap-[40px] text-[#011632] font-semibold text-[16px]">
                 <li>
-                    <a href="#home">Home</a>
+                    <a href="#home" onClick={(e) => handleSmoothScroll(e, 'home')}>Home</a>
                 </li>
                 <li>
-                    <a href="#services">Services</a>
+                    <a href="#services" onClick={(e) => handleSmoothScroll(e, 'services')}>Services</a>
                 </li>
                 <li>
-                    <a href="#blogs">Blogs</a>
+                    <a href="#blogs" onClick={(e) => handleSmoothScroll(e, 'blogs')}>Blogs</a>
                 </li>
                 <li>
-                    <a href="#about">About</a>
+                    <a href="#about" onClick={(e) => handleSmoothScroll(e, 'about')}>About</a>
                 </li>
                 <li>
-                    <a href="#contact">Contact</a>
+                    <a href="#contact" onClick={(e) => handleSmoothScroll(e, 'contact')}>Contact</a>
                 </li>
                 <li>
                     <a
@@ -74,19 +90,19 @@ const Navbar = () => {
 
                     <ul className="space-y-4 text-center text-[#011632] font-semibold text-[16px] mt-12">
                         <li>
-                            <a href="#home">Home</a>
+                            <a href="#home" onClick={(e) => handleSmoothScroll(e, 'home')}>Home</a>
                         </li>
                         <li>
-                            <a href="#services">Services</a>
+                            <a href="#services" onClick={(e) => handleSmoothScroll(e, 'services')}>Services</a>
                         </li>
                         <li>
-                            <a href="#blogs">Blogs</a>
+                            <a href="#blogs" onClick={(e) => handleSmoothScroll(e, 'blogs')}>Blogs</a>
                         </li>
                         <li>
-                            <a href="#about">About</a>
+                            <a href="#about" onClick={(e) => handleSmoothScroll(e, 'about')}>About</a>
                         </li>
                         <li>
-                            <a href="#contact">Contact</a>
+                            <a href="#contact" onClick={(e) => handleSmoothScroll(e, 'contact')}>Contact</a>
                         </li>
                         <li>
                             <a href="#login" className=" py-2 px-4 rounded-md">
