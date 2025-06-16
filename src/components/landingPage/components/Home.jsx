@@ -6,9 +6,13 @@ import DoctorConsultation from './DoctorConsultation';
 import NewsArticles from './NewsArticles';
 import TestimonialsSlider from './Testimonials';
 import TeamSection from './TeamSection';
+import { useLanguage } from '../contexts/LanguageContext.jsx';
 import '../../landingPage/index.css';
 
 const Home = () => {
+    // Use Language Context
+    const { translate } = useLanguage();
+
     return (
         <div className="w-full">
             {/* Home Section */}
@@ -47,30 +51,29 @@ const Home = () => {
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-12">
                         <h2 className="text-3xl md:text-4xl font-semibold text-[#011632] mb-4">
-                            Contact Us
+                            {translate('contactTitle')}
                         </h2>
                         <p className="text-[#3C4959] text-lg max-w-2xl mx-auto">
-                            Get in touch with us for any inquiries about our healthcare services.
-                            We're here to help you with your health and wellness needs.
+                            {translate('contactDescription')}
                         </p>
                     </div>
                     
                     <div className="grid md:grid-cols-3 gap-8 text-center">
                         <div className="bg-white p-6 rounded-lg shadow-md">
                             <div className="text-[#1376F8] text-3xl mb-4">📧</div>
-                            <h3 className="text-xl font-semibold text-[#011632] mb-2">Email</h3>
+                            <h3 className="text-xl font-semibold text-[#011632] mb-2">{translate('contactEmail')}</h3>
                             <p className="text-[#3C4959]">contact@emediub.com</p>
                         </div>
                         
                         <div className="bg-white p-6 rounded-lg shadow-md">
                             <div className="text-[#1376F8] text-3xl mb-4">📞</div>
-                            <h3 className="text-xl font-semibold text-[#011632] mb-2">Phone</h3>
+                            <h3 className="text-xl font-semibold text-[#011632] mb-2">{translate('contactPhone')}</h3>
                             <p className="text-[#3C4959]">+91 8805047968</p>
                         </div>
                         
                         <div className="bg-white p-6 rounded-lg shadow-md">
                             <div className="text-[#1376F8] text-3xl mb-4">📍</div>
-                            <h3 className="text-xl font-semibold text-[#011632] mb-2">Address</h3>
+                            <h3 className="text-xl font-semibold text-[#011632] mb-2">{translate('contactAddress')}</h3>
                             <p className="text-[#3C4959]">
                                 1372/C, 2nd Floor, 32nd E Cross Rd<br />
                                 4th T Block East, Jayanagar<br />

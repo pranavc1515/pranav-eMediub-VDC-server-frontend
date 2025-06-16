@@ -2,28 +2,14 @@ import React, { useState } from 'react'
 import MediHub from '../assets/eMidiHub.svg'
 import Button3 from '../assets/Button3.svg'
 import CloseButton from '../assets/icons8-close.svg'
+import { useLanguage } from '../contexts/LanguageContext.jsx'
 
 const Navbar = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false)
-    const [selectedLanguage, setSelectedLanguage] = useState('English')
-
-    // Indian languages list
-    const indianLanguages = [
-        { code: 'en', name: 'English', nativeName: 'English' },
-        { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
-        { code: 'bn', name: 'Bengali', nativeName: 'বাংলা' },
-        { code: 'te', name: 'Telugu', nativeName: 'తెలుగు' },
-        { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
-        { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்' },
-        { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી' },
-        { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ' },
-        { code: 'ml', name: 'Malayalam', nativeName: 'മലയാളം' },
-        { code: 'or', name: 'Odia', nativeName: 'ଓଡ଼ିଆ' },
-        { code: 'pa', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ' },
-        { code: 'as', name: 'Assamese', nativeName: 'অসমীয়া' },
-        { code: 'ur', name: 'Urdu', nativeName: 'اردو' }
-    ]
+    
+    // Use Language Context
+    const { selectedLanguage, selectLanguage, translate, getCurrentLanguage, indianLanguages } = useLanguage()
 
     const toggleMobileMenu = () => {
         setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -38,11 +24,9 @@ const Navbar = () => {
         setIsLanguageDropdownOpen(!isLanguageDropdownOpen)
     }
 
-    const selectLanguage = (language) => {
-        setSelectedLanguage(language.name)
+    const handleLanguageSelect = (language) => {
+        selectLanguage(language.code)
         setIsLanguageDropdownOpen(false)
-        // You can add language change logic here
-        console.log(`Language changed to: ${language.name} (${language.code})`)
     }
 
     // Smooth scroll function
@@ -70,26 +54,26 @@ const Navbar = () => {
             {/* Desktop Menu */}
             <ul className="hidden lg:flex justify-between gap-[40px] text-[#011632] font-semibold text-[16px]">
                 <li>
-                    <a href="#home" onClick={(e) => handleSmoothScroll(e, 'home')}>Home</a>
+                    <a href="#home" onClick={(e) => handleSmoothScroll(e, 'home')}>{translate('navHome')}</a>
                 </li>
                 <li>
-                    <a href="#services" onClick={(e) => handleSmoothScroll(e, 'services')}>Services</a>
+                    <a href="#services" onClick={(e) => handleSmoothScroll(e, 'services')}>{translate('navServices')}</a>
                 </li>
                 <li>
-                    <a href="#blogs" onClick={(e) => handleSmoothScroll(e, 'blogs')}>Blogs</a>
+                    <a href="#blogs" onClick={(e) => handleSmoothScroll(e, 'blogs')}>{translate('navBlogs')}</a>
                 </li>
                 <li>
-                    <a href="#about" onClick={(e) => handleSmoothScroll(e, 'about')}>About</a>
+                    <a href="#about" onClick={(e) => handleSmoothScroll(e, 'about')}>{translate('navAbout')}</a>
                 </li>
                 <li>
-                    <a href="#contact" onClick={(e) => handleSmoothScroll(e, 'contact')}>Contact</a>
+                    <a href="#contact" onClick={(e) => handleSmoothScroll(e, 'contact')}>{translate('navContact')}</a>
                 </li>
                 <li>
                     <a
                         href="sign-in"
                         className=" border-[2px]  border-[#0190CA] text-[#0190CA] py-2 px-4 rounded-md"
                     >
-                        Login / Signup
+                        {translate('navLogin')}
                     </a>
                 </li>
                 <li className="relative mr-[40px]">
@@ -107,9 +91,9 @@ const Navbar = () => {
                                 {indianLanguages.map((language) => (
                                     <button
                                         key={language.code}
-                                        onClick={() => selectLanguage(language)}
+                                        onClick={() => handleLanguageSelect(language)}
                                         className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
-                                            selectedLanguage === language.name 
+                                            selectedLanguage === language.code 
                                                 ? 'bg-blue-50 text-[#0190CA] font-semibold' 
                                                 : 'text-gray-700'
                                         }`}
@@ -148,23 +132,23 @@ const Navbar = () => {
 
                     <ul className="space-y-4 text-center text-[#011632] font-semibold text-[16px] mt-12">
                         <li>
-                            <a href="#home" onClick={(e) => handleSmoothScroll(e, 'home')}>Home</a>
+                            <a href="#home" onClick={(e) => handleSmoothScroll(e, 'home')}>{translate('navHome')}</a>
                         </li>
                         <li>
-                            <a href="#services" onClick={(e) => handleSmoothScroll(e, 'services')}>Services</a>
+                            <a href="#services" onClick={(e) => handleSmoothScroll(e, 'services')}>{translate('navServices')}</a>
                         </li>
                         <li>
-                            <a href="#blogs" onClick={(e) => handleSmoothScroll(e, 'blogs')}>Blogs</a>
+                            <a href="#blogs" onClick={(e) => handleSmoothScroll(e, 'blogs')}>{translate('navBlogs')}</a>
                         </li>
                         <li>
-                            <a href="#about" onClick={(e) => handleSmoothScroll(e, 'about')}>About</a>
+                            <a href="#about" onClick={(e) => handleSmoothScroll(e, 'about')}>{translate('navAbout')}</a>
                         </li>
                         <li>
-                            <a href="#contact" onClick={(e) => handleSmoothScroll(e, 'contact')}>Contact</a>
+                            <a href="#contact" onClick={(e) => handleSmoothScroll(e, 'contact')}>{translate('navContact')}</a>
                         </li>
                         <li>
                             <a href="#login" className=" py-2 px-4 rounded-md">
-                                Login / Signup
+                                {translate('navLogin')}
                             </a>
                         </li>
                         <li className="relative">
@@ -182,9 +166,9 @@ const Navbar = () => {
                                         {indianLanguages.map((language) => (
                                             <button
                                                 key={language.code}
-                                                onClick={() => selectLanguage(language)}
+                                                onClick={() => handleLanguageSelect(language)}
                                                 className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
-                                                    selectedLanguage === language.name 
+                                                    selectedLanguage === language.code 
                                                         ? 'bg-blue-50 text-[#0190CA] font-semibold' 
                                                         : 'text-gray-700'
                                                 }`}

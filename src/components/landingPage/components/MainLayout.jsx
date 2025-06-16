@@ -8,11 +8,15 @@ import GooglePlay from '../assets/googlePlay.svg';
 import AppStore from '../assets/AppStore.svg';
 import Navbar from './Navbar';
 import FooterSection from './FooterSection';
+import { useLanguage } from '../contexts/LanguageContext.jsx';
 
 const MainLayout = ({ children }) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const images = [images1, images2, images3, images4];
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    
+    // Use Language Context
+    const { translate } = useLanguage();
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -38,14 +42,11 @@ const MainLayout = ({ children }) => {
                 <Navbar />
                 <div className="YourHealthSection pl-[40px]">
                     <h1 className="text-[64px] font-semibold leading-none w-[735px] text-[#011632]">
-                        Your Health File, 
-                        Simplified!
+                        {translate('headerTitle')}
                     </h1>
                     <img src={vector} className="w-[25%]" alt="Decorative line" />
                     <p className="text-[18px] w-[531px] font-[400] text-[#3C4959] pt-[30px]">
-                        eMediHub transforms healthcare with digital
-                        precision—integrating insights, connectivity, and
-                        collaboration for smarter, patient-centric care.
+                        {translate('headerDescription')}
                     </p>
                     <div className="flex gap-3 pt-3">
                         {[0, 1, 2, 3].map((index) => (
@@ -65,7 +66,7 @@ const MainLayout = ({ children }) => {
 
             {/* Sticky App Store Buttons */}
             <div className="fixed bottom-0 right-0 z-50 flex items-center gap-4 bg-white/80 backdrop-blur-sm p-3 rounded-tl-lg shadow-lg">
-                <span className="text-sm font-semibold text-gray-700">Download Our App:</span>
+                <span className="text-sm font-semibold text-gray-700">{translate('downloadApp')}</span>
                 <a href="#" className="transition-transform hover:scale-105">
                     <img src={GooglePlay} alt="Google Play" className="h-10" />
                 </a>

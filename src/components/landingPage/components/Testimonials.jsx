@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import testimonial from "../assets/Testinomial.svg";
 import Ellipse from "../assets/Ellipse1097.svg";
 import DoctorImage1 from "../assets/DoctorImage1.svg";
+import { useLanguage } from '../contexts/LanguageContext.jsx';
 
 const testimonials = [
   {
@@ -28,6 +29,7 @@ const testimonials = [
 ];
 
 const TestimonialsSlider = () => {
+  const { translate } = useLanguage();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Auto-slide every 3 seconds
@@ -50,11 +52,10 @@ const TestimonialsSlider = () => {
     >
       {/* Section Title */}
       <h2 className="text-3xl md:text-4xl font-semibold text-[#011632] mb-3 z-50">
-        Testimonials
+        {translate('testimonials')}
       </h2>
       <p className="text-[#3C4959] w-[80%] xl:w-[450px] text-base md:text-lg font-normal mb-10 text-center">
-        Hear from our satisfied clients! Real experiences that inspire trust and
-        confidence in our healthcare services.
+        {translate('testimonialsDesc')}
       </p>
 
       {/* Slider Container - Desktop */}
@@ -81,7 +82,7 @@ const TestimonialsSlider = () => {
                     "{item.quote}"
                   </p>
                   <button className="bg-[#0190CA] items-center w-[140px] h-[45px] text-[#FFFFFF] rounded-[5px] transition-all hover:bg-[#0177a7] font-medium">
-                    View Story
+                    {translate('viewStory')}
                   </button>
                   {/* Dot Indicators */}
                   <div className="flex ml-[30px] space-x-3 mt-6">
@@ -149,7 +150,7 @@ const TestimonialsSlider = () => {
                     "{item.quote}"
                   </p>
                   <button className="bg-[#0190CA] items-center w-[140px] h-[45px] mx-auto text-[#FFFFFF] rounded-[5px] mb-4 hover:bg-[#0177a7] font-medium">
-                    View Story
+                    {translate('viewStory')}
                   </button>
                   <div className="flex justify-center space-x-3 mb-6">
                     {testimonials.map((_, dotIndex) => (

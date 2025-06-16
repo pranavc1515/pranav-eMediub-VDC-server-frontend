@@ -1,10 +1,23 @@
 import React from "react";
+import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../contexts/LanguageContext.jsx';
 import Vector from "../assets/Vector.svg";
 import Vector2 from "../assets/Vector2.svg";
 import maskGroup from "../assets/Maskgroup2.svg";
 import labtest from "../assets/labtest.svg";
 
 function OurServicesCardTwo() {
+  const navigate = useNavigate();
+  const { translate } = useLanguage();
+
+  const handleOrderMedicines = () => {
+    navigate('/sign-in');
+  };
+
+  const handleBookLabTest = () => {
+    navigate('/sign-in');
+  };
+
   return (
     <section className=" flex justify-center flex-col items-center  mx-auto py-12 px-4 w-[97%]  ">
     {/* Section: Book Your Appointment */}
@@ -12,18 +25,18 @@ function OurServicesCardTwo() {
      
       <div className=" lg:w-1/2 text-left bookAppointmenttwo">
         <h3 className="text-[42px] font-semibold leading-1 text-[#011632]">
-        Pharmacy
+        {translate('pharmacy')}
         </h3>
         <img src={Vector} alt=""className='xl:ml-[14px] w-[40%] mt-[10px]'/>
         <p className="text-[#3C4959] font-normal text-[18px] 2xl:w-[687px]  mt-4">
-        Order prescription and OTC medicines online with ease. Upload your
-  prescription, place an order, and get genuine medicines delivered to
-  your doorstep—fast, secure, and hassle-free. Stay healthy with 24/7
-  service and affordable prices!
+        {translate('pharmacyDesc')}
         </p>
        
-        <button className="mt-4 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]">
-          Order medicines
+        <button 
+          className="mt-4 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]"
+          onClick={handleOrderMedicines}
+        >
+          {translate('orderMedicinesBtn')}
         </button>
       </div>
 
@@ -54,24 +67,21 @@ function OurServicesCardTwo() {
   
       <div className="lg:w-1/2   lg:pl-8 mt-6 lg:mt-0">
         <h3 className="text-[32px] font-semibold text-[#011632]">
-        Book Lab Tests Online
+        {translate('bookLabTests')}
         </h3>
         <img src={Vector2} alt="" className="xl:ml-[140px] xl:mt-[-5px] mt-[-5px]" />  
         <p className="text-[#3C4959] text-[18px] font-normal xl:w-[444px] mt-4">
-        Schedule diagnostic tests at trusted labs with home sample
-  collection, real-time updates, and fast, reliable results. Get
-  tested from the comfort of your home with professional sample
-  collection by certified experts. Track your test status in real time
-  and receive accurate digital reports securely. We ensure
-  high-quality diagnostics, affordability, and doctor-reviewed results
-  for better healthcare decisions.
+        {translate('labTestsDesc')}
         </p>
 
         
     
 
-        <button className="mt-8 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]">
-          Book lab test
+        <button 
+          className="mt-8 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]"
+          onClick={handleBookLabTest}
+        >
+          {translate('bookLabTestBtn')}
         </button>
       </div>
     </div>

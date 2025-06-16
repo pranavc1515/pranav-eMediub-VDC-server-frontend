@@ -3,8 +3,11 @@ import Healthhygenic from "../assets/HealthHygenic.svg";
 import SaltRichDiet from "../assets/SaltRichDiet.svg";
 import MuchGoOnDiet from "../assets/MuchGoOnDiet.svg";
 import Vector2 from "../assets/Vector2.svg";
+import { useLanguage } from '../contexts/LanguageContext.jsx';
 
 const NewsArticles = () => {
+  const { translate } = useLanguage();
+  
   const articles = [
     {
       image: Healthhygenic,
@@ -28,10 +31,12 @@ const NewsArticles = () => {
 
   return (
     <div className="py-12 md:py-16 px-4 md:px-6 text-center">
-      <h2 className="font-semibold text-3xl md:text-4xl leading-tight text-[#011632] tracking-normal text-center mb-3">News & Articles</h2>
+      <h2 className="font-semibold text-3xl md:text-4xl leading-tight text-[#011632] tracking-normal text-center mb-3">
+        {translate('newsArticles')}
+      </h2>
       <img src={Vector2} alt="Divider" className="w-[280px] md:w-[320px] mx-auto mb-5" />
       <p className="font-normal text-base md:text-lg text-[#3C4959] mx-auto mb-8 md:mb-10 text-center max-w-2xl">
-        We share the latest medical insights and health information to keep you informed about advancements in healthcare.
+        {translate('newsArticlesDesc')}
       </p>
       <div className="grid md:grid-cols-3 gap-6 md:gap-8">
         {articles.map((article, index) => (
@@ -42,7 +47,7 @@ const NewsArticles = () => {
             <p className="text-[#3C4959] px-6 mb-5 text-left text-sm md:text-base">{article.description}</p>
             <div className="px-6">
               <button className="bg-[#011632] w-full font-medium text-center text-sm md:text-base h-[40px] text-[#FFFFFF] px-4 py-1 rounded-md hover:bg-[#0a2254] transition-colors">
-                Read More
+                {translate('readMore')}
               </button>
             </div>
           </div>

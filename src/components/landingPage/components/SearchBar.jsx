@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../contexts/LanguageContext.jsx';
 import Location from '../assets/location.svg';
 import Search from '../assets/Search.svg';
 
 const SearchBar = () => {
+    const { translate } = useLanguage();
     const [searchInput, setSearchInput] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
-    const [userLocation, setUserLocation] = useState('Location');
+    const [userLocation, setUserLocation] = useState(translate('location'));
     const [loading, setLoading] = useState(false);
     
     // Dummy data for Indian healthcare locations
@@ -84,7 +86,7 @@ const SearchBar = () => {
                     onClick={getUserLocation}
                 >
                     <img src={Location} alt="Location" />
-                    <span>{loading ? "Detecting..." : userLocation}</span>
+                    <span>{loading ? translate('detecting') : userLocation}</span>
                 </div>
                 {/* Vertical Divider */}
                 <div className="w-[1px] h-6 bg-gray-300 mx-3"></div>
@@ -93,7 +95,7 @@ const SearchBar = () => {
                     <img src={Search} alt="Search" />
                     <input
                         type="text"
-                        placeholder="Search For Nearby Clinic, Hospital Or Specialist"
+                        placeholder={translate('searchPlaceholder')}
                         className="w-full border-none outline-none text-gray-500 px-3 bg-transparent"
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}

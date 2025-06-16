@@ -1,8 +1,22 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../contexts/LanguageContext.jsx';
 import Vector2 from "../assets/Vector2.svg";
 import BootCamp from "../assets/BootCamp.svg";
 import FitnessChallenges from "../assets/FitnessChallenges.svg";
+
 const OurServicesCardForth = () => {
+  const navigate = useNavigate();
+  const { translate } = useLanguage();
+
+  const handleJoinBootCamp = () => {
+    navigate('/sign-in');
+  };
+
+  const handleTakeFitnessChallenge = () => {
+    navigate('/sign-in');
+  };
+
   return (
    
    <section className=" flex justify-center flex-col items-center  mx-auto py-12 px-4 w-[97%]  ">
@@ -11,15 +25,18 @@ const OurServicesCardForth = () => {
      
       <div className=" lg:w-1/2 text-left bookAppointmenttwo">
         <h3 className="text-[42px] font-semibold leading-1 text-[#011632]">
-        Boot Camp
+        {translate('bootCamp')}
         </h3>
         <img src={Vector2} alt=""className='xl:ml-[14px] w-[40%] mt-[10px]'/>
         <p className="text-[#3C4959] font-normal text-[18px] 2xl:w-[687px]  mt-4">
-        Engage in high-intensity boot camps designed to push your limits, enhance endurance, and achieve your fitness goals. Our expert-led sessions combine strength training, cardio, and functional workouts for maximum results. Whether you're a beginner or a fitness enthusiast, our boot camps offer personalized coaching, group motivation, and a dynamic training experience to help you stay committed and energized.
+        {translate('bootCampDesc')}
         </p>
        
-        <button className="mt-4 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]">
-          Join boot camp
+        <button 
+          className="mt-4 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]"
+          onClick={handleJoinBootCamp}
+        >
+          {translate('joinBootCampBtn')}
         </button>
       </div>
 
@@ -50,19 +67,21 @@ const OurServicesCardForth = () => {
   
       <div className="lg:w-1/2   lg:pl-8 mt-6 lg:mt-0">
         <h3 className="text-[32px] font-semibold text-[#011632]">
-        Fitness Challenges
+        {translate('fitnessChallenges')}
         </h3>
         <img src={Vector2} alt="" className="xl:ml-[140px] xl:mt-[-5px] mt-[-5px]" />  
         <p className="text-[#3C4959] text-[18px] font-normal xl:w-[444px] mt-4">
-        Take on exciting fitness challenges, track your progress, and stay motivated with a supportive community. Achieve your goals with personalized milestones, rewards, and a motivating group environment.
-        Join the challenge and transform your fitness journey!
+        {translate('fitnessChallengesDesc')}
         </p>
 
         
     
 
-        <button className="mt-8 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]">
-          Take fitness challenge
+        <button 
+          className="mt-8 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]"
+          onClick={handleTakeFitnessChallenge}
+        >
+          {translate('takeFitnessChallengeBtn')}
         </button>
       </div>
     </div>
