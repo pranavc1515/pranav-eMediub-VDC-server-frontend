@@ -48,6 +48,14 @@ export const SocketContextProvider: React.FC<SocketContextProviderProps> = ({
                 userType: isDoctor ? 'doctor' : 'patient',
                 userId: user.userId,
             },
+            transports: ['websocket', 'polling'],
+            secure: true,
+            rejectUnauthorized: false,
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            timeout: 20000,
+            withCredentials: true
         })
 
         // Set up event listeners
@@ -57,6 +65,10 @@ export const SocketContextProvider: React.FC<SocketContextProviderProps> = ({
 
         newSocket.on('connect_error', (error) => {
             console.error('Socket connection error:', error)
+        })
+
+        newSocket.on('disconnect', (reason) => {
+            console.log('Socket disconnected:', reason)
         })
 
         // Store socket in state
