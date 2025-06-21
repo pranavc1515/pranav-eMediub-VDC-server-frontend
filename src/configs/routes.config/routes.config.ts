@@ -22,6 +22,18 @@ export const protectedRoutes: Routes = [
         authority: [],
     },
     {
+        key: 'user.dashboard',
+        path: '/user/dashboard',
+        component: lazy(() => import('@/views/user/Dashboard')),
+        authority: ['user'],
+    },
+    {
+        key: 'user.appointments',
+        path: '/user/appointments',
+        component: lazy(() => import('@/views/user/Appointments')),
+        authority: ['user'],
+    },
+    {
         key: 'user.profileSetup',
         path: '/user-profile-setup',
         component: lazy(() => import('@/views/user/ProfileSetup')),
