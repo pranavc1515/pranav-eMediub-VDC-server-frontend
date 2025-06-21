@@ -13,6 +13,7 @@ import DatePicker from '@/components/ui/DatePicker'
 import Select from '@/components/ui/Select'
 import dayjs from 'dayjs'
 import Badge from '@/components/ui/Badge'
+import { getTodayDateString } from '@/utils/dateUtils'
 
 // Common languages in India
 const languageOptions = [
@@ -358,6 +359,7 @@ const Profile = () => {
                                 name="dob"
                                 id="dob"
                                 defaultValue={profile?.dob ? profile.dob : ''}
+                                max={getTodayDateString()}
                                 className="w-full rounded-md border border-gray-300 p-2"
                             />
                         </FormItem>

@@ -13,6 +13,7 @@ import Alert from '@/components/ui/Alert'
 import Steps from '@/components/ui/Steps'
 import { useToken } from '@/store/authStore'
 import type { ChangeEvent } from 'react'
+import { getTodayDateString } from '@/utils/dateUtils'
 
 // Common languages in India
 const languageOptions = [
@@ -316,6 +317,7 @@ const ProfileSetup = () => {
                                         name="dob"
                                         value={personalFormData.dob}
                                         onChange={handlePersonalInputChange}
+                                        max={getTodayDateString()}
                                         className="w-full rounded-md border border-gray-300 p-2"
                                         required
                                     />

@@ -18,6 +18,7 @@ import { HiOutlinePencilAlt, HiOutlineCamera } from 'react-icons/hi'
 import type { UserProfileDetailsResponse } from '@/services/UserService'
 import Container from '@/components/shared/Container'
 import { useAuth } from '@/auth'
+import { getTodayDateString } from '@/utils/dateUtils'
 
 // Helper function to calculate age from date of birth
 const calculateAge = (dob: string): string => {
@@ -481,6 +482,7 @@ const Profile = () => {
                                     value={formData.dob}
                                     onChange={handleInputChange}
                                     className="w-full"
+                                    max={getTodayDateString()}
                                     required
                                 />
                             </FormItem>

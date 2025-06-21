@@ -10,6 +10,7 @@ import Alert from '@/components/ui/Alert'
 import UserService from '@/services/UserService'
 import { useToken } from '@/store/authStore'
 import { useAuth } from '@/auth'
+import { getTodayDateString } from '@/utils/dateUtils'
 
 // Helper function to calculate age from date of birth
 const calculateAge = (dob: string): string => {
@@ -310,6 +311,7 @@ const UserProfileSetup = () => {
                                     value={formData.dob}
                                     onChange={handleInputChange}
                                     className="w-full"
+                                    max={getTodayDateString()}
                                     required
                                 />
                                 <small className="text-gray-500">
