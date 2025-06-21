@@ -1,10 +1,11 @@
 import { memo, Suspense, lazy } from 'react'
 import { useSessionUser } from '@/store/authStore'
+import type { Meta } from '@/@types/routes'
 
 const DoctorHomePage = lazy(() => import('./components/DoctorHomePage'))
 const UserHomePage = lazy(() => import('./components/UserHomePage'))
 
-const Home = () => {
+const Home = <T extends Meta>(props: T): JSX.Element => {
     const user = useSessionUser((state) => state.user)
     const isDoctor = user.authority?.includes('doctor') || false
 

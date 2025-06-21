@@ -1,6 +1,7 @@
 {
     "nav": {
         "home": "Home",
+        "videoDoctorConsultation": "Video Doctor Consultation",
         "singleMenuItem": "Single menu item",
         "collapseMenu": {
             "collapseMenu": "Collapse menu item",

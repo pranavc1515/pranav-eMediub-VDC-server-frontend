@@ -24,6 +24,16 @@ const navigationConfig: NavigationTree[] = [
         subMenu: [],
     },
     {
+        key: 'videoDoctorConsultation',
+        path: '/vdc',
+        title: 'Video Doctor Consultation',
+        translateKey: 'nav.videoDoctorConsultation',
+        icon: 'video',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: ['user', 'doctor'],
+        subMenu: [],
+    },
+    {
         key: 'userProfile',
         path: '/user/profile',
         title: 'Profile',

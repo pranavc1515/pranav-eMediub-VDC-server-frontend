@@ -22,6 +22,13 @@ export const protectedRoutes: Routes = [
         authority: [],
     },
     {
+        key: 'videoDoctorConsultation',
+        path: '/vdc',
+        component: lazy(() => import('@/views/Home')),
+        authority: [],
+       
+    },
+    {
         key: 'user.dashboard',
         path: '/user/dashboard',
         component: lazy(() => import('@/views/user/Dashboard')),
