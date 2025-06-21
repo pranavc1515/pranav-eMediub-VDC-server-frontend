@@ -15,10 +15,10 @@ export const publicRoutes: Routes = [
 ]
 
 export const protectedRoutes: Routes = [
-    {
+        {
         key: 'home',
         path: '/home',
-        component: lazy(() => import('@/views/Home')),
+        component: lazy(() => import('@/views/user/Dashboard')),
         authority: [],
     },
     {
@@ -26,13 +26,6 @@ export const protectedRoutes: Routes = [
         path: '/vdc',
         component: lazy(() => import('@/views/Home')),
         authority: [],
-       
-    },
-    {
-        key: 'user.dashboard',
-        path: '/user/dashboard',
-        component: lazy(() => import('@/views/user/Dashboard')),
-        authority: ['user'],
     },
     {
         key: 'user.appointments',

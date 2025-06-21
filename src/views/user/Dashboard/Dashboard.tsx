@@ -3,6 +3,7 @@ import { Card, Input, Button, Avatar } from '@/components/ui'
 import Container from '@/components/shared/Container'
 import { useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
+import type { Meta } from '@/@types/routes'
 import { 
     HiOutlineVideoCamera, 
     HiOutlineCalendar, 
@@ -24,7 +25,7 @@ interface ServiceCard {
     bgColor: string
 }
 
-const UserDashboard = <T extends Record<string, any>>(props: T): JSX.Element => {
+const UserDashboard = <T extends Meta>(props: T): JSX.Element => {
     const [searchTerm, setSearchTerm] = useState('')
     const navigate = useNavigate()
     const user = useSessionUser((state) => state.user)
@@ -117,7 +118,7 @@ const UserDashboard = <T extends Record<string, any>>(props: T): JSX.Element => 
     const handleSearch = () => {
         if (searchTerm.trim()) {
             // Navigate to doctors search with the search term
-            navigate(`/home?search=${encodeURIComponent(searchTerm)}`)
+            navigate(`/vdc?search=${encodeURIComponent(searchTerm)}`)
         }
     }
 
