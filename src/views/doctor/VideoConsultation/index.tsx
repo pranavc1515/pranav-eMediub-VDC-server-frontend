@@ -7,6 +7,7 @@ import ReactMuiTableListView, { Column } from '@/components/shared/ReactMuiTable
 import useConsultation from '@/hooks/useConsultation'
 import { useSessionUser } from '@/store/authStore'
 import { usePrescriptionStore } from '@/store/prescriptionStore'
+import ConsultationService from '@/services/ConsultationService'
 import type { ConsultationRecord } from '@/services/ConsultationService'
 
 interface ConsultationWithPatient extends Omit<ConsultationRecord, 'patientId' | 'status'> {
@@ -32,6 +33,7 @@ const PatientQueueList = () => {
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(15)
     const [searchTerm, setSearchTerm] = useState('')
+    const [checkingStatus, setCheckingStatus] = useState(false)
 
     const { consultationHistory, pagination, isLoading, getDoctorHistory } =
         useConsultation({ doctorId })
@@ -42,8 +44,44 @@ const PatientQueueList = () => {
         }
     }, [getDoctorHistory, currentPage, pageSize, doctorId])
 
-    const handleJoinCall = (id: number) => {
-        navigate(`/doctor/video-consultation/${id}`)
+    const handleJoinCall = async (patientId: number) => {
+        setCheckingStatus(true)
+        try {
+            // Check consultation status before joining
+            const statusResponse = await ConsultationService.checkConsultationStatus(
+                doctorId,
+                patientId
+            )
+
+            if (statusResponse.success) {
+                switch (statusResponse.action) {
+                    case 'rejoin':
+                        // Existing ongoing consultation - rejoin directly
+                        navigate(`/doctor/video-consultation/${patientId}?rejoin=true&consultationId=${statusResponse.consultationId}`)
+                        break
+
+                    case 'ended':
+                        // Consultation has ended
+                        alert('This consultation has already ended')
+                        // Refresh the consultation history
+                        getDoctorHistory(currentPage, pageSize)
+                        break
+
+                    default:
+                        // Normal flow - start new consultation
+                        navigate(`/doctor/video-consultation/${patientId}`)
+                }
+            } else {
+                // Fallback to normal flow
+                navigate(`/doctor/video-consultation/${patientId}`)
+            }
+        } catch (error) {
+            console.error('Error checking consultation status:', error)
+            // Fallback to normal flow
+            navigate(`/doctor/video-consultation/${patientId}`)
+        } finally {
+            setCheckingStatus(false)
+        }
     }
 
     const handleDownloadPrescription = (prescriptionUrl: string) => {
@@ -199,8 +237,10 @@ const PatientQueueList = () => {
                 className="w-full flex items-center justify-center gap-2"
                 icon={<HiVideoCamera />}
                 onClick={() => handleJoinCall(consultation.patientId as number)}
+                loading={checkingStatus}
+                disabled={checkingStatus}
             >
-                Join Call
+                {checkingStatus ? 'Checking...' : 'Join Call'}
             </Button>
         </Card>
     )
