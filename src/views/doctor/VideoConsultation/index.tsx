@@ -1,52 +1,33 @@
 import { useState, useEffect } from 'react'
 import { Card, Button } from '@/components/ui'
-import { HiVideoCamera, HiDownload } from 'react-icons/hi'
+import { HiVideoCamera, HiDownload, HiPlus } from 'react-icons/hi'
 import { useNavigate } from 'react-router-dom'
 import VideoCallInterface from '@/views/Interface/VideoCallInterface'
-import ReactMuiTableListView, {
-    Column,
-} from '@/components/shared/ReactMuiTableListView'
+import ReactMuiTableListView, { Column } from '@/components/shared/ReactMuiTableListView'
 import useConsultation from '@/hooks/useConsultation'
-// import { useAuth } from '@/hooks/useAuth'
 import { useSessionUser } from '@/store/authStore'
+import { usePrescriptionStore } from '@/store/prescriptionStore'
 import type { ConsultationRecord } from '@/services/ConsultationService'
-import { Console } from 'console'
 
-interface TableRowData extends ConsultationRecord {
-    patient?: {
-        firstName: string
-        lastName: string
-        email: string
-    }
-}
-
-interface TableColumn {
-    Header: string
-    accessor: string
-    Cell?: (
-        props: { row: { original: TableRowData } } | { value: string },
-    ) => JSX.Element
-}
-
-interface ConsultationWithPatient extends ConsultationRecord {
+interface ConsultationWithPatient extends Omit<ConsultationRecord, 'patientId' | 'status'> {
     patient: {
         name: string
         email: string
         phone: string
     }
-    prescription?: string
     patientId: number
     scheduledDate: string
     startTime: string
-    status: string
+    status: 'ongoing' | 'completed' | 'cancelled'
 }
+
+type TableData = Record<string, unknown> & ConsultationWithPatient
 
 // List view component
 const PatientQueueList = () => {
     const navigate = useNavigate()
-    // const { session } = useAuth()
     const user = useSessionUser((state) => state.user)
-    console.log('user', user)
+    const { setPrescriptionDetails } = usePrescriptionStore()
     const doctorId = user?.userId ? Number(user.userId) : 0
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(15)
@@ -60,18 +41,6 @@ const PatientQueueList = () => {
             getDoctorHistory(currentPage, pageSize)
         }
     }, [getDoctorHistory, currentPage, pageSize, doctorId])
-
-    const [patientQueue] = useState([
-        {
-            id: 1,
-            name: 'Ajit',
-            age: 45,
-            gender: 'Male',
-            appointmentTime: '10:00 AM',
-            reason: '',
-            status: 'in call',
-        },
-    ])
 
     const handleJoinCall = (id: number) => {
         navigate(`/doctor/video-consultation/${id}`)
@@ -89,15 +58,20 @@ const PatientQueueList = () => {
         document.body.removeChild(link)
     }
 
+    const handleAddPrescription = (consultationId: string, patientId: number) => {
+        setPrescriptionDetails(consultationId, patientId.toString())
+        navigate('/doctor/upload-prescription')
+    }
+
     // Separate ongoing and completed consultations
-    const ongoingConsultations = consultationHistory.filter(
+    const ongoingConsultations = (consultationHistory as unknown as ConsultationWithPatient[]).filter(
         (consultation) => consultation.status === 'ongoing',
     )
-    const completedConsultations = consultationHistory.filter(
+    const completedConsultations = (consultationHistory as unknown as ConsultationWithPatient[]).filter(
         (consultation) => consultation.status === 'completed',
     )
 
-    const columns = [
+    const columns: Column<Record<string, unknown>>[] = [
         {
             Header: 'Consultation ID',
             accessor: 'id',
@@ -108,80 +82,93 @@ const PatientQueueList = () => {
         },
         {
             Header: 'Patient',
-            accessor: (row: ConsultationWithPatient) => row.patient?.name || '',
+            accessor: (row) => (row as TableData).patient?.name || '',
             Cell: ({
                 row: { original },
-            }: {
-                row: { original: ConsultationWithPatient }
-            }) => (
-                <div>
-                    <div>{original.patient?.name ?? 'Unknown'}</div>
-                    <div className="text-sm text-gray-500">
-                        {original.patient?.email ?? 'No email'}
+            }) => {
+                const data = original as TableData
+                return (
+                    <div>
+                        <div>{data.patient?.name ?? 'Unknown'}</div>
+                        <div className="text-sm text-gray-500">
+                            {data.patient?.email ?? 'No email'}
+                        </div>
                     </div>
-                </div>
-            ),
+                )
+            },
         },
         {
             Header: 'Date & Time',
-            accessor: (row: ConsultationWithPatient) => row.scheduledDate,
+            accessor: (row) => (row as TableData).scheduledDate,
             Cell: ({
                 row: { original },
-            }: {
-                row: { original: ConsultationWithPatient }
-            }) => (
-                <div>
-                    <div>{original.scheduledDate}</div>
-                    <div className="text-sm text-gray-500">
-                        {original.startTime}
+            }) => {
+                const data = original as TableData
+                return (
+                    <div>
+                        <div>{data.scheduledDate}</div>
+                        <div className="text-sm text-gray-500">
+                            {data.startTime}
+                        </div>
                     </div>
-                </div>
-            ),
+                )
+            },
         },
         {
             Header: 'Actions',
             accessor: 'id',
             Cell: ({
                 row: { original },
-            }: {
-                row: { original: ConsultationWithPatient }
-            }) => (
-                <div className="flex gap-2 justify-center">
-                    {original.prescription ? (
-                        <div className="flex gap-2">
-                            <Button
-                                size="sm"
-                                variant="solid"
-                                icon={<HiDownload />}
-                                onClick={() =>
-                                    handleDownloadPrescription(
-                                        original.prescription,
-                                    )
-                                }
-                            >
-                                Download
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant="solid"
-                                onClick={() =>
-                                    window.open(original.prescription, '_blank')
-                                }
-                            >
-                                View
-                            </Button>
-                        </div>
-                    ) : (
-                        <span className="text-gray-500">
-                            No prescription added
-                        </span>
-                    )}
-                </div>
-            ),
+            }) => {
+                const data = original as TableData
+                return (
+                    <div className="flex gap-2 justify-center">
+                        {data.prescription ? (
+                            <div className="flex gap-2">
+                                <Button
+                                    size="sm"
+                                    variant="solid"
+                                    icon={<HiDownload />}
+                                    onClick={() =>
+                                        handleDownloadPrescription(
+                                            data.prescription as string,
+                                        )
+                                    }
+                                >
+                                    Download
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="solid"
+                                    onClick={() =>
+                                        window.open(data.prescription as string, '_blank')
+                                    }
+                                >
+                                    View
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="flex gap-2 items-center ">
+                                <span className="text-gray-500 text-sm"></span>
+                                <Button
+                                    size="sm"
+                                    variant="solid"
+                                    icon={<HiPlus />}
+                                    onClick={() =>
+                                        handleAddPrescription(data.id as string, data.patientId as number)
+                                    }
+                                >
+                                    Add Now
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                )
+            },
         },
     ]
 
-    const cardTemplate = (consultation: ConsultationWithPatient) => (
+    const cardTemplate = (consultation: TableData) => (
         <Card className="p-4">
             <div className="flex justify-between items-start mb-4">
                 <div>
@@ -211,7 +198,7 @@ const PatientQueueList = () => {
                 variant="solid"
                 className="w-full flex items-center justify-center gap-2"
                 icon={<HiVideoCamera />}
-                onClick={() => handleJoinCall(consultation.patientId)}
+                onClick={() => handleJoinCall(consultation.patientId as number)}
             >
                 Join Call
             </Button>
@@ -226,19 +213,21 @@ const PatientQueueList = () => {
             </div>
 
             {/* Ongoing Consultations as Cards */}
-            <div className="mb-8">
-                <ReactMuiTableListView
-                    tableTitle="On going call"
-                    data={ongoingConsultations}
-                    columns={columns}
-                    cardTemplate={cardTemplate}
-                    viewTypeProp="card"
-                    enableTableListview={false}
-                    enableCardView={true}
-                    enablePagination={false}
-                    enableSearch={false}
-                />
-            </div>
+            {ongoingConsultations.length > 0 && (
+                <div className="mb-8">
+                    <ReactMuiTableListView
+                        tableTitle="On going call"
+                        data={ongoingConsultations as unknown as Record<string, unknown>[]}
+                        columns={columns}
+                        cardTemplate={cardTemplate}
+                        viewTypeProp="card"
+                        enableTableListview={false}
+                        enableCardView={true}
+                        enablePagination={false}
+                        enableSearch={false}
+                    />
+                </div>
+            )}
 
             {/* Completed Consultations as List */}
             <div className="mb-6">
@@ -246,7 +235,7 @@ const PatientQueueList = () => {
                 <ReactMuiTableListView
                     tableTitle="Consultation History"
                     columns={columns}
-                    data={completedConsultations}
+                    data={completedConsultations as unknown as Record<string, unknown>[]}
                     enablePagination={true}
                     enableSearch={false}
                     enableCardView={false}

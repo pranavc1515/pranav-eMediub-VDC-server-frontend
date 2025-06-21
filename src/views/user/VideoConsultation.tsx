@@ -13,7 +13,7 @@ import type { ConsultationRecord } from '@/services/ConsultationService'
 type ConsultationWithDoctor = ConsultationRecord & {
     [key: string]: unknown
     doctor: {
-        id: number
+        id: string
         fullName: string
         email: string
         profilePhoto: string
@@ -71,7 +71,7 @@ const VideoConsultation = () => {
         navigate(`/user/video-consultation/${doctorId}`)
     }
 
-    const handleDownloadPrescription = (consultationId: number) => {
+    const handleDownloadPrescription = (consultationId: string) => {
         const consultation = consultationHistory.find(
             (c) => c.id === consultationId,
         )
@@ -100,7 +100,7 @@ const VideoConsultation = () => {
                 accessor: (row) => row.doctor?.fullName || '',
                 Cell: ({ row: { original } }) => (
                     <div>
-                        <div>
+                        <div className="font-bold">
                             {original.doctor?.fullName || 'Unknown Doctor'}
                         </div>
                         <div className="text-sm text-gray-500">
@@ -168,7 +168,7 @@ const VideoConsultation = () => {
                                     icon={<HiDownload />}
                                     onClick={() =>
                                         handleDownloadPrescription(
-                                            Number(original.id),
+                                            original.id,
                                         )
                                     }
                                 >
@@ -179,7 +179,7 @@ const VideoConsultation = () => {
                                     variant="solid"
                                     onClick={() =>
                                         window.open(
-                                            original.prescription,
+                                            original.prescription as string,
                                             '_blank',
                                         )
                                     }
@@ -293,19 +293,21 @@ const VideoConsultation = () => {
             </div>
 
             {/* Ongoing Consultations as Cards */}
-            <div className="mb-8">
-                <ReactMuiTableListView
-                    tableTitle="On going call"
-                    data={ongoingConsultations}
-                    columns={columns}
-                    cardTemplate={cardTemplate}
-                    viewTypeProp="card"
-                    enableTableListview={false}
-                    enableCardView={true}
-                    enablePagination={false}
-                    enableSearch={false}
-                />
-            </div>
+            {ongoingConsultations.length > 0 && (
+                <div className="mb-8">
+                    <ReactMuiTableListView
+                        tableTitle="On going call"
+                        data={ongoingConsultations as ConsultationWithDoctor[]}
+                        columns={columns}
+                        cardTemplate={cardTemplate}
+                        viewTypeProp="card"
+                        enableTableListview={false}
+                        enableCardView={true}
+                        enablePagination={false}
+                        enableSearch={false}
+                    />
+                </div>
+            )}
 
             {/* Completed Consultations as List */}
             <div className="mb-6">
@@ -313,7 +315,7 @@ const VideoConsultation = () => {
                 <ReactMuiTableListView
                     tableTitle="Consultation History"
                     columns={columns}
-                    data={completedConsultations}
+                    data={completedConsultations as ConsultationWithDoctor[]}
                     enablePagination={true}
                     enableSearch={false}
                     enableCardView={false}

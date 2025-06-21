@@ -23,6 +23,7 @@ export type ConsultationRecord = {
     consultationType: 'video'
     roomName: string
     notes?: string
+    prescription?: string
     doctor?: {
         id: string
         fullName: string
