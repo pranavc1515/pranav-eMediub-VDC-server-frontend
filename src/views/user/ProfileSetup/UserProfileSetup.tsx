@@ -1,4 +1,4 @@
-import { useState, useEffect, ChangeEvent, FormEvent } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Container from '@/components/shared/Container'
 import Card from '@/components/shared/Card'
@@ -10,6 +10,12 @@ import Alert from '@/components/ui/Alert'
 import UserService from '@/services/UserService'
 import { useToken } from '@/store/authStore'
 import { useAuth } from '@/auth'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { 
+    UserPersonalDetailsSchema,
+    type UserPersonalDetailsFormData
+} from '@/utils/validationSchemas'
 import { getTodayDateString } from '@/utils/dateUtils'
 
 // Helper function to calculate age from date of birth
@@ -56,20 +62,23 @@ const UserProfileSetup = () => {
     const [success, setSuccess] = useState('')
     const [userPhone, setUserPhone] = useState<string>('')
 
-    // Personal details form state
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        phone: '', // This will be pre-filled from the auth and disabled
-        age: '',
-        dob: '',
-        gender: '',
-        marital_status: '',
-        height: '',
-        weight: '',
-        diet: '',
-        profession: '',
-        image: '',
+    // React Hook Form setup
+    const form = useForm<UserPersonalDetailsFormData>({
+        resolver: zodResolver(UserPersonalDetailsSchema),
+        defaultValues: {
+            name: '',
+            email: '',
+            phone: '',
+            age: '',
+            dob: '',
+            gender: 'Male',
+            marital_status: 'Single',
+            height: '',
+            weight: '',
+            diet: 'Vegetarian',
+            profession: '',
+            image: '',
+        }
     })
 
     useEffect(() => {
@@ -84,10 +93,7 @@ const UserProfileSetup = () => {
                 // Get the phone number from the authenticated user
                 if (user && user.phoneNumber) {
                     setUserPhone(user.phoneNumber)
-                    setFormData((prev) => ({
-                        ...prev,
-                        phone: user.phoneNumber,
-                    }))
+                    form.setValue('phone', user.phoneNumber)
                 }
 
                 // Try to fetch user profile to check if already completed
@@ -102,19 +108,17 @@ const UserProfileSetup = () => {
                     }
 
                     // Pre-fill form with existing data if available
-                    const formValues = {
+                    const formValues: Partial<UserPersonalDetailsFormData> = {
                         name: userProfile.fullName || '',
                         email: userProfile.email || '',
                         phone: userProfile.phoneNumber || userPhone,
-                        dob: '',
-                        gender: userProfile.gender || '',
-                        marital_status: userProfile.maritalStatus || '',
+                        gender: (userProfile.gender as 'Male' | 'Female' | 'Other') || 'Male',
+                        marital_status: (userProfile.maritalStatus as 'Single' | 'Married' | 'Divorced' | 'Widowed') || 'Single',
                         height: userProfile.height || '',
                         weight: userProfile.weight || '',
-                        diet: userProfile.diet || '',
+                        diet: (userProfile.diet as 'Vegetarian' | 'Non-Vegetarian' | 'Vegan' | 'Other') || 'Vegetarian',
                         profession: userProfile.profession || '',
                         image: userProfile.image || '',
-                        age: ''
                     }
                     
                     // Format and set date of birth if available
@@ -139,7 +143,12 @@ const UserProfileSetup = () => {
                         }
                     }
                     
-                    setFormData(formValues)
+                    // Set form values
+                    Object.entries(formValues).forEach(([key, value]) => {
+                        if (value !== undefined) {
+                            form.setValue(key as keyof UserPersonalDetailsFormData, value)
+                        }
+                    })
                 }
             } catch (err) {
                 console.error('Error loading user profile:', err)
@@ -150,72 +159,42 @@ const UserProfileSetup = () => {
         }
 
         loadUserProfile()
-    }, [])
+    }, [token, user, navigate, form])
 
-    const handleInputChange = (
-        e: ChangeEvent<
-            HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-        >,
-    ) => {
-        const { name, value } = e.target
-        
-        // Special handling for date of birth to ensure proper format
-        if (name === 'dob' && value) {
-            console.log('DOB input changed to:', value)
-            setFormData(prev => {
-                const updatedData = {
-                    ...prev,
-                    [name]: value
-                }
-                
-                // Calculate age immediately on DOB change
-                const calculatedAge = calculateAge(value)
-                console.log('Updated age to:', calculatedAge)
-                
-                return {
-                    ...updatedData,
-                    age: calculatedAge
-                }
-            })
-        } else {
-            setFormData(prev => ({
-                ...prev,
-                [name]: value,
-            }))
+    // Watch DOB field to automatically calculate age
+    const watchedDob = form.watch('dob')
+    useEffect(() => {
+        if (watchedDob) {
+            const calculatedAge = calculateAge(watchedDob)
+            form.setValue('age', calculatedAge)
         }
-    }
+    }, [watchedDob, form])
 
-    const handleFormSubmit = async (e: FormEvent) => {
-        e.preventDefault()
+    const handleFormSubmit = async (data: UserPersonalDetailsFormData) => {
         setSubmitting(true)
         setError('')
 
         try {
             // Ensure phone number is set
-            if (!formData.phone) {
-                setFormData((prev) => ({
-                    ...prev,
-                    phone: userPhone,
-                }))
+            if (!data.phone) {
+                data.phone = userPhone
             }
 
-            const response = await UserService.updatePersonalDetails(formData)
-
+            const response = await UserService.updatePersonalDetails(data)
+            
             if (response.status) {
-                setSuccess(response.message || 'Profile updated successfully!')
-
+                setSuccess('Profile setup completed successfully!')
+                
                 // Redirect to home after a short delay
                 setTimeout(() => {
                     navigate('/home')
                 }, 1500)
             } else {
-                setError('Failed to update profile. Please try again.')
+                setError(response.message || 'Failed to update profile. Please try again.')
             }
-        } catch (err) {
-            console.error('Error updating user profile:', err)
-            setError(
-                'An error occurred while updating your profile. Please try again.',
-            )
+        } catch (error) {
+            console.error('Error updating profile:', error)
+            setError('An error occurred while updating your profile. Please try again.')
         } finally {
             setSubmitting(false)
         }
@@ -223,192 +202,270 @@ const UserProfileSetup = () => {
 
     if (loading) {
         return (
-            <Container className="h-full flex items-center justify-center">
-                <Loading loading={true} />
-            </Container>
-        )
-    }
-
-    if (error && !success) {
-        return (
-            <Container className="h-full flex items-center justify-center">
-                <div className="w-full max-w-md">
-                    <Alert type="danger" showIcon className="mb-4">
-                        {error}
-                    </Alert>
-                    <Button
-                        variant="solid"
-                        onClick={() => navigate('/sign-in')}
-                    >
-                        Back to Login
-                    </Button>
-                </div>
+            <Container>
+                <Loading loading={loading} />
             </Container>
         )
     }
 
     return (
-        <Container className="py-8">
-            <Card className="max-w-3xl mx-auto">
+        <Container className="py-6">
+            <Card className="max-w-4xl mx-auto">
                 <div className="p-6">
-                    <h1 className="text-2xl font-bold mb-6">
-                        Complete Your User Profile
-                    </h1>
-
-                    {success && (
-                        <Alert type="success" showIcon className="mb-4">
-                            {success}
-                        </Alert>
-                    )}
+                    <div className="mb-6">
+                        <h1 className="text-2xl font-bold mb-2">Complete Your Profile</h1>
+                        <p className="text-gray-600">Please provide your details to get started</p>
+                    </div>
 
                     {error && (
-                        <Alert type="danger" showIcon className="mb-4">
+                        <Alert type="danger" showIcon className="mb-4" onClose={() => setError('')}>
                             {error}
                         </Alert>
                     )}
 
-                    <form onSubmit={handleFormSubmit}>
-                        <div className="space-y-4">
-                            <FormItem label="Full Name" asterisk={true}>
-                                <Input
+                    {success && (
+                        <Alert type="success" showIcon className="mb-4" onClose={() => setSuccess('')}>
+                            {success}
+                        </Alert>
+                    )}
+
+                    <Form onSubmit={form.handleSubmit(handleFormSubmit)}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormItem
+                                label="Full Name"
+                                asterisk={true}
+                                invalid={!!form.formState.errors.name}
+                                errorMessage={form.formState.errors.name?.message}
+                            >
+                                <Controller
                                     name="name"
-                                    value={formData.name}
-                                    onChange={handleInputChange}
-                                    placeholder="Your full name"
-                                    required
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            placeholder="Enter your full name"
+                                        />
+                                    )}
                                 />
                             </FormItem>
 
-                            <FormItem label="Email" asterisk={true}>
-                                <Input
+                            <FormItem
+                                label="Email"
+                                invalid={!!form.formState.errors.email}
+                                errorMessage={form.formState.errors.email?.message}
+                            >
+                                <Controller
                                     name="email"
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={handleInputChange}
-                                    placeholder="you@example.com"
-                                    required
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            type="email"
+                                            placeholder="Enter your email"
+                                        />
+                                    )}
                                 />
                             </FormItem>
 
-                            <FormItem label="Phone Number">
-                                <Input
+                            <FormItem
+                                label="Phone Number"
+                                asterisk={true}
+                                invalid={!!form.formState.errors.phone}
+                                errorMessage={form.formState.errors.phone?.message}
+                            >
+                                <Controller
                                     name="phone"
-                                    value={formData.phone ? (formData.phone.startsWith('+') ? 
-                                        `+${formData.phone.substring(1, 3)} ${formData.phone.substring(3)}` : 
-                                        `+${formData.phone.substring(0, 2)} ${formData.phone.substring(2)}`) : ''}
-                                    disabled={true}
-                                    className="bg-gray-100"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            placeholder="Enter your phone number"
+                                            disabled
+                                            className="bg-gray-100"
+                                        />
+                                    )}
                                 />
-                                <small className="text-gray-500">
-                                    Phone number cannot be changed
-                                </small>
+                                <small className="text-gray-500">Your phone number cannot be changed</small>
                             </FormItem>
 
-                            <FormItem label="Date of Birth" asterisk={true}>
-                                <Input
-                                    type="date"
+                            <FormItem
+                                label="Date of Birth"
+                                asterisk={true}
+                                invalid={!!form.formState.errors.dob}
+                                errorMessage={form.formState.errors.dob?.message}
+                            >
+                                <Controller
                                     name="dob"
-                                    value={formData.dob}
-                                    onChange={handleInputChange}
-                                    className="w-full"
-                                    max={getTodayDateString()}
-                                    required
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <input
+                                            {...field}
+                                            type="date"
+                                            max={getTodayDateString()}
+                                            className="w-full rounded-md border border-gray-300 p-2"
+                                        />
+                                    )}
                                 />
-                                <small className="text-gray-500">
-                                    Format: YYYY-MM-DD
-                                </small>
                             </FormItem>
 
-                            <FormItem label="Age">
-                                <Input
+                            <FormItem
+                                label="Age"
+                                invalid={!!form.formState.errors.age}
+                                errorMessage={form.formState.errors.age?.message}
+                            >
+                                <Controller
                                     name="age"
-                                    value={formData.age}
-                                    disabled={true}
-                                    className="bg-gray-100"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            placeholder="Age will be calculated automatically"
+                                            disabled
+                                            className="bg-gray-100"
+                                        />
+                                    )}
                                 />
-                                <small className="text-gray-500">
-                                    Age is automatically calculated based on date of birth
-                                </small>
                             </FormItem>
 
-                            <FormItem label="Gender" asterisk={true}>
-                                <select
+                            <FormItem
+                                label="Gender"
+                                asterisk={true}
+                                invalid={!!form.formState.errors.gender}
+                                errorMessage={form.formState.errors.gender?.message}
+                            >
+                                <Controller
                                     name="gender"
-                                    value={formData.gender}
-                                    onChange={handleInputChange}
-                                    className="w-full rounded-md border border-gray-300 p-2"
-                                    required
-                                >
-                                    <option value="">Select Gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <select
+                                            {...field}
+                                            className="w-full rounded-md border border-gray-300 p-2"
+                                        >
+                                            <option value="">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    )}
+                                />
                             </FormItem>
 
-                            <FormItem label="Marital Status">
-                                <select
+                            <FormItem
+                                label="Marital Status"
+                                invalid={!!form.formState.errors.marital_status}
+                                errorMessage={form.formState.errors.marital_status?.message}
+                            >
+                                <Controller
                                     name="marital_status"
-                                    value={formData.marital_status}
-                                    onChange={handleInputChange}
-                                    className="w-full rounded-md border border-gray-300 p-2"
-                                >
-                                    <option value="">
-                                        Select Marital Status
-                                    </option>
-                                    <option value="Single">Single</option>
-                                    <option value="Married">Married</option>
-                                </select>
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <select
+                                            {...field}
+                                            className="w-full rounded-md border border-gray-300 p-2"
+                                        >
+                                            <option value="">Select Marital Status</option>
+                                            <option value="Single">Single</option>
+                                            <option value="Married">Married</option>
+                                            <option value="Divorced">Divorced</option>
+                                            <option value="Widowed">Widowed</option>
+                                        </select>
+                                    )}
+                                />
                             </FormItem>
 
-                            <FormItem label="Height">
-                                <Input
+                            <FormItem
+                                label="Height (cm)"
+                                invalid={!!form.formState.errors.height}
+                                errorMessage={form.formState.errors.height?.message}
+                            >
+                                <Controller
                                     name="height"
-                                    value={formData.height}
-                                    onChange={handleInputChange}
-                                    placeholder="e.g., 5.5-cm"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            type="number"
+                                            min="50"
+                                            max="300"
+                                            placeholder="Enter your height in cm"
+                                        />
+                                    )}
                                 />
                             </FormItem>
 
-                            <FormItem label="Weight">
-                                <Input
+                            <FormItem
+                                label="Weight (kg)"
+                                invalid={!!form.formState.errors.weight}
+                                errorMessage={form.formState.errors.weight?.message}
+                            >
+                                <Controller
                                     name="weight"
-                                    value={formData.weight}
-                                    onChange={handleInputChange}
-                                    placeholder="e.g., 55-kg"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            type="number"
+                                            min="20"
+                                            max="500"
+                                            placeholder="Enter your weight in kg"
+                                        />
+                                    )}
                                 />
                             </FormItem>
 
-                            <FormItem label="Diet">
-                                <Input
+                            <FormItem
+                                label="Diet Preference"
+                                invalid={!!form.formState.errors.diet}
+                                errorMessage={form.formState.errors.diet?.message}
+                            >
+                                <Controller
                                     name="diet"
-                                    value={formData.diet}
-                                    onChange={handleInputChange}
-                                    placeholder="Any dietary preferences"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <select
+                                            {...field}
+                                            className="w-full rounded-md border border-gray-300 p-2"
+                                        >
+                                            <option value="">Select Diet Preference</option>
+                                            <option value="Vegetarian">Vegetarian</option>
+                                            <option value="Non-Vegetarian">Non-Vegetarian</option>
+                                            <option value="Vegan">Vegan</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    )}
                                 />
                             </FormItem>
 
-                            <FormItem label="Profession">
-                                <Input
+                            <FormItem
+                                label="Profession"
+                                invalid={!!form.formState.errors.profession}
+                                errorMessage={form.formState.errors.profession?.message}
+                            >
+                                <Controller
                                     name="profession"
-                                    value={formData.profession}
-                                    onChange={handleInputChange}
-                                    placeholder="Your occupation"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            placeholder="Enter your profession"
+                                        />
+                                    )}
                                 />
                             </FormItem>
-
-                            <div className="flex justify-end pt-4">
-                                <Button
-                                    variant="solid"
-                                    type="submit"
-                                    loading={submitting}
-                                    disabled={submitting}
-                                >
-                                    Complete Profile Setup
-                                </Button>
-                            </div>
                         </div>
-                    </form>
+
+                        <div className="flex justify-end mt-8">
+                            <Button
+                                type="submit"
+                                variant="solid"
+                                loading={submitting}
+                                disabled={submitting}
+                                size="lg"
+                            >
+                                Complete Profile Setup
+                            </Button>
+                        </div>
+                    </Form>
                 </div>
             </Card>
         </Container>

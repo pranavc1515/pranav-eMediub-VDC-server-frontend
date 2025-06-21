@@ -11,6 +11,12 @@ import {
 import Container from '@/components/shared/Container'
 import { HiOutlineKey, HiOutlineBell, HiOutlineShieldCheck } from 'react-icons/hi'
 import { useAuth } from '@/auth'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { 
+    PasswordChangeSchema,
+    type PasswordChangeFormData
+} from '@/utils/validationSchemas'
 
 const Settings = () => {
     const { user } = useAuth()
@@ -19,10 +25,13 @@ const Settings = () => {
     const [error, setError] = useState('')
     
     // Password change form
-    const [passwordForm, setPasswordForm] = useState({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
+    const passwordForm = useForm<PasswordChangeFormData>({
+        resolver: zodResolver(PasswordChangeSchema),
+        defaultValues: {
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+        }
     })
     
     // Notification settings
@@ -32,13 +41,6 @@ const Settings = () => {
         appNotifications: true
     })
     
-    const handlePasswordChange = (name: string, value: string) => {
-        setPasswordForm(prev => ({
-            ...prev,
-            [name]: value
-        }))
-    }
-    
     const handleNotificationChange = (name: string, checked: boolean) => {
         setNotifications(prev => ({
             ...prev,
@@ -46,49 +48,37 @@ const Settings = () => {
         }))
     }
     
-    const handlePasswordSubmit = () => {
-        // Validate passwords
-        if (!passwordForm.currentPassword) {
-            setError('Current password is required')
-            return
+    const handlePasswordSubmit = async (data: PasswordChangeFormData) => {
+        try {
+            setError('')
+            setSuccess('')
+            
+            // TODO: Implement actual password change API call
+            // const response = await UserService.changePassword(data)
+            
+            // Mock success for now
+            setSuccess('Password updated successfully!')
+            
+            // Reset form
+            passwordForm.reset()
+        } catch (err) {
+            setError('Failed to update password. Please try again.')
         }
-        
-        if (!passwordForm.newPassword) {
-            setError('New password is required')
-            return
-        }
-        
-        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-            setError('New passwords do not match')
-            return
-        }
-        
-        // Password strength validation
-        if (passwordForm.newPassword.length < 8) {
-            setError('Password must be at least 8 characters long')
-            return
-        }
-        
-        // TODO: Implement actual password change API call
-        
-        // Mock success
-        setSuccess('Password updated successfully!')
-        setError('')
-        
-        // Reset form
-        setPasswordForm({
-            currentPassword: '',
-            newPassword: '',
-            confirmPassword: ''
-        })
     }
     
-    const handleSaveNotifications = () => {
-        // TODO: Implement notification settings API call
-        
-        // Mock success
-        setSuccess('Notification preferences saved successfully!')
-        setError('')
+    const handleSaveNotifications = async () => {
+        try {
+            setError('')
+            setSuccess('')
+            
+            // TODO: Implement notification settings API call
+            // const response = await UserService.updateNotificationSettings(notifications)
+            
+            // Mock success
+            setSuccess('Notification preferences saved successfully!')
+        } catch (err) {
+            setError('Failed to save notification preferences. Please try again.')
+        }
     }
     
     return (
@@ -150,41 +140,77 @@ const Settings = () => {
                                     <HiOutlineKey className="text-lg mr-2" /> 
                                     Change Password
                                 </h4>
-                                <FormContainer>
-                                    <FormItem label="Current Password">
-                                        <Input 
-                                            type="password"
-                                            value={passwordForm.currentPassword}
-                                            onChange={e => handlePasswordChange('currentPassword', e.target.value)}
-                                            placeholder="Enter your current password"
-                                        />
-                                    </FormItem>
-                                    <FormItem label="New Password">
-                                        <Input 
-                                            type="password"
-                                            value={passwordForm.newPassword}
-                                            onChange={e => handlePasswordChange('newPassword', e.target.value)}
-                                            placeholder="Enter new password"
-                                        />
-                                        <small className="text-gray-500">Password must be at least 8 characters long</small>
-                                    </FormItem>
-                                    <FormItem label="Confirm New Password">
-                                        <Input 
-                                            type="password"
-                                            value={passwordForm.confirmPassword}
-                                            onChange={e => handlePasswordChange('confirmPassword', e.target.value)}
-                                            placeholder="Confirm new password"
-                                        />
-                                    </FormItem>
-                                    <div className="mt-4">
-                                        <Button 
-                                            variant="solid"
-                                            onClick={handlePasswordSubmit}
+                                <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}>
+                                    <FormContainer>
+                                        <FormItem 
+                                            label="Current Password"
+                                            asterisk={true}
+                                            invalid={!!passwordForm.formState.errors.currentPassword}
+                                            errorMessage={passwordForm.formState.errors.currentPassword?.message}
                                         >
-                                            Update Password
-                                        </Button>
-                                    </div>
-                                </FormContainer>
+                                            <Controller
+                                                name="currentPassword"
+                                                control={passwordForm.control}
+                                                render={({ field }) => (
+                                                    <Input 
+                                                        {...field}
+                                                        type="password"
+                                                        placeholder="Enter your current password"
+                                                    />
+                                                )}
+                                            />
+                                        </FormItem>
+                                        <FormItem 
+                                            label="New Password"
+                                            asterisk={true}
+                                            invalid={!!passwordForm.formState.errors.newPassword}
+                                            errorMessage={passwordForm.formState.errors.newPassword?.message}
+                                        >
+                                            <Controller
+                                                name="newPassword"
+                                                control={passwordForm.control}
+                                                render={({ field }) => (
+                                                    <Input 
+                                                        {...field}
+                                                        type="password"
+                                                        placeholder="Enter new password"
+                                                    />
+                                                )}
+                                            />
+                                            <small className="text-gray-500">
+                                                Password must be at least 8 characters with uppercase, lowercase, number, and special character
+                                            </small>
+                                        </FormItem>
+                                        <FormItem 
+                                            label="Confirm New Password"
+                                            asterisk={true}
+                                            invalid={!!passwordForm.formState.errors.confirmPassword}
+                                            errorMessage={passwordForm.formState.errors.confirmPassword?.message}
+                                        >
+                                            <Controller
+                                                name="confirmPassword"
+                                                control={passwordForm.control}
+                                                render={({ field }) => (
+                                                    <Input 
+                                                        {...field}
+                                                        type="password"
+                                                        placeholder="Confirm new password"
+                                                    />
+                                                )}
+                                            />
+                                        </FormItem>
+                                        <div className="mt-4">
+                                            <Button 
+                                                type="submit"
+                                                variant="solid"
+                                                loading={passwordForm.formState.isSubmitting}
+                                                disabled={passwordForm.formState.isSubmitting}
+                                            >
+                                                Update Password
+                                            </Button>
+                                        </div>
+                                    </FormContainer>
+                                </form>
                                 
                                 <div className="mt-8 pt-4 border-t">
                                     <h4 className="mb-4 flex items-center">
@@ -193,17 +219,25 @@ const Settings = () => {
                                     </h4>
                                     <FormContainer>
                                         <FormItem>
-                                            <div className="flex items-center">
-                                                <label className="inline-flex items-center cursor-pointer">
-                                                    <input 
-                                                        type="checkbox" 
-                                                        className="form-checkbox" 
-                                                        checked
-                                                        disabled
-                                                    />
-                                                    <span className="ml-2">Two-factor authentication</span>
-                                                </label>
-                                                <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">Coming Soon</span>
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <label className="font-medium">Two-Factor Authentication</label>
+                                                    <p className="text-sm text-gray-500">Add an extra layer of security to your account</p>
+                                                </div>
+                                                <Button variant="default" size="sm">
+                                                    Enable 2FA
+                                                </Button>
+                                            </div>
+                                        </FormItem>
+                                        <FormItem>
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <label className="font-medium">Login Activity</label>
+                                                    <p className="text-sm text-gray-500">View recent login activity for your account</p>
+                                                </div>
+                                                <Button variant="default" size="sm">
+                                                    View Activity
+                                                </Button>
                                             </div>
                                         </FormItem>
                                     </FormContainer>
@@ -218,37 +252,53 @@ const Settings = () => {
                                 </h4>
                                 <FormContainer>
                                     <FormItem>
-                                        <div className="flex items-center mb-3">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <label className="font-medium">Email Notifications</label>
+                                                <p className="text-sm text-gray-500">Receive notifications via email</p>
+                                            </div>
                                             <label className="inline-flex items-center cursor-pointer">
                                                 <input 
                                                     type="checkbox" 
                                                     className="form-checkbox" 
                                                     checked={notifications.emailNotifications}
-                                                    onChange={e => handleNotificationChange('emailNotifications', e.target.checked)}
+                                                    onChange={(e) => handleNotificationChange('emailNotifications', e.target.checked)}
                                                 />
-                                                <span className="ml-2">Email Notifications</span>
+                                                <span className="ml-2">Enable</span>
                                             </label>
                                         </div>
-                                        <div className="flex items-center mb-3">
+                                    </FormItem>
+                                    <FormItem>
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <label className="font-medium">SMS Notifications</label>
+                                                <p className="text-sm text-gray-500">Receive notifications via SMS</p>
+                                            </div>
                                             <label className="inline-flex items-center cursor-pointer">
                                                 <input 
                                                     type="checkbox" 
                                                     className="form-checkbox" 
                                                     checked={notifications.smsNotifications}
-                                                    onChange={e => handleNotificationChange('smsNotifications', e.target.checked)}
+                                                    onChange={(e) => handleNotificationChange('smsNotifications', e.target.checked)}
                                                 />
-                                                <span className="ml-2">SMS Notifications</span>
+                                                <span className="ml-2">Enable</span>
                                             </label>
                                         </div>
-                                        <div className="flex items-center">
+                                    </FormItem>
+                                    <FormItem>
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <label className="font-medium">Push Notifications</label>
+                                                <p className="text-sm text-gray-500">Receive push notifications in the app</p>
+                                            </div>
                                             <label className="inline-flex items-center cursor-pointer">
                                                 <input 
                                                     type="checkbox" 
                                                     className="form-checkbox" 
                                                     checked={notifications.appNotifications}
-                                                    onChange={e => handleNotificationChange('appNotifications', e.target.checked)}
+                                                    onChange={(e) => handleNotificationChange('appNotifications', e.target.checked)}
                                                 />
-                                                <span className="ml-2">In-app Notifications</span>
+                                                <span className="ml-2">Enable</span>
                                             </label>
                                         </div>
                                     </FormItem>

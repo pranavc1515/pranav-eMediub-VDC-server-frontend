@@ -19,6 +19,12 @@ import type { UserProfileDetailsResponse } from '@/services/UserService'
 import Container from '@/components/shared/Container'
 import { useAuth } from '@/auth'
 import { getTodayDateString } from '@/utils/dateUtils'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { 
+    UserPersonalDetailsSchema,
+    type UserPersonalDetailsFormData
+} from '@/utils/validationSchemas'
 
 // Helper function to calculate age from date of birth
 const calculateAge = (dob: string): string => {
@@ -66,20 +72,23 @@ const Profile = () => {
     const [userPhone, setUserPhone] = useState<string>('')
     const [imagePreview, setImagePreview] = useState<string | null>(null)
 
-    // Form state
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        age: '',
-        dob: '',
-        gender: '',
-        marital_status: '',
-        height: '',
-        weight: '',
-        diet: '',
-        profession: '',
-        image: ''
+    // Form setup
+    const form = useForm<UserPersonalDetailsFormData>({
+        resolver: zodResolver(UserPersonalDetailsSchema),
+        defaultValues: {
+            name: '',
+            email: '',
+            phone: '',
+            age: '',
+            dob: '',
+            gender: 'Male',
+            marital_status: 'Single',
+            height: '',
+            weight: '',
+            diet: 'Vegetarian',
+            profession: '',
+            image: '',
+        }
     })
 
     useEffect(() => {
@@ -93,10 +102,7 @@ const Profile = () => {
             // Get the phone number from the authenticated user
             if (user && user.phoneNumber) {
                 setUserPhone(user.phoneNumber)
-                setFormData((prev) => ({
-                    ...prev,
-                    phone: user.phoneNumber,
-                }))
+                form.setValue('phone', user.phoneNumber)
             }
             
             const response = await UserService.getProfileDetails()
@@ -106,27 +112,39 @@ const Profile = () => {
             if (response?.data) {
                 const profileInfo = response.data
                 
-                const formValues = {
+                const formValues: Partial<UserPersonalDetailsFormData> = {
                     name: profileInfo.name || '',
                     email: profileInfo.email || '',
                     phone: profileInfo.phone || userPhone,
-                    dob: profileInfo.dob ? profileInfo.dob.split('T')[0] : '',
-                    gender: profileInfo.gender || '',
-                    marital_status: profileInfo.marital_status || '',
+                    gender: (profileInfo.gender as 'Male' | 'Female' | 'Other') || 'Male',
+                    marital_status: (profileInfo.marital_status as 'Single' | 'Married' | 'Divorced' | 'Widowed') || 'Single',
                     height: profileInfo.height || '',
                     weight: profileInfo.weight || '',
-                    diet: profileInfo.diet || '',
+                    diet: (profileInfo.diet as 'Vegetarian' | 'Non-Vegetarian' | 'Vegan' | 'Other') || 'Vegetarian',
                     profession: profileInfo.profession || '',
                     image: profileInfo.image || '',
-                    age: profileInfo.age || ''
                 }
                 
-                // Calculate age if dob is available but age isn't
-                if (formValues.dob && !formValues.age) {
-                    formValues.age = calculateAge(formValues.dob)
+                // Handle date of birth
+                if (profileInfo.dob) {
+                    try {
+                        const dobDate = new Date(profileInfo.dob)
+                        if (!isNaN(dobDate.getTime())) {
+                            const formattedDob = dobDate.toISOString().split('T')[0]
+                            formValues.dob = formattedDob
+                            formValues.age = calculateAge(formattedDob)
+                        }
+                    } catch (error) {
+                        console.error('Error formatting DOB:', error)
+                    }
                 }
                 
-                setFormData(formValues)
+                // Set form values
+                Object.entries(formValues).forEach(([key, value]) => {
+                    if (value !== undefined) {
+                        form.setValue(key as keyof UserPersonalDetailsFormData, value)
+                    }
+                })
             }
         } catch (error) {
             console.error('Error fetching profile data:', error)
@@ -144,71 +162,24 @@ const Profile = () => {
         
         // Special handling for date of birth to calculate age
         if (name === 'dob' && value) {
-            setFormData(prev => {
-                const updatedData = {
-                    ...prev,
-                    [name]: value
-                }
-                
-                // Calculate age immediately on DOB change
-                const calculatedAge = calculateAge(value)
-                
-                return {
-                    ...updatedData,
-                    age: calculatedAge
-                }
-            })
+            form.setValue('dob', value)
         } else {
-            setFormData(prev => ({
-                ...prev,
-                [name]: value,
-            }))
+            form.setValue(name as keyof UserPersonalDetailsFormData, value)
         }
     }
 
-    const handleSubmit = async () => {
-        // Basic form validation
-        if (!formData.name.trim()) {
-            setError('Full name is required')
-            return
-        }
-        
-        if (!formData.email.trim()) {
-            setError('Email is required')
-            return
-        }
-        
-        // Simple email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-        if (!emailRegex.test(formData.email)) {
-            setError('Please enter a valid email address')
-            return
-        }
-        
-        if (!formData.dob) {
-            setError('Date of birth is required')
-            return
-        }
-        
-        if (!formData.gender) {
-            setError('Gender is required')
-            return
-        }
-        
+    const handleSubmit = async (data: UserPersonalDetailsFormData) => {
         try {
             setSubmitting(true)
             setError('')
             setSuccess('')
 
             // Ensure phone number is set
-            if (!formData.phone) {
-                setFormData((prev) => ({
-                    ...prev,
-                    phone: userPhone,
-                }))
+            if (!data.phone) {
+                data.phone = userPhone
             }
 
-            const response = await UserService.updatePersonalDetails(formData)
+            const response = await UserService.updatePersonalDetails(data)
             
             if (response.status) {
                 // Show success message inside the drawer first
@@ -248,10 +219,7 @@ const Profile = () => {
                 if (event.target) {
                     const base64Image = event.target.result as string
                     setImagePreview(base64Image)
-                    setFormData(prev => ({
-                        ...prev,
-                        image: base64Image
-                    }))
+                    form.setValue('image', base64Image)
                 }
             }
             
@@ -268,8 +236,8 @@ const Profile = () => {
     // Toggle drawer visibility and reset error/success messages
     const toggleDrawer = (visible: boolean) => {
         setFormVisible(visible)
-        if (visible) {
-            // Reset error and success messages when opening drawer
+        if (!visible) {
+            // Reset error and success messages when closing drawer
             setError('')
             setSuccess('')
             // Reset image preview to use the saved image
@@ -409,10 +377,10 @@ const Profile = () => {
                             <div className="relative">
                                 <Avatar 
                                     size={100} 
-                                    src={(imagePreview || formData.image) || undefined} 
+                                    src={(imagePreview || form.watch('image')) || undefined} 
                                     className="mb-2"
-                                    icon={!(imagePreview || formData.image) ? <span className="text-2xl">
-                                        {formData.name?.charAt(0)?.toUpperCase() || 'U'}
+                                    icon={!(imagePreview || form.watch('image')) ? <span className="text-2xl">
+                                        {form.watch('name')?.charAt(0)?.toUpperCase() || 'U'}
                                     </span> : undefined}
                                 />
                                 <Button 
@@ -441,34 +409,43 @@ const Profile = () => {
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormItem label="Full Name" asterisk={true}>
-                                <Input
+                                <Controller
                                     name="name"
-                                    value={formData.name}
-                                    onChange={handleInputChange}
-                                    placeholder="Your full name"
-                                    required
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            placeholder="Enter your full name"
+                                        />
+                                    )}
                                 />
                             </FormItem>
 
                             <FormItem label="Email" asterisk={true}>
-                                <Input
+                                <Controller
                                     name="email"
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={handleInputChange}
-                                    placeholder="you@example.com"
-                                    required
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            type="email"
+                                            placeholder="Enter your email"
+                                        />
+                                    )}
                                 />
                             </FormItem>
 
                             <FormItem label="Phone Number">
-                                <Input
+                                <Controller
                                     name="phone"
-                                    value={formData.phone ? (formData.phone.startsWith('+') ? 
-                                        `+${formData.phone.substring(1, 3)} ${formData.phone.substring(3)}` : 
-                                        `+${formData.phone.substring(0, 2)} ${formData.phone.substring(2)}`) : ''}
-                                    disabled={true}
-                                    className="bg-gray-100"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            disabled
+                                            className="bg-gray-100"
+                                        />
+                                    )}
                                 />
                                 <small className="text-gray-500">
                                     Phone number cannot be changed
@@ -476,101 +453,133 @@ const Profile = () => {
                             </FormItem>
 
                             <FormItem label="Date of Birth" asterisk={true}>
-                                <Input
-                                    type="date"
+                                <Controller
                                     name="dob"
-                                    value={formData.dob}
-                                    onChange={handleInputChange}
-                                    className="w-full"
-                                    max={getTodayDateString()}
-                                    required
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <input
+                                            {...field}
+                                            type="date"
+                                            max={getTodayDateString()}
+                                            className="w-full rounded-md border border-gray-300 p-2"
+                                        />
+                                    )}
                                 />
                             </FormItem>
 
                             <FormItem label="Age">
-                                <Input
+                                <Controller
                                     name="age"
-                                    value={formData.age}
-                                    disabled={true}
-                                    className="bg-gray-100"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            disabled
+                                            className="bg-gray-100"
+                                            placeholder="Age will be calculated automatically"
+                                        />
+                                    )}
                                 />
-                                <small className="text-gray-500">
-                                    Age is calculated based on date of birth
-                                </small>
                             </FormItem>
 
                             <FormItem label="Gender" asterisk={true}>
-                                <Select<SelectOption>
-                                    value={
-                                        formData.gender ? 
-                                        { value: formData.gender, label: formData.gender } : 
-                                        undefined
-                                    }
-                                    onChange={option => handleInputChange({ 
-                                        name: 'gender', 
-                                        value: (option as SelectOption)?.value || '' 
-                                    })}
-                                    options={[
-                                        { value: 'Male', label: 'Male' },
-                                        { value: 'Female', label: 'Female' },
-                                        { value: 'Other', label: 'Other' }
-                                    ]}
-                                    placeholder="Select Gender"
+                                <Controller
+                                    name="gender"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <select
+                                            {...field}
+                                            className="w-full rounded-md border border-gray-300 p-2"
+                                        >
+                                            <option value="">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    )}
                                 />
                             </FormItem>
 
                             <FormItem label="Marital Status">
-                                <Select<SelectOption>
-                                    value={
-                                        formData.marital_status ? 
-                                        { value: formData.marital_status, label: formData.marital_status } : 
-                                        undefined
-                                    }
-                                    onChange={option => handleInputChange({ 
-                                        name: 'marital_status', 
-                                        value: (option as SelectOption)?.value || '' 
-                                    })}
-                                    options={[
-                                        { value: 'Single', label: 'Single' },
-                                        { value: 'Married', label: 'Married' },
-                                    ]}
-                                    placeholder="Select Marital Status"
+                                <Controller
+                                    name="marital_status"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <select
+                                            {...field}
+                                            className="w-full rounded-md border border-gray-300 p-2"
+                                        >
+                                            <option value="">Select Marital Status</option>
+                                            <option value="Single">Single</option>
+                                            <option value="Married">Married</option>
+                                            <option value="Divorced">Divorced</option>
+                                            <option value="Widowed">Widowed</option>
+                                        </select>
+                                    )}
                                 />
                             </FormItem>
 
                             <FormItem label="Height">
-                                <Input
+                                <Controller
                                     name="height"
-                                    value={formData.height}
-                                    onChange={handleInputChange}
-                                    placeholder="e.g., 5.5-cm"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            type="number"
+                                            min="50"
+                                            max="300"
+                                            placeholder="Enter your height in cm"
+                                        />
+                                    )}
                                 />
                             </FormItem>
 
                             <FormItem label="Weight">
-                                <Input
+                                <Controller
                                     name="weight"
-                                    value={formData.weight}
-                                    onChange={handleInputChange}
-                                    placeholder="e.g., 55-kg"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            type="number"
+                                            min="20"
+                                            max="500"
+                                            placeholder="Enter your weight in kg"
+                                        />
+                                    )}
                                 />
                             </FormItem>
 
                             <FormItem label="Diet">
-                                <Input
+                                <Controller
                                     name="diet"
-                                    value={formData.diet}
-                                    onChange={handleInputChange}
-                                    placeholder="Any dietary preferences"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <select
+                                            {...field}
+                                            className="w-full rounded-md border border-gray-300 p-2"
+                                        >
+                                            <option value="">Select Diet Preference</option>
+                                            <option value="Vegetarian">Vegetarian</option>
+                                            <option value="Non-Vegetarian">Non-Vegetarian</option>
+                                            <option value="Vegan">Vegan</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    )}
                                 />
                             </FormItem>
 
                             <FormItem label="Profession">
-                                <Input
+                                <Controller
                                     name="profession"
-                                    value={formData.profession}
-                                    onChange={handleInputChange}
-                                    placeholder="Your occupation"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            placeholder="Enter your profession"
+                                        />
+                                    )}
                                 />
                             </FormItem>
                         </div>
@@ -584,7 +593,7 @@ const Profile = () => {
                             </Button>
                             <Button
                                 variant="solid"
-                                onClick={handleSubmit}
+                                onClick={form.handleSubmit(handleSubmit)}
                                 loading={submitting}
                             >
                                 Save Changes

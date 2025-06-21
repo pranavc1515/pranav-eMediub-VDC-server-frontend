@@ -12,7 +12,14 @@ import type { CheckDoctorExistsResponse } from '@/services/DoctorService'
 import Alert from '@/components/ui/Alert'
 import Steps from '@/components/ui/Steps'
 import { useToken } from '@/store/authStore'
-import type { ChangeEvent } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { 
+    DoctorPersonalDetailsSchema, 
+    DoctorProfessionalDetailsSchema,
+    type DoctorPersonalDetailsFormData,
+    type DoctorProfessionalDetailsFormData
+} from '@/utils/validationSchemas'
 import { getTodayDateString } from '@/utils/dateUtils'
 
 // Common languages in India
@@ -43,27 +50,33 @@ const ProfileSetup = () => {
     const [doctorId, setDoctorId] = useState<number | null>(null)
     const [doctorPhone, setDoctorPhone] = useState<string>('')
     
-    // Personal details form state
-    const [personalFormData, setPersonalFormData] = useState({
-        fullName: '',
-        email: '',
-        gender: '',
-        dob: '',
-        profilePhoto: ''
+    // React Hook Form for personal details
+    const personalForm = useForm<DoctorPersonalDetailsFormData>({
+        resolver: zodResolver(DoctorPersonalDetailsSchema),
+        defaultValues: {
+            fullName: '',
+            email: '',
+            gender: 'Male',
+            dob: '',
+            profilePhoto: ''
+        }
     })
-    
-    // Professional details form state
-    const [professionalFormData, setProfessionalFormData] = useState({
-        qualification: '',
-        specialization: '',
-        registrationNumber: '',
-        registrationState: '',
-        expiryDate: '',
-        clinicName: '',
-        yearsOfExperience: 0,
-        communicationLanguages: ['English'],
-        consultationFees: 0,
-        availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+
+    // React Hook Form for professional details
+    const professionalForm = useForm<DoctorProfessionalDetailsFormData>({
+        resolver: zodResolver(DoctorProfessionalDetailsSchema),
+        defaultValues: {
+            qualification: '',
+            specialization: '',
+            registrationNumber: '',
+            registrationState: '',
+            expiryDate: '',
+            clinicName: '',
+            yearsOfExperience: 0,
+            communicationLanguages: ['English'],
+            consultationFees: 0,
+            availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+        }
     })
     
     // Loading states for each form
@@ -117,8 +130,7 @@ const ProfileSetup = () => {
         checkDoctorStatus()
     }, [token, navigate])
     
-    const handlePersonalDetailsSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
+    const handlePersonalDetailsSubmit = async (data: DoctorPersonalDetailsFormData) => {
         setPersonalFormLoading(true)
         setError('')
         
@@ -129,7 +141,7 @@ const ProfileSetup = () => {
             
             const response = await DoctorService.updatePersonalDetails(
                 doctorId,
-                personalFormData
+                data
             )
             
             if (response.success) {
@@ -146,8 +158,7 @@ const ProfileSetup = () => {
         }
     }
     
-    const handleProfessionalDetailsSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
+    const handleProfessionalDetailsSubmit = async (data: DoctorProfessionalDetailsFormData) => {
         setProfessionalFormLoading(true)
         setError('')
         
@@ -158,7 +169,7 @@ const ProfileSetup = () => {
             
             const response = await DoctorService.updateProfessionalDetails(
                 doctorId,
-                professionalFormData
+                data
             )
             
             if (response.success) {
@@ -177,156 +188,131 @@ const ProfileSetup = () => {
             setProfessionalFormLoading(false)
         }
     }
-    
-    const handlePersonalInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target
-        setPersonalFormData(prev => ({
-            ...prev,
-            [name]: value
-        }))
-    }
-    
-    const handleProfessionalInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target
-        
-        if (name === 'yearsOfExperience' || name === 'consultationFees') {
-            setProfessionalFormData(prev => ({
-                ...prev,
-                [name]: Number(value)
-            }))
-        } else if (name === 'communicationLanguages') {
-            // Handle comma-separated string for languages
-            setProfessionalFormData(prev => ({
-                ...prev,
-                [name]: value.split(',').map(lang => lang.trim())
-            }))
-        } else {
-            setProfessionalFormData(prev => ({
-                ...prev,
-                [name]: value
-            }))
-        }
-    }
-    
-    const handleLanguageChange = (selectedOptions: any) => {
-        const languages = selectedOptions ? selectedOptions.map((option: any) => option.value) : [];
-        setProfessionalFormData(prev => ({
-            ...prev,
-            communicationLanguages: languages
-        }));
-    }
-    
+
     if (loading) {
         return (
-            <Container className="h-full flex items-center justify-center">
-                <Loading loading={true} />
+            <Container>
+                <Loading loading={loading} />
             </Container>
         )
     }
-    
-    if (error && !success) {
-        return (
-            <Container className="h-full flex items-center justify-center">
-                <div className="w-full max-w-md">
-                    <Alert type="danger" showIcon className="mb-4">
-                        {error}
-                    </Alert>
-                    <Button variant="solid" onClick={() => navigate('/sign-in')}>
-                        Back to Login
-                    </Button>
-                </div>
-            </Container>
-        )
-    }
-    
+
     return (
-        <Container className="py-8">
-            <Card className="max-w-3xl mx-auto">
+        <Container className="py-6">
+            <Card className="max-w-4xl mx-auto">
                 <div className="p-6">
-                    <h1 className="text-2xl font-bold mb-6">Complete Your Doctor Profile</h1>
-                    
-                    {success && (
-                        <Alert type="success" showIcon className="mb-4">
-                            {success}
-                        </Alert>
-                    )}
-                    
+                    <div className="mb-6">
+                        <h1 className="text-2xl font-bold mb-2">Doctor Profile Setup</h1>
+                        <p className="text-gray-600">Complete your profile to start providing consultations</p>
+                    </div>
+
+                    {/* Progress Steps */}
+                    <div className="mb-8">
+                        <Steps current={currentStep}>
+                            <Steps.Item title="Personal Details" />
+                            <Steps.Item title="Professional Details" />
+                        </Steps>
+                    </div>
+
                     {error && (
-                        <Alert type="danger" showIcon className="mb-4">
+                        <Alert type="danger" showIcon className="mb-4" onClose={() => setError('')}>
                             {error}
                         </Alert>
                     )}
-                    
-                    <Steps current={currentStep} className="mb-8">
-                        <Steps.Item title="Personal Details" />
-                        <Steps.Item title="Professional Details" />
-                    </Steps>
-                    
+
+                    {success && (
+                        <Alert type="success" showIcon className="mb-4" onClose={() => setSuccess('')}>
+                            {success}
+                        </Alert>
+                    )}
+
+                    {/* Step 1: Personal Details */}
                     {currentStep === 0 && (
-                        <form onSubmit={handlePersonalDetailsSubmit}>
+                        <Form onSubmit={personalForm.handleSubmit(handlePersonalDetailsSubmit)}>
                             <div className="space-y-4">
                                 <FormItem
                                     label="Full Name"
                                     asterisk={true}
+                                    invalid={!!personalForm.formState.errors.fullName}
+                                    errorMessage={personalForm.formState.errors.fullName?.message}
                                 >
-                                    <Input
+                                    <Controller
                                         name="fullName"
-                                        value={personalFormData.fullName}
-                                        onChange={handlePersonalInputChange}
-                                        placeholder="Dr. John Doe"
-                                        required
+                                        control={personalForm.control}
+                                        render={({ field }) => (
+                                            <Input
+                                                {...field}
+                                                placeholder="Dr. John Doe"
+                                            />
+                                        )}
                                     />
                                 </FormItem>
                                 
                                 <FormItem
                                     label="Email"
+                                    invalid={!!personalForm.formState.errors.email}
+                                    errorMessage={personalForm.formState.errors.email?.message}
                                 >
-                                    <Input
+                                    <Controller
                                         name="email"
-                                        type="email"
-                                        value={personalFormData.email}
-                                        onChange={handlePersonalInputChange}
-                                        placeholder="doctor@example.com"
+                                        control={personalForm.control}
+                                        render={({ field }) => (
+                                            <Input
+                                                {...field}
+                                                type="email"
+                                                placeholder="doctor@example.com"
+                                            />
+                                        )}
                                     />
                                 </FormItem>
                                 
                                 <FormItem
                                     label="Gender"
                                     asterisk={true}
+                                    invalid={!!personalForm.formState.errors.gender}
+                                    errorMessage={personalForm.formState.errors.gender?.message}
                                 >
-                                    <select
+                                    <Controller
                                         name="gender"
-                                        value={personalFormData.gender}
-                                        onChange={handlePersonalInputChange}
-                                        className="w-full rounded-md border border-gray-300 p-2"
-                                        required
-                                    >
-                                        <option value="">Select Gender</option>
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
-                                        <option value="Other">Other</option>
-                                    </select>
+                                        control={personalForm.control}
+                                        render={({ field }) => (
+                                            <select
+                                                {...field}
+                                                className="w-full rounded-md border border-gray-300 p-2"
+                                            >
+                                                <option value="">Select Gender</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        )}
+                                    />
                                 </FormItem>
                                 
                                 <FormItem
                                     label="Date of Birth"
                                     asterisk={true}
+                                    invalid={!!personalForm.formState.errors.dob}
+                                    errorMessage={personalForm.formState.errors.dob?.message}
                                 >
-                                    <input
-                                        type="date"
+                                    <Controller
                                         name="dob"
-                                        value={personalFormData.dob}
-                                        onChange={handlePersonalInputChange}
-                                        max={getTodayDateString()}
-                                        className="w-full rounded-md border border-gray-300 p-2"
-                                        required
+                                        control={personalForm.control}
+                                        render={({ field }) => (
+                                            <input
+                                                {...field}
+                                                type="date"
+                                                max={getTodayDateString()}
+                                                className="w-full rounded-md border border-gray-300 p-2"
+                                            />
+                                        )}
                                     />
                                 </FormItem>
                                 
-                                <div className="flex justify-end pt-4">
+                                <div className="flex gap-4 mt-6">
                                     <Button
-                                        variant="solid"
                                         type="submit"
+                                        variant="solid"
                                         loading={personalFormLoading}
                                         disabled={personalFormLoading}
                                     >
@@ -334,137 +320,175 @@ const ProfileSetup = () => {
                                     </Button>
                                 </div>
                             </div>
-                        </form>
+                        </Form>
                     )}
-                    
+
+                    {/* Step 2: Professional Details */}
                     {currentStep === 1 && (
-                        <form onSubmit={handleProfessionalDetailsSubmit}>
+                        <Form onSubmit={professionalForm.handleSubmit(handleProfessionalDetailsSubmit)}>
                             <div className="space-y-4">
                                 <FormItem
                                     label="Qualification"
                                     asterisk={true}
+                                    invalid={!!professionalForm.formState.errors.qualification}
+                                    errorMessage={professionalForm.formState.errors.qualification?.message}
                                 >
-                                    <Input
+                                    <Controller
                                         name="qualification"
-                                        value={professionalFormData.qualification}
-                                        onChange={handleProfessionalInputChange}
-                                        placeholder="MBBS, MD"
-                                        required
+                                        control={professionalForm.control}
+                                        render={({ field }) => (
+                                            <Input
+                                                {...field}
+                                                placeholder="MBBS, MD, etc."
+                                            />
+                                        )}
                                     />
                                 </FormItem>
                                 
                                 <FormItem
                                     label="Specialization"
                                     asterisk={true}
+                                    invalid={!!professionalForm.formState.errors.specialization}
+                                    errorMessage={professionalForm.formState.errors.specialization?.message}
                                 >
-                                    <Input
+                                    <Controller
                                         name="specialization"
-                                        value={professionalFormData.specialization}
-                                        onChange={handleProfessionalInputChange}
-                                        placeholder="Cardiology, Pediatrics, etc."
-                                        required
+                                        control={professionalForm.control}
+                                        render={({ field }) => (
+                                            <Input
+                                                {...field}
+                                                placeholder="Cardiology, Pediatrics, etc."
+                                            />
+                                        )}
                                     />
                                 </FormItem>
                                 
                                 <FormItem
                                     label="Registration Number"
                                     asterisk={true}
+                                    invalid={!!professionalForm.formState.errors.registrationNumber}
+                                    errorMessage={professionalForm.formState.errors.registrationNumber?.message}
                                 >
-                                    <Input
+                                    <Controller
                                         name="registrationNumber"
-                                        value={professionalFormData.registrationNumber}
-                                        onChange={handleProfessionalInputChange}
-                                        placeholder="Medical Council Registration Number"
-                                        required
+                                        control={professionalForm.control}
+                                        render={({ field }) => (
+                                            <Input
+                                                {...field}
+                                                placeholder="Medical Council Registration Number"
+                                            />
+                                        )}
                                     />
                                 </FormItem>
                                 
                                 <FormItem
                                     label="Registration State"
                                     asterisk={true}
+                                    invalid={!!professionalForm.formState.errors.registrationState}
+                                    errorMessage={professionalForm.formState.errors.registrationState?.message}
                                 >
-                                    <Input
+                                    <Controller
                                         name="registrationState"
-                                        value={professionalFormData.registrationState}
-                                        onChange={handleProfessionalInputChange}
-                                        placeholder="State of Medical Council Registration"
-                                        required
+                                        control={professionalForm.control}
+                                        render={({ field }) => (
+                                            <Input
+                                                {...field}
+                                                placeholder="State of Medical Council Registration"
+                                            />
+                                        )}
                                     />
                                 </FormItem>
                                 
                                 <FormItem
                                     label="Registration Expiry Date"
+                                    invalid={!!professionalForm.formState.errors.expiryDate}
+                                    errorMessage={professionalForm.formState.errors.expiryDate?.message}
                                 >
-                                    <input
-                                        type="date"
+                                    <Controller
                                         name="expiryDate"
-                                        value={professionalFormData.expiryDate}
-                                        onChange={handleProfessionalInputChange}
-                                        className="w-full rounded-md border border-gray-300 p-2"
+                                        control={professionalForm.control}
+                                        render={({ field }) => (
+                                            <input
+                                                {...field}
+                                                type="date"
+                                                className="w-full rounded-md border border-gray-300 p-2"
+                                            />
+                                        )}
                                     />
                                 </FormItem>
                                 
                                 <FormItem
                                     label="Clinic Name"
+                                    invalid={!!professionalForm.formState.errors.clinicName}
+                                    errorMessage={professionalForm.formState.errors.clinicName?.message}
                                 >
-                                    <Input
+                                    <Controller
                                         name="clinicName"
-                                        value={professionalFormData.clinicName}
-                                        onChange={handleProfessionalInputChange}
-                                        placeholder="Name of your clinic or hospital"
+                                        control={professionalForm.control}
+                                        render={({ field }) => (
+                                            <Input
+                                                {...field}
+                                                placeholder="Name of your clinic or hospital"
+                                            />
+                                        )}
                                     />
                                 </FormItem>
                                 
                                 <FormItem
                                     label="Years of Experience"
+                                    asterisk={true}
+                                    invalid={!!professionalForm.formState.errors.yearsOfExperience}
+                                    errorMessage={professionalForm.formState.errors.yearsOfExperience?.message}
                                 >
-                                    <Input
+                                    <Controller
                                         name="yearsOfExperience"
-                                        type="number"
-                                        value={professionalFormData.yearsOfExperience.toString()}
-                                        onChange={handleProfessionalInputChange}
-                                        min="0"
-                                    />
-                                </FormItem>
-                                
-                                <FormItem
-                                    label="Communication Languages"
-                                >
-                                    <Select
-                                        name="communicationLanguages"
-                                        isMulti
-                                        options={languageOptions}
-                                        value={languageOptions.filter(option => 
-                                            professionalFormData.communicationLanguages.includes(option.value)
+                                        control={professionalForm.control}
+                                        render={({ field }) => (
+                                            <Input
+                                                {...field}
+                                                type="number"
+                                                min="0"
+                                                max="60"
+                                                placeholder="Years of experience"
+                                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                            />
                                         )}
-                                        onChange={handleLanguageChange}
-                                        placeholder="Select languages"
                                     />
                                 </FormItem>
                                 
                                 <FormItem
-                                    label="Consultation Fees (in INR)"
+                                    label="Consultation Fees (₹)"
+                                    asterisk={true}
+                                    invalid={!!professionalForm.formState.errors.consultationFees}
+                                    errorMessage={professionalForm.formState.errors.consultationFees?.message}
                                 >
-                                    <Input
+                                    <Controller
                                         name="consultationFees"
-                                        type="number"
-                                        value={professionalFormData.consultationFees.toString()}
-                                        onChange={handleProfessionalInputChange}
-                                        min="0"
+                                        control={professionalForm.control}
+                                        render={({ field }) => (
+                                            <Input
+                                                {...field}
+                                                type="number"
+                                                min="0"
+                                                max="10000"
+                                                placeholder="Consultation fees"
+                                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                            />
+                                        )}
                                     />
                                 </FormItem>
                                 
-                                <div className="flex justify-between pt-4">
+                                <div className="flex gap-4 mt-6">
                                     <Button
+                                        type="button"
                                         variant="default"
                                         onClick={() => setCurrentStep(0)}
-                                        disabled={professionalFormLoading}
                                     >
-                                        Back to Personal Details
+                                        Back: Personal Details
                                     </Button>
                                     <Button
-                                        variant="solid"
                                         type="submit"
+                                        variant="solid"
                                         loading={professionalFormLoading}
                                         disabled={professionalFormLoading}
                                     >
@@ -472,7 +496,7 @@ const ProfileSetup = () => {
                                     </Button>
                                 </div>
                             </div>
-                        </form>
+                        </Form>
                     )}
                 </div>
             </Card>
