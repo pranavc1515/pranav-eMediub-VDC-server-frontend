@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { FormItem, Form } from '@/components/ui/Form'
+import Checkbox from '@/components/ui/Checkbox'
 import { useAuth } from '@/auth'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -12,6 +13,7 @@ import ApiService from '@/services/ApiService'
 import DoctorService from '@/services/DoctorService'
 import { useToken } from '@/store/authStore'
 import appConfig from '@/configs/app.config'
+import TermsAndConditionsModal from '@/components/shared/TermsAndConditionsModal'
 
 import type { ReactNode } from 'react'
 import type { CommonProps } from '@/@types/common'
@@ -49,6 +51,8 @@ const SignInForm = ({
     const [otpValue, setOtpValue] = useState('')
     const [isNewDoctor, setIsNewDoctor] = useState(false)
     const [isProfileComplete, setIsProfileComplete] = useState(false)
+    const [isTermsAccepted, setIsTermsAccepted] = useState(false)
+    const [showTermsModal, setShowTermsModal] = useState(false)
 
     const navigate = useNavigate()
     const { signIn } = useAuth()
@@ -65,8 +69,25 @@ const SignInForm = ({
 
     const formatPhone = (phone: string) => `+91${phone}`
 
+    const handleTermsCheckboxChange = (checked: boolean) => {
+        if (checked) {
+            setShowTermsModal(true)
+        } else {
+            setIsTermsAccepted(false)
+        }
+    }
+
+    const handleTermsAccept = () => {
+        setIsTermsAccepted(true)
+        setShowTermsModal(false)
+    }
+
+    const handleTermsCancel = () => {
+        setShowTermsModal(false)
+    }
+
     const handleSendOtp = async ({ phone }: { phone: string }) => {
-        if (disableSubmit) return
+        if (disableSubmit || !isTermsAccepted) return
 
         const formattedPhone = formatPhone(phone)
         setSubmitting(true)
@@ -254,11 +275,33 @@ const SignInForm = ({
                             )}
                         />
                     </FormItem>
+                    
+                    <FormItem className="mb-6">
+                        <div className="flex items-start space-x-2">
+                            <Checkbox
+                                checked={isTermsAccepted}
+                                onChange={handleTermsCheckboxChange}
+                            />
+                            <div className="text-sm leading-5">
+                                <span>I agree to the </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowTermsModal(true)}
+                                    className="text-blue-600 hover:text-blue-800 underline font-medium"
+                                >
+                                    Terms and Conditions
+                                </button>
+                                <span> for {userType === 'doctor' ? 'Healthcare Providers' : 'Patients'}</span>
+                            </div>
+                        </div>
+                    </FormItem>
+                    
                     <Button
                         block
                         loading={isSubmitting}
                         variant="solid"
                         type="submit"
+                        disabled={!isTermsAccepted || isSubmitting}
                     >
                         {isSubmitting ? 'Sending OTP...' : 'Send OTP'}
                     </Button>
@@ -295,6 +338,13 @@ const SignInForm = ({
                     </Button>
                 </Form>
             )}
+
+            <TermsAndConditionsModal
+                isOpen={showTermsModal}
+                onClose={handleTermsCancel}
+                onAccept={handleTermsAccept}
+                userType={userType}
+            />
         </div>
     )
 }
