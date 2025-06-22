@@ -6,6 +6,7 @@ import { useSessionUser } from '@/store/authStore'
 import usePatientQueue from '@/hooks/usePatientQueue'
 import useConsultation from '@/hooks/useConsultation'
 import VideoService from '@/services/VideoService'
+import ConsultationService from '@/services/ConsultationService'
 import { useVideoCall } from '@/contexts/VideoCallContext'
 import { useSocketContext } from '@/contexts/SocketContext'
 import ReactMuiTableListView, {
@@ -51,6 +52,7 @@ const DoctorHomePage = () => {
     const [pageSize, setPageSize] = useState(15)
     const [isAvailable, setIsAvailable] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
+    const [checkingStatus, setCheckingStatus] = useState(false)
 
     const navigate = useNavigate()
     const { socket } = useSocketContext()
@@ -117,14 +119,141 @@ const DoctorHomePage = () => {
         roomName: string,
     ) => {
         try {
-            setDoctorId(parseInt(user.userId))
-            setPatientId(patientId)
-            setRoomName(roomName)
-            createRoom(patientId, roomName)
-
-            navigate(`/doctor/video-consultation/${patientId}`)
+            console.log(`Starting consultation for patient ${patientId} with room ${roomName}`);
+            
+            const doctorId = parseInt(user.userId);
+            
+            // Call the REST API to start consultation
+            const response = await ConsultationService.startConsultation(doctorId, patientId);
+            
+            console.log('Start consultation response:', response);
+            
+            if (response.success) {
+                // Set video call context
+                setDoctorId(doctorId);
+                setPatientId(patientId);
+                setRoomName(response.roomName || roomName);
+                
+                // Create room for video call
+                await createRoom(patientId, response.roomName || roomName);
+                
+                // Navigate to video consultation
+                navigate(`/doctor/video-consultation/${patientId}`);
+                
+                console.log(`Successfully started consultation ${response.consultationId}`);
+            } else {
+                console.error('Failed to start consultation:', response.message || response.error);
+                alert(`Failed to start consultation: ${response.message || response.error}`);
+            }
         } catch (error) {
-            console.error('Failed to start consultation:', error)
+            console.error('Error starting consultation:', error);
+            alert('Failed to start consultation. Please try again.');
+        }
+    }
+
+    const handleJoinCall = async (patientId: number) => {
+        setCheckingStatus(true)
+        try {
+            const doctorId = parseInt(user.userId)
+
+            // Check consultation status for this specific doctor-patient pair
+            // Pass autoJoin: false to prevent doctor from auto-joining patient queue
+            const statusResponse =
+                await ConsultationService.checkConsultationStatus(
+                    doctorId,
+                    patientId,
+                    false, // autoJoin = false for doctor requests
+                )
+
+            console.log(
+                'Doctor checking status for:',
+                { doctorId, patientId },
+                'Response:',
+                statusResponse,
+            )
+
+            if (statusResponse.success) {
+                switch (statusResponse.action) {
+                    case 'rejoin':
+                        // Existing ongoing consultation - rejoin directly
+                        console.log(
+                            'Rejoining existing consultation:',
+                            statusResponse.consultationId,
+                        )
+                        navigate(
+                            `/doctor/video-consultation/${patientId}?rejoin=true&consultationId=${statusResponse.consultationId}`,
+                        )
+                        break
+
+                    case 'ended':
+                        // Consultation has ended
+                        alert('This consultation has already ended')
+                        // Refresh the queue
+                        fetchQueue()
+                        break
+
+                    case 'none':
+                    default: {
+                        // Normal flow - start new consultation
+                        const queueEntry = patientQueueData.find(
+                            (p) => p.patientId === patientId,
+                        )
+                        if (queueEntry) {
+                            console.log(
+                                'Starting new consultation for patient:',
+                                patientId,
+                                'Room:',
+                                queueEntry.roomName,
+                            )
+                            handleStartConsultation(
+                                patientId,
+                                queueEntry.roomName || `room-${Date.now()}`,
+                            )
+                        } else {
+                            console.error(
+                                'Queue entry not found for patient:',
+                                patientId,
+                            )
+                            alert('Unable to find patient in queue')
+                        }
+                        break
+                    }
+                }
+            } else {
+                // Fallback to normal flow
+                const queueEntry = patientQueueData.find(
+                    (p) => p.patientId === patientId,
+                )
+                if (queueEntry) {
+                    handleStartConsultation(
+                        patientId,
+                        queueEntry.roomName || `room-${Date.now()}`,
+                    )
+                } else {
+                    console.error(
+                        'Queue entry not found for patient:',
+                        patientId,
+                    )
+                    alert('Unable to find patient in queue')
+                }
+            }
+        } catch (error) {
+            console.error('Error checking consultation status:', error)
+            // Fallback to normal flow
+            const queueEntry = patientQueueData.find(
+                (p) => p.patientId === patientId,
+            )
+            if (queueEntry) {
+                handleStartConsultation(
+                    patientId,
+                    queueEntry.roomName || `room-${Date.now()}`,
+                )
+            } else {
+                console.error('Queue entry not found for patient:', patientId)
+                alert('Unable to find patient in queue')
+            }
+        } finally {
+            setCheckingStatus(false)
         }
     }
 
@@ -226,7 +355,7 @@ const DoctorHomePage = () => {
                 accessor: (row) => row.id,
                 Cell: ({ row: { original } }) => {
                     return (
-                        <div className="flex justify-center">
+                        <div className="flex justify-center gap-2">
                             {original.status === 'waiting' && (
                                 <Button
                                     variant="solid"
@@ -234,11 +363,27 @@ const DoctorHomePage = () => {
                                     onClick={() =>
                                         handleStartConsultation(
                                             original.patientId,
-                                            original.roomName,
+                                            original.roomName || '',
                                         )
                                     }
                                 >
                                     Start Consultation
+                                </Button>
+                            )}
+                            {original.status === 'in_consultation' && (
+                                <Button
+                                    variant="solid"
+                                    size="sm"
+                                    className="bg-green-500 hover:bg-green-600"
+                                    onClick={() =>
+                                        handleJoinCall(original.patientId)
+                                    }
+                                    loading={checkingStatus}
+                                    disabled={checkingStatus}
+                                >
+                                    {checkingStatus
+                                        ? 'Checking...'
+                                        : 'Join Call'}
                                 </Button>
                             )}
                         </div>
@@ -293,21 +438,37 @@ const DoctorHomePage = () => {
                             {patient.roomName}
                         </div>
                     </div>
-                    {patient.status === 'waiting' && (
-                        <Button
-                            variant="solid"
-                            size="sm"
-                            className="w-full"
-                            onClick={() =>
-                                handleStartConsultation(
-                                    patient.patientId,
-                                    patient.roomName,
-                                )
-                            }
-                        >
-                            Start Consultation
-                        </Button>
-                    )}
+                    <div className="flex gap-2">
+                        {patient.status === 'waiting' && (
+                            <Button
+                                variant="solid"
+                                size="sm"
+                                className="flex-1"
+                                onClick={() =>
+                                    handleStartConsultation(
+                                        patient.patientId,
+                                        patient.roomName,
+                                    )
+                                }
+                            >
+                                Start Consultation
+                            </Button>
+                        )}
+                        {patient.status === 'in_consultation' && (
+                            <Button
+                                variant="solid"
+                                size="sm"
+                                className="flex-1 bg-green-500 hover:bg-green-600"
+                                onClick={() =>
+                                    handleJoinCall(patient.patientId)
+                                }
+                                loading={checkingStatus}
+                                disabled={checkingStatus}
+                            >
+                                {checkingStatus ? 'Checking...' : 'Join Call'}
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </Card>
         ),
@@ -329,7 +490,7 @@ const DoctorHomePage = () => {
                     </span>
                     <input
                         type="checkbox"
-                        id="availability-toggle"    
+                        id="availability-toggle"
                         checked={isAvailable}
                         onChange={handleToggleAvailability}
                         className="toggle-checkbox hidden"

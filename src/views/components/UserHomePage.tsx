@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useDoctors from '@/hooks/useDoctors'
 import PaymentService from '@/services/PaymentService'
+import ConsultationService from '@/services/ConsultationService'
 import ReactMuiTableListView, {
     Column,
 } from '@/components/shared/ReactMuiTableListView'
@@ -103,6 +104,56 @@ const UserHomePage = () => {
         setCurrentPage(1)
     }, [])
 
+    const checkConsultationStatusAndRedirect = async (doctorId: number) => {
+        try {
+            const patientId = user?.userId ? Number(user.userId) : 0
+
+            if (!patientId) {
+                console.error('Patient ID not found')
+                return
+            }
+
+            // Check consultation status
+            const statusResponse =
+                await ConsultationService.checkConsultationStatus(
+                    doctorId,
+                    patientId,
+                )
+
+            if (statusResponse.success) {
+                switch (statusResponse.action) {
+                    case 'rejoin':
+                        // Already in ongoing consultation - rejoin directly
+                        navigate(
+                            `/user/video-consultation/${doctorId}?rejoin=true&consultationId=${statusResponse.consultationId}`,
+                        )
+                        break
+
+                    case 'ended':
+                        // Previous consultation has ended, proceed normally
+                        navigate(`/user/video-consultation/${doctorId}`)
+                        break
+
+                    case 'wait':
+                        // Already in queue - go to waiting room
+                        navigate(`/user/video-consultation/${doctorId}`)
+                        break
+
+                    default:
+                        // No existing consultation or queue - proceed normally
+                        navigate(`/user/video-consultation/${doctorId}`)
+                }
+            } else {
+                // Fallback - proceed normally
+                navigate(`/user/video-consultation/${doctorId}`)
+            }
+        } catch (error) {
+            console.error('Error checking consultation status:', error)
+            // Fallback - proceed normally
+            navigate(`/user/video-consultation/${doctorId}`)
+        }
+    }
+
     const handleConsultNow = (doctor: ExtendedDoctor) => {
         const handleCreateOrder = async () => {
             try {
@@ -148,7 +199,10 @@ const UserHomePage = () => {
                                 })
 
                             if (verifyResponse.success) {
-                                navigate(`/user/video-consultation/${doctorId}`)
+                                // Check consultation status before redirecting
+                                await checkConsultationStatusAndRedirect(
+                                    doctorId,
+                                )
                             } else {
                                 console.error('Payment verification failed')
                             }

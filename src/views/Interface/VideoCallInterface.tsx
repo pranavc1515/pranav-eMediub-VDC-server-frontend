@@ -36,6 +36,9 @@ interface LocalTracks {
 interface QueueStatus {
     position: number
     estimatedWait: string
+    status?: string
+    queueLength?: number
+    totalInQueue?: number
 }
 
 const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
@@ -46,11 +49,11 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
         consultationId,
         setConsultationId,
     } = useVideoCall()
-    const params = useParams<{ doctorId?: string }>()
-    const location = useLocation()
-    const doctorId = parseInt(String(docId || params.doctorId || '0'))
+    const { id } = useParams<{ doctorId: string }>()
+    const doctorId = parseInt(docId || id || '0')
 
     // Get URL parameters
+    const location = useLocation()
     const urlParams = new URLSearchParams(location.search)
     const shouldRejoin = urlParams.get('rejoin') === 'true'
     const urlConsultationId = urlParams.get('consultationId')
@@ -72,7 +75,9 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
     const [isWaiting, setIsWaiting] = useState(true)
     const [isPrescriptionDrawerOpen, setIsPrescriptionDrawerOpen] =
         useState(false)
-    const [consultationStatus, setConsultationStatus] = useState<string | null>(null)
+    const [consultationStatus, setConsultationStatus] = useState<string | null>(
+        null,
+    )
 
     const { socket } = useSocketContext()
     const { startConsultation } = useConsultation({
@@ -133,7 +138,10 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
     const handleDirectRejoin = async (consultationId: string) => {
         try {
-            console.log('Direct rejoin requested for consultation:', consultationId)
+            console.log(
+                'Direct rejoin requested for consultation:',
+                consultationId,
+            )
             setIsWaiting(false)
             setConsultationId(consultationId)
             await handleRejoinConsultation(consultationId)
@@ -146,15 +154,26 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
     const checkConsultationStatusAndConnect = async () => {
         try {
             if (!doctorId || !user?.userId) {
-                console.log('Missing doctorId or userId:', { doctorId, userId: user?.userId })
+                console.log('Missing doctorId or userId:', {
+                    doctorId,
+                    userId: user?.userId,
+                })
                 return
             }
 
-            console.log('Checking consultation status for doctor:', doctorId, 'patient:', user.userId)
-            
+            console.log(
+                'Checking consultation status for doctor:',
+                doctorId,
+                'patient:',
+                user.userId,
+            )
+
+            // For patients, pass autoJoin: true (default behavior)
+            // For doctors, this should not be called from VideoCallInterface
             const response = await ConsultationService.checkConsultationStatus(
                 doctorId,
-                parseInt(user.userId.toString())
+                parseInt(user.userId.toString()),
+                !isDoctor // autoJoin only for patients, not doctors
             )
 
             console.log('Status check response:', response)
@@ -165,7 +184,9 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                 switch (response.action) {
                     case 'rejoin':
                         // Ongoing consultation found - rejoin directly
-                        console.log('Action: rejoin - ongoing consultation found')
+                        console.log(
+                            'Action: rejoin - ongoing consultation found',
+                        )
                         setIsWaiting(false)
                         setConsultationId(response.consultationId!)
                         setActualRoomName(response.roomName!)
@@ -182,27 +203,61 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                         break
 
                     case 'wait':
-                        // Patient is in queue - show waiting room
-                        console.log('Action: wait - patient is in queue')
+                        // Patient is already in queue or automatically joined - show waiting room
+                        console.log(
+                            'Action: wait - patient is in queue, position:',
+                            response.position,
+                        )
                         setQueueStatus({
                             position: response.position!,
                             estimatedWait: response.estimatedWait!,
+                            status: response.status,
+                            queueLength: response.queueLength,
                         })
                         setActualRoomName(response.roomName!)
+                        setIsWaiting(true)
+                        break
+
+                    case 'joined':
+                        // Patient just joined the queue
+                        console.log(
+                            'Action: joined - patient joined queue at position:',
+                            response.position,
+                        )
+                        setQueueStatus({
+                            position: response.position!,
+                            estimatedWait: response.estimatedWait!,
+                            status: 'waiting',
+                            queueLength: response.queueLength,
+                        })
+                        setActualRoomName(response.roomName!)
+                        setIsWaiting(true)
+                        break
+
+                    case 'in_consultation':
+                        // Patient is already in consultation
+                        console.log('Action: in_consultation - patient is in consultation')
+                        setIsWaiting(false)
+                        setConsultationId(response.consultationId!)
+                        setActualRoomName(response.roomName!)
+                        await handleRejoinConsultation(response.consultationId!)
                         break
 
                     default:
-                        // No active consultation - proceed with normal flow
-                        console.log('Action: default - proceeding with normal flow')
+                        // Handle other cases
+                        console.log(
+                            'Action: default - proceeding with fallback flow',
+                        )
                         if (isDoctor) {
                             handleDoctorFlow()
                         } else {
-                            handlePatientFlow()
+                            // For patients, if no specific action, show error
+                            setError('Unable to determine consultation status')
                         }
                 }
             } else {
                 console.error('Status check failed:', response)
-                setError('Failed to check consultation status')
+                setError(response.message || 'Failed to check consultation status')
             }
         } catch (error) {
             console.error('Error checking consultation status:', error)
@@ -212,22 +267,32 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
     const handleRejoinConsultation = async (consultationId: string) => {
         try {
-            console.log('Rejoining consultation:', consultationId, 'for user:', user.userId, 'type:', isDoctor ? 'doctor' : 'patient')
-            
+            console.log(
+                'Rejoining consultation:',
+                consultationId,
+                'for user:',
+                user.userId,
+                'type:',
+                isDoctor ? 'doctor' : 'patient',
+            )
+
             const rejoinResponse = await ConsultationService.rejoinConsultation(
                 consultationId,
                 String(user.userId!),
-                isDoctor ? 'doctor' : 'patient'
+                isDoctor ? 'doctor' : 'patient',
             )
 
             console.log('Rejoin response:', rejoinResponse)
 
             if (rejoinResponse.success) {
-                console.log('Successfully rejoined, joining room:', rejoinResponse.roomName)
+                console.log(
+                    'Successfully rejoined, joining room:',
+                    rejoinResponse.roomName,
+                )
                 await joinRoom(
                     rejoinResponse.roomName!,
                     rejoinResponse.doctorId!,
-                    rejoinResponse.patientId!
+                    rejoinResponse.patientId!,
                 )
             } else if (rejoinResponse.message?.includes('ended')) {
                 setError('Consultation has ended')
@@ -236,7 +301,9 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                 }, 3000)
             } else {
                 console.error('Rejoin failed:', rejoinResponse.message)
-                setError(rejoinResponse.message || 'Failed to rejoin consultation')
+                setError(
+                    rejoinResponse.message || 'Failed to rejoin consultation',
+                )
             }
         } catch (error) {
             console.error('Error rejoining consultation:', error)
@@ -265,44 +332,8 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
         }
     }
 
-    const handlePatientFlow = async () => {
-        try {
-            const response = await joinQueue({
-                patientId: Number(user.userId),
-            })
-
-            if (response && response.success) {
-                switch (response.action) {
-                    case 'rejoin':
-                        // Patient should rejoin existing consultation
-                        setIsWaiting(false)
-                        setConsultationId(response.consultationId!)
-                        setActualRoomName(response.roomName)
-                        await handleRejoinConsultation(response.consultationId!)
-                        break
-
-                    case 'in_consultation':
-                        // Patient is already in consultation
-                        setError('You are already in consultation')
-                        break
-
-                    case 'waiting':
-                    case 'joined':
-                    default:
-                        // Patient joined queue or is waiting
-                        setActualRoomName(response.roomName)
-                        setQueueStatus({
-                            position: response.position,
-                            estimatedWait: response.estimatedWait,
-                        })
-                        break
-                }
-            }
-        } catch (err) {
-            console.error('Error joining queue:', err)
-            setError('Failed to join queue')
-        }
-    }
+    // Patient flow is now handled automatically by checkConsultationStatus in backend
+    // This function is no longer needed as queue joining happens automatically
 
     const cleanup = () => {
         try {
@@ -579,16 +610,17 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
         }
     }
 
-
-
     // Show consultation ended message
     if (consultationStatus === 'ended') {
         return (
             <div className="fixed inset-0 flex items-center justify-center bg-gray-900 z-[30]">
                 <div className="text-center text-white">
-                    <h2 className="text-2xl font-bold mb-4">Consultation Ended</h2>
+                    <h2 className="text-2xl font-bold mb-4">
+                        Consultation Ended
+                    </h2>
                     <p className="text-gray-300 mb-4">
-                        The consultation has been completed or ended by the doctor.
+                        The consultation has been completed or ended by the
+                        doctor.
                     </p>
                     <p className="text-sm text-gray-400">
                         You will be redirected automatically...

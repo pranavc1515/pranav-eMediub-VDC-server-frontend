@@ -6,21 +6,26 @@ import type { AxiosRequestConfig } from 'axios'
  */
 export type ConsultationResponse = {
     success: boolean
-    message: string
+    message?: string
+    error?: string
     consultationId?: string
     roomName?: string
+    doctorId?: number
+    patientId?: number
     data?: any
 }
 
 export type ConsultationStatusResponse = {
     success: boolean
-    status: 'ongoing' | 'completed' | 'waiting' | 'in_consultation' | 'none'
-    action: 'rejoin' | 'ended' | 'wait' | 'none'
+    message?: string
+    status?: string
+    action?: 'rejoin' | 'ended' | 'none' | 'wait' | 'joined' | 'in_consultation' | 'conflict'
     consultationId?: string
     roomName?: string
     position?: number
     estimatedWait?: string
-    message: string
+    queueLength?: number
+    totalInQueue?: number
 }
 
 export type RejoinResponse = {
@@ -81,11 +86,11 @@ const ConsultationService = {
     /**
      * Check consultation status for reconnection handling
      */
-    checkConsultationStatus(doctorId: number, patientId: number) {
+    checkConsultationStatus(doctorId: number, patientId: number, autoJoin: boolean = true) {
         const config: AxiosRequestConfig = {
             method: 'POST',
             url: '/api/consultation/checkStatus',
-            data: { doctorId, patientId },
+            data: { doctorId, patientId, autoJoin },
         }
         return ApiService.fetchDataWithAxios<ConsultationStatusResponse>(config)
     },
