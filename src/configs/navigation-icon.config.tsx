@@ -11,6 +11,7 @@ import {
     PiFileTextDuotone,
     PiMonitorDuotone,
     PiUploadDuotone,
+    PiUsersDuotone,
 } from 'react-icons/pi'
 
 export type NavigationIcons = Record<string, JSX.Element>
@@ -28,6 +29,7 @@ const navigationIcon: NavigationIcons = {
     'file-text': <PiFileTextDuotone />,
     monitor: <PiMonitorDuotone />,
     'file-upload': <PiUploadDuotone />,
+    family: <PiUsersDuotone />,
 }
 
 export default navigationIcon
