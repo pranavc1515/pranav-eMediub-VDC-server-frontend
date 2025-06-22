@@ -76,6 +76,7 @@ const Profile = () => {
     // Form setup
     const form = useForm<UserPersonalDetailsFormData>({
         resolver: zodResolver(UserPersonalDetailsSchema),
+        mode: 'onChange', // Enable real-time validation
         defaultValues: {
             name: '',
             email: '',
@@ -592,17 +593,25 @@ const Profile = () => {
                                     control={form.control}
                                     render={({ field }) => (
                                         <Input
-                                            {...field}
                                             type="number"
                                             min="50"
                                             max="300"
                                             step="0.1"
                                             placeholder="Enter your height in cm"
                                             invalid={!!form.formState.errors.height}
+                                            value={field.value || ''}
                                             onChange={(e) => {
                                                 const value = e.target.value
-                                                field.onChange(value === '' ? '' : parseFloat(value) || 0)
+                                                if (value === '') {
+                                                    field.onChange('')
+                                                } else {
+                                                    const numValue = parseFloat(value)
+                                                    if (!isNaN(numValue)) {
+                                                        field.onChange(numValue)
+                                                    }
+                                                }
                                             }}
+                                            onBlur={field.onBlur}
                                         />
                                     )}
                                 />
@@ -618,17 +627,25 @@ const Profile = () => {
                                     control={form.control}
                                     render={({ field }) => (
                                         <Input
-                                            {...field}
                                             type="number"
                                             min="20"
                                             max="500"
                                             step="0.1"
                                             placeholder="Enter your weight in kg"
                                             invalid={!!form.formState.errors.weight}
+                                            value={field.value || ''}
                                             onChange={(e) => {
                                                 const value = e.target.value
-                                                field.onChange(value === '' ? '' : parseFloat(value) || 0)
+                                                if (value === '') {
+                                                    field.onChange('')
+                                                } else {
+                                                    const numValue = parseFloat(value)
+                                                    if (!isNaN(numValue)) {
+                                                        field.onChange(numValue)
+                                                    }
+                                                }
                                             }}
+                                            onBlur={field.onBlur}
                                         />
                                     )}
                                 />

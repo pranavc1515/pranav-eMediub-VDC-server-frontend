@@ -210,27 +210,31 @@ export const UserPersonalDetailsSchema = z.object({
   marital_status: z.enum(['Single', 'Married', 'Divorced', 'Widowed'], {
     required_error: ValidationMessages.required,
   }).optional(),
-  height: z.union([z.string(), z.number()])
+  height: z.union([z.string(), z.number(), z.literal('')])
     .optional()
     .refine((value) => {
-      if (!value && value !== 0) return true
+      // Allow empty values
+      if (!value || value === '' || value === null || value === undefined) return true
       const height = typeof value === 'string' ? parseFloat(value) : value
+      // Check if it's a valid number and within range
       return !isNaN(height) && height >= 50 && height <= 300
     }, 'Height must be between 50-300 cm')
     .transform((value) => {
-      if (!value && value !== 0) return ''
-      return typeof value === 'number' ? value.toString() : value
+      if (!value || value === '' || value === null || value === undefined) return ''
+      return typeof value === 'number' ? value.toString() : value.toString()
     }),
-  weight: z.union([z.string(), z.number()])
+  weight: z.union([z.string(), z.number(), z.literal('')])
     .optional()
     .refine((value) => {
-      if (!value && value !== 0) return true
+      // Allow empty values
+      if (!value || value === '' || value === null || value === undefined) return true
       const weight = typeof value === 'string' ? parseFloat(value) : value
+      // Check if it's a valid number and within range
       return !isNaN(weight) && weight >= 20 && weight <= 500
     }, 'Weight must be between 20-500 kg')
     .transform((value) => {
-      if (!value && value !== 0) return ''
-      return typeof value === 'number' ? value.toString() : value
+      if (!value || value === '' || value === null || value === undefined) return ''
+      return typeof value === 'number' ? value.toString() : value.toString()
     }),
   diet: z.enum(['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Other'], {
     required_error: ValidationMessages.required,
