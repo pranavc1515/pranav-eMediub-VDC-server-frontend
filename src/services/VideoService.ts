@@ -27,6 +27,7 @@ interface RoomsResponse {
 
 interface ParticipantsResponse {
     success: boolean
+    message?: string
     participants: Array<{
         sid: string
         identity: string
@@ -39,10 +40,12 @@ interface ParticipantsResponse {
 interface GenerateTokenRequest {
     identity: string
     roomName: string
+    [key: string]: unknown
 }
 
 interface CreateRoomRequest {
     roomName: string
+    [key: string]: unknown
 }
 
 const VideoService = {

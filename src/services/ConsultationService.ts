@@ -146,6 +146,22 @@ const ConsultationService = {
     },
 
     /**
+     * End consultation by doctor
+     */
+    endConsultationByDoctor(consultationId: string | number, doctorId: number, notes?: string) {
+        const config: AxiosRequestConfig = {
+            method: 'POST',
+            url: '/api/consultation/endConsultation',
+            data: { 
+                consultationId: parseInt(consultationId.toString()), 
+                doctorId: parseInt(doctorId.toString()), 
+                notes 
+            },
+        }
+        return ApiService.fetchDataWithAxios<ConsultationResponse>(config)
+    },
+
+    /**
      * Get consultation history for a doctor
      */
     getDoctorConsultationHistory(doctorId: number, page: number = 1, limit: number = 15) {

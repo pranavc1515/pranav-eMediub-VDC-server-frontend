@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useLocation } from 'react-router-dom'
+import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import {
     connect,
     createLocalVideoTrack,
@@ -18,10 +18,13 @@ import { useSocketContext } from '@/contexts/SocketContext'
 import { useVideoCall } from '@/contexts/VideoCallContext'
 import useConsultation from '@/hooks/useConsultation'
 import usePatientQueue from '@/hooks/usePatientQueue'
+
 import WaitingRoom from '@/components/Interface/WaitingRoom'
 import CallControls from '@/components/Interface/CallControls'
 import PrescriptionDrawer from '@/components/Interface/PrescriptionDrawer'
-import { FaNotesMedical } from 'react-icons/fa'
+import EndConsultationModal from '@/components/Interface/EndConsultationModal'
+import ConsultationComplete from '@/components/Interface/ConsultationComplete'
+import { FaNotesMedical, FaUsers, FaClock, FaSignal } from 'react-icons/fa'
 import { Button } from '@/components/ui'
 
 interface VideoCallInterfaceProps {
@@ -49,8 +52,9 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
         consultationId,
         setConsultationId,
     } = useVideoCall()
-    const { id } = useParams<{ doctorId: string }>()
+    const { id } = useParams<{ doctorId?: string }>()
     const doctorId = parseInt(docId || id || '0')
+    const navigate = useNavigate()
 
     // Get URL parameters
     const location = useLocation()
@@ -79,11 +83,22 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
         null,
     )
 
+    // Enhanced states for new features
+    const [callStartTime, setCallStartTime] = useState<Date | null>(null)
+    const [callDuration, setCallDuration] = useState('00:00')
+    const [showEndConsultationModal, setShowEndConsultationModal] =
+        useState(false)
+    const [showConsultationComplete, setShowConsultationComplete] =
+        useState(false)
+    const [isEndingConsultation, setIsEndingConsultation] = useState(false)
+    const [roomSid, setRoomSid] = useState<string | null>(null)
+    const [participantCount, setParticipantCount] = useState(0)
+
     const { socket } = useSocketContext()
     const { startConsultation } = useConsultation({
         doctorId: doctorId,
     })
-    const { leaveQueue, joinQueue } = usePatientQueue({
+    const { leaveQueue } = usePatientQueue({
         doctorId: doctorId,
     })
 
@@ -91,6 +106,95 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
     const remoteVideoRef = useRef<HTMLDivElement>(null)
     const { user } = useAuth()
     const isDoctor = user.authority?.includes('doctor') || false
+
+    // Call timer effect
+    useEffect(() => {
+        let interval: NodeJS.Timeout | null = null
+
+        if (callStartTime && !isWaiting && !showConsultationComplete) {
+            interval = setInterval(() => {
+                const now = new Date()
+                const diff = now.getTime() - callStartTime.getTime()
+                const minutes = Math.floor(diff / 60000)
+                const seconds = Math.floor((diff % 60000) / 1000)
+                setCallDuration(
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`,
+                )
+            }, 1000)
+        }
+
+        return () => {
+            if (interval) {
+                clearInterval(interval)
+            }
+        }
+    }, [callStartTime, isWaiting, showConsultationComplete])
+
+    // Participant count effect
+    useEffect(() => {
+        if (room && roomSid) {
+            console.log(
+                'Setting up participant count monitoring for room SID:',
+                roomSid,
+            )
+
+            const updateParticipantCount = async () => {
+                try {
+                    console.log('Fetching participants for room SID:', roomSid)
+                    const response =
+                        await VideoService.listParticipants(roomSid)
+                    if (response.success) {
+                        // Count only connected participants from API (don't add local participant here)
+                        const connectedParticipants =
+                            response.participants.filter(
+                                (p) => p.status === 'connected',
+                            ).length
+                        console.log(
+                            'API participants count:',
+                            connectedParticipants,
+                            'room participants:',
+                            room.participants.size,
+                        )
+                        setParticipantCount(connectedParticipants)
+                    } else {
+                        console.warn(
+                            'Failed to fetch participants:',
+                            response.message,
+                        )
+                        // Fallback: count based on room participants (remote only)
+                        const roomParticipants = room.participants.size
+                        console.log(
+                            'Using fallback participant count:',
+                            roomParticipants,
+                        )
+                        setParticipantCount(roomParticipants)
+                    }
+                } catch (error) {
+                    console.error('Error fetching participant count:', error)
+                    // Fallback: count based on room participants (remote only)
+                    const roomParticipants = room.participants.size
+                    console.log(
+                        'Using error fallback participant count:',
+                        roomParticipants,
+                    )
+                    setParticipantCount(roomParticipants)
+                }
+            }
+
+            // Initial count
+            updateParticipantCount()
+
+            // Update count every 10 seconds (reduced frequency to avoid API overload)
+            const interval = setInterval(updateParticipantCount, 10000)
+
+            return () => clearInterval(interval)
+        } else {
+            console.log(
+                'Room or roomSid not available for participant monitoring:',
+                { room: !!room, roomSid },
+            )
+        }
+    }, [room, roomSid])
 
     useEffect(() => {
         if (!socket) return
@@ -111,17 +215,25 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
             socket.on('CONSULTATION_STARTED', async (data) => {
                 setIsWaiting(false)
                 setConsultationId(data.consultationId)
+                setCallStartTime(new Date()) // Start call timer
                 await joinRoom(data.roomName, data.doctorId, data.patientId)
             })
         }
 
         socket.on('CONSULTATION_ENDED', () => {
             setConsultationStatus('ended')
-            setError('Consultation has ended')
-            cleanup()
-            setTimeout(() => {
-                onCallEnd?.()
-            }, 3000)
+            if (isDoctor) {
+                // Doctor sees ended message and redirects to /vdc
+                setError('Consultation has ended')
+                cleanup()
+                setTimeout(() => {
+                    navigate('/vdc')
+                }, 2000)
+            } else {
+                // Patient sees consultation complete screen
+                setShowConsultationComplete(true)
+                cleanup()
+            }
         })
 
         socket.on('PARTICIPANT_REJOINED', (data) => {
@@ -134,7 +246,7 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                 socket.disconnect()
             }
         }
-    }, [shouldRejoin, urlConsultationId, socket])
+    }, [shouldRejoin, urlConsultationId, socket, isDoctor, navigate])
 
     const handleDirectRejoin = async (consultationId: string) => {
         try {
@@ -144,6 +256,7 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
             )
             setIsWaiting(false)
             setConsultationId(consultationId)
+            setCallStartTime(new Date()) // Start call timer for rejoined calls
             await handleRejoinConsultation(consultationId)
         } catch (error) {
             console.error('Error in direct rejoin:', error)
@@ -173,7 +286,7 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
             const response = await ConsultationService.checkConsultationStatus(
                 doctorId,
                 parseInt(user.userId.toString()),
-                !isDoctor // autoJoin only for patients, not doctors
+                !isDoctor, // autoJoin only for patients, not doctors
             )
 
             console.log('Status check response:', response)
@@ -190,16 +303,21 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                         setIsWaiting(false)
                         setConsultationId(response.consultationId!)
                         setActualRoomName(response.roomName!)
+                        setCallStartTime(new Date()) // Start call timer
                         await handleRejoinConsultation(response.consultationId!)
                         break
 
                     case 'ended':
                         // Consultation has ended
                         console.log('Action: ended - consultation has ended')
-                        setError('Consultation has ended')
-                        setTimeout(() => {
-                            onCallEnd?.()
-                        }, 3000)
+                        if (isDoctor) {
+                            setError('Consultation has ended')
+                            setTimeout(() => {
+                                navigate('/vdc')
+                            }, 3000)
+                        } else {
+                            setShowConsultationComplete(true)
+                        }
                         break
 
                     case 'wait':
@@ -236,10 +354,13 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
                     case 'in_consultation':
                         // Patient is already in consultation
-                        console.log('Action: in_consultation - patient is in consultation')
+                        console.log(
+                            'Action: in_consultation - patient is in consultation',
+                        )
                         setIsWaiting(false)
                         setConsultationId(response.consultationId!)
                         setActualRoomName(response.roomName!)
+                        setCallStartTime(new Date()) // Start call timer
                         await handleRejoinConsultation(response.consultationId!)
                         break
 
@@ -257,7 +378,9 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                 }
             } else {
                 console.error('Status check failed:', response)
-                setError(response.message || 'Failed to check consultation status')
+                setError(
+                    response.message || 'Failed to check consultation status',
+                )
             }
         } catch (error) {
             console.error('Error checking consultation status:', error)
@@ -295,10 +418,14 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                     rejoinResponse.patientId!,
                 )
             } else if (rejoinResponse.message?.includes('ended')) {
-                setError('Consultation has ended')
-                setTimeout(() => {
-                    onCallEnd?.()
-                }, 3000)
+                if (isDoctor) {
+                    setError('Consultation has ended')
+                    setTimeout(() => {
+                        navigate('/vdc')
+                    }, 3000)
+                } else {
+                    setShowConsultationComplete(true)
+                }
             } else {
                 console.error('Rejoin failed:', rejoinResponse.message)
                 setError(
@@ -318,11 +445,13 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                 // Existing consultation found
                 setConsultationId(res.consultationId)
                 setActualRoomName(res.roomName)
+                setCallStartTime(new Date()) // Start call timer
                 await joinRoom(res.roomName, doctorId, patientId)
             } else {
                 // New consultation started
                 setConsultationId(res.consultationId)
                 setActualRoomName(res.roomName || roomName)
+                setCallStartTime(new Date()) // Start call timer
                 await joinRoom(res.roomName || roomName, doctorId, patientId)
             }
             setIsWaiting(false)
@@ -331,9 +460,6 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
             setError('Failed to start consultation')
         }
     }
-
-    // Patient flow is now handled automatically by checkConsultationStatus in backend
-    // This function is no longer needed as queue joining happens automatically
 
     const cleanup = () => {
         try {
@@ -346,6 +472,7 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
             if (room) {
                 room.disconnect()
             }
+            setCallStartTime(null) // Reset call timer
             setTimeout(() => {
                 try {
                     if (localVideoRef.current) {
@@ -428,8 +555,9 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                 preferredVideoCodecs: [{ codec: 'VP8', simulcast: true }],
             })
 
-            console.log('Connected to room:', room.name)
+            console.log('Connected to room:', room.name, 'SID:', room.sid)
             setRoom(room)
+            setRoomSid(room.sid) // Store room SID for participant count
             handleRoomEvents(room)
         } catch (error) {
             console.error('Error joining room:', error)
@@ -558,7 +686,11 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
     const handleRoomDisconnected = (room: Room) => {
         console.log('Disconnected from room:', room.name)
         cleanup()
-        onCallEnd?.()
+        if (isDoctor) {
+            navigate('/vdc')
+        } else if (!showConsultationComplete) {
+            setShowConsultationComplete(true)
+        }
     }
 
     const handleDominantSpeakerChanged = (
@@ -584,17 +716,59 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
     }
 
     const endCall = async () => {
-        if (isDoctor && consultationId && socket) {
-            socket.emit('END_CONSULTATION', { consultationId })
-        } else if (!isDoctor && socket) {
-            socket.emit('LEAVE_QUEUE', {
-                patientId: user.userId,
-                doctorId,
-            })
+        if (isDoctor) {
+            // Doctor wants to end consultation - show confirmation modal
+            setShowEndConsultationModal(true)
+        } else {
+            // Patient leaves call - just disconnect them
+            cleanup()
+            setShowConsultationComplete(true)
         }
+    }
 
-        cleanup()
-        onCallEnd?.()
+    const handleConfirmEndConsultation = async () => {
+        if (!consultationId || !isDoctor) return
+
+        try {
+            setIsEndingConsultation(true)
+
+            // Call API to end consultation
+            const response = await ConsultationService.endConsultationByDoctor(
+                consultationId,
+                doctorId,
+                'Consultation completed by doctor',
+            )
+
+            if (response.success) {
+                console.log('Consultation ended successfully')
+                setShowEndConsultationModal(false)
+                cleanup()
+                // Socket event will be emitted from backend to notify patient
+                // Doctor will be redirected to /vdc via socket event handler
+            } else {
+                console.error('API response error:', response)
+                setError(response.message || 'Failed to end consultation')
+            }
+        } catch (error) {
+            console.error('Error ending consultation:', error)
+            // Check if it's a network error or API error
+            if (error.response) {
+                // API returned an error status
+                const apiError = error.response.data
+                setError(
+                    apiError.message ||
+                        `Server error: ${error.response.status}`,
+                )
+            } else if (error.request) {
+                // Network error
+                setError('Network error: Unable to connect to server')
+            } else {
+                // Other error
+                setError('Failed to end consultation')
+            }
+        } finally {
+            setIsEndingConsultation(false)
+        }
     }
 
     const handleExitQueue = async () => {
@@ -610,8 +784,19 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
         }
     }
 
-    // Show consultation ended message
-    if (consultationStatus === 'ended') {
+    // Show consultation complete screen for patients
+    if (showConsultationComplete && !isDoctor) {
+        return (
+            <ConsultationComplete
+                onRedirectToPrescriptions={() =>
+                    navigate('/user/prescriptions')
+                }
+            />
+        )
+    }
+
+    // Show consultation ended message for doctors
+    if (consultationStatus === 'ended' && isDoctor) {
         return (
             <div className="fixed inset-0 flex items-center justify-center bg-gray-900 z-[30]">
                 <div className="text-center text-white">
@@ -619,11 +804,10 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                         Consultation Ended
                     </h2>
                     <p className="text-gray-300 mb-4">
-                        The consultation has been completed or ended by the
-                        doctor.
+                        The consultation has been completed successfully.
                     </p>
                     <p className="text-sm text-gray-400">
-                        You will be redirected automatically...
+                        Redirecting to dashboard...
                     </p>
                 </div>
             </div>
@@ -648,6 +832,26 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                         className="absolute top-4 left-4 right-4 bg-red-600 text-white p-3 rounded-md shadow-lg z-50 font-semibold text-center"
                     >
                         {error}
+                    </div>
+                )}
+
+                {/* Call Information Bar */}
+                {!isWaiting && callStartTime && (
+                    <div className="absolute top-4 left-4 bg-black bg-opacity-60 text-white px-4 py-2 rounded-lg shadow-lg z-40 flex items-center space-x-4">
+                        <div className="flex items-center space-x-2">
+                            <FaClock className="text-green-400" />
+                            <span className="font-mono text-sm">
+                                {callDuration}
+                            </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <FaUsers className="text-blue-400" />
+                            <span className="text-sm">{participantCount}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <FaSignal className="text-green-400" />
+                            <span className="text-sm">Connected</span>
+                        </div>
                     </div>
                 )}
 
@@ -709,6 +913,16 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                 onToggleVideo={toggleVideo}
                 onEndCall={endCall}
             />
+
+            {/* End Consultation Confirmation Modal (Doctor Only) */}
+            {isDoctor && (
+                <EndConsultationModal
+                    isOpen={showEndConsultationModal}
+                    onClose={() => setShowEndConsultationModal(false)}
+                    onConfirm={handleConfirmEndConsultation}
+                    isLoading={isEndingConsultation}
+                />
+            )}
 
             {/* Prescription Drawer */}
             {isDoctor && (
