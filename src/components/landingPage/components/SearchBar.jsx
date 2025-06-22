@@ -82,8 +82,12 @@ const SearchBar = () => {
             <div className="bg-[#FFFFFF] flex items-center w-[90%] md:w-[60%] lg:w-[95%] p-5 rounded-lg shadow-md">
                 {/* Location Section */}
                 <div 
-                    className="flex items-center space-x-2 text-gray-400 px-3 cursor-pointer" 
+                    className="flex items-center space-x-2 text-gray-400 px-3 cursor-pointer touch-manipulation hover:text-gray-600 transition-colors" 
                     onClick={getUserLocation}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && getUserLocation()}
+                    aria-label="Get current location"
                 >
                     <img src={Location} alt="Location" />
                     <span>{loading ? translate('detecting') : userLocation}</span>
@@ -109,10 +113,18 @@ const SearchBar = () => {
                             {dummySuggestions.map((suggestion, index) => (
                                 <div 
                                     key={index}
-                                    className="p-2 hover:bg-gray-100 cursor-pointer"
+                                    className="p-2 hover:bg-gray-100 cursor-pointer touch-manipulation"
                                     onClick={() => {
                                         setSearchInput(suggestion);
                                         setShowSuggestions(false);
+                                    }}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            setSearchInput(suggestion);
+                                            setShowSuggestions(false);
+                                        }
                                     }}
                                 >
                                     {suggestion}

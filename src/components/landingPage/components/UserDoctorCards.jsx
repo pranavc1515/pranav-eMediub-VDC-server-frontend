@@ -10,19 +10,23 @@ const UserDoctorCards = () => {
   const { translate } = useLanguage();
 
   const handleUserCardClick = () => {
-    navigate('/sign-in');
+    navigate('/auth/sign-in');
   };
 
   const handleDoctorCardClick = () => {
-    navigate('/sign-in');
+    navigate('/auth/sign-in');
   };
 
   return (
     <div className="flex flex-col lg:flex-row justify-center items-center gap-6 p-4 mt-4">
       <div
-        className="relative bg-gradient-to-r from-white to-blue-100 rounded-lg shadow-md p-6 flex items-center w-full xl:max-w-[48.5%] h-[150px] bg-cover bg-right cursor-pointer hover:shadow-lg transition-shadow"
+        className="relative bg-gradient-to-r from-white to-blue-100 rounded-lg shadow-md p-6 flex items-center w-full xl:max-w-[48.5%] h-[150px] bg-cover bg-right cursor-pointer hover:shadow-lg transition-shadow touch-manipulation"
         style={{ backgroundImage: `url(${UserDoctorCard})` }}
         onClick={handleUserCardClick}
+        onTouchEnd={handleUserCardClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === 'Enter' && handleUserCardClick()}
       >
         {/* Left Content */}
         <div className="flex flex-col z-10">
@@ -35,9 +39,13 @@ const UserDoctorCards = () => {
       </div>
 
       <div
-        className="relative bg-gradient-to-r from-white to-blue-100 rounded-lg shadow-md p-6 flex items-center w-full xl:max-w-[48.5%] h-[150px] bg-cover bg-right cursor-pointer hover:shadow-lg transition-shadow"
+        className="relative bg-gradient-to-r from-white to-blue-100 rounded-lg shadow-md p-6 flex items-center w-full xl:max-w-[48.5%] h-[150px] bg-cover bg-right cursor-pointer hover:shadow-lg transition-shadow touch-manipulation"
         style={{ backgroundImage: `url(${UserDoctorCard})` }}
         onClick={handleDoctorCardClick}
+        onTouchEnd={handleDoctorCardClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === 'Enter' && handleDoctorCardClick()}
       >
         {/* Left Content */}
         <div className="flex flex-col z-10">

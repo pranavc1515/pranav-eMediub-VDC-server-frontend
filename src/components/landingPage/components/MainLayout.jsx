@@ -66,11 +66,23 @@ const MainLayout = ({ children }) => {
 
             {/* Sticky App Store Buttons */}
             <div className="fixed bottom-0 right-0 z-50 flex items-center gap-4 bg-white/80 backdrop-blur-sm p-3 rounded-tl-lg shadow-lg">
-                <span className="text-sm font-semibold text-gray-700">{translate('downloadApp')}</span>
-                <a href="#" className="transition-transform hover:scale-105">
+                <span className="text-sm font-semibold text-gray-700 hidden sm:block">{translate('downloadApp')}</span>
+                <a 
+                    href="https://play.google.com/store" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="transition-transform hover:scale-105 touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                    aria-label="Download on Google Play"
+                >
                     <img src={GooglePlay} alt="Google Play" className="h-10" />
                 </a>
-                <a href="#" className="transition-transform hover:scale-105">
+                <a 
+                    href="https://apps.apple.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="transition-transform hover:scale-105 touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                    aria-label="Download on App Store"
+                >
                     <img src={AppStore} alt="App Store" className="h-10" />
                 </a>
             </div>

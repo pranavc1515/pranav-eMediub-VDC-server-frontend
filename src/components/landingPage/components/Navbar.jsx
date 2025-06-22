@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import MediHub from '../assets/eMidiHub.svg'
 import Button3 from '../assets/Button3.svg'
 import CloseButton from '../assets/icons8-close.svg'
 import { useLanguage } from '../contexts/LanguageContext.jsx'
 
 const Navbar = () => {
+    const navigate = useNavigate()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false)
     
@@ -27,6 +29,14 @@ const Navbar = () => {
     const handleLanguageSelect = (language) => {
         selectLanguage(language.code)
         setIsLanguageDropdownOpen(false)
+    }
+
+    const handleLoginClick = (e) => {
+        e.preventDefault()
+        navigate('/auth/sign-in')
+        if (isMobileMenuOpen) {
+            closeMobileMenu()
+        }
     }
 
     // Smooth scroll function
@@ -69,12 +79,12 @@ const Navbar = () => {
                     <a href="#contact" onClick={(e) => handleSmoothScroll(e, 'contact')}>{translate('navContact')}</a>
                 </li>
                 <li>
-                    <a
-                        href="sign-in"
-                        className=" border-[2px]  border-[#0190CA] text-[#0190CA] py-2 px-4 rounded-md"
+                    <button
+                        onClick={handleLoginClick}
+                        className="border-[2px] border-[#0190CA] text-[#0190CA] py-2 px-4 rounded-md hover:bg-[#0190CA] hover:text-white transition-colors touch-manipulation"
                     >
                         {translate('navLogin')}
-                    </a>
+                    </button>
                 </li>
                 <li className="relative mr-[40px]">
                     <button
@@ -111,17 +121,22 @@ const Navbar = () => {
             </ul>
 
             {/* Mobile Menu Button */}
-            <button onClick={toggleMobileMenu} className="lg:hidden  pr-4">
+            <button 
+                onClick={toggleMobileMenu} 
+                className="lg:hidden pr-4 touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md p-1"
+                aria-label="Toggle mobile menu"
+            >
                 <img src={Button3} alt="Menu" className="w-8 h-8" />
             </button>
 
             {/* Mobile Menu (Full Width) */}
             {isMobileMenuOpen && (
-                <div className="lg:hidden fixed inset-0 bg-[#F9F9F9] flex flex-col items-center space-y-4 p-6 h-screen w-full z-50">
+                <div className="lg:hidden fixed inset-0 bg-[#F9F9F9] flex flex-col items-center space-y-4 p-6 h-screen w-full z-[9999]">
                     {/* Close Button */}
                     <button
                         onClick={closeMobileMenu}
-                        className="absolute p-[6px] rounded-[10px] top-8 right-4 text-white bg-[#2a7be5] "
+                        className="absolute p-[6px] rounded-[10px] top-8 right-4 text-white bg-[#2a7be5] touch-manipulation focus:outline-none focus:ring-2 focus:ring-white"
+                        aria-label="Close mobile menu"
                     >
                         <img
                             src={CloseButton}
@@ -147,9 +162,12 @@ const Navbar = () => {
                             <a href="#contact" onClick={(e) => handleSmoothScroll(e, 'contact')}>{translate('navContact')}</a>
                         </li>
                         <li>
-                            <a href="#login" className=" py-2 px-4 rounded-md">
+                            <button 
+                                onClick={handleLoginClick}
+                                className="border-[2px] border-[#0190CA] text-[#0190CA] py-2 px-4 rounded-md hover:bg-[#0190CA] hover:text-white transition-colors touch-manipulation"
+                            >
                                 {translate('navLogin')}
-                            </a>
+                            </button>
                         </li>
                         <li className="relative">
                             <button
