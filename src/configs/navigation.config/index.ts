@@ -84,6 +84,16 @@ const navigationConfig: NavigationTree[] = [
         subMenu: [],
     },
     {
+        key: 'userFamily',
+        path: '/user/family',
+        title: 'Family Members',
+        translateKey: 'nav.userFamily',
+        icon: 'family',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: ['user'],
+        subMenu: [],
+    },
+    {
         key: 'termsConditions',
         path: '/terms-conditions',
         title: 'Terms & Conditions',

@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => {
     // Load environment variables
     const proxyTarget =
         process.env.VITE_DEV_PROXY_TARGET || 'http://128.199.26.111:3000'
+        // process.env.VITE_DEV_PROXY_TARGET || 'http://localhost:3000'
 
     return {
         plugins: [react()],
