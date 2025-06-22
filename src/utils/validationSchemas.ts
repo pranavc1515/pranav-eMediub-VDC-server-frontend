@@ -210,20 +210,28 @@ export const UserPersonalDetailsSchema = z.object({
   marital_status: z.enum(['Single', 'Married', 'Divorced', 'Widowed'], {
     required_error: ValidationMessages.required,
   }).optional(),
-  height: z.string()
+  height: z.union([z.string(), z.number()])
     .optional()
     .refine((value) => {
-      if (!value) return true
-      const height = parseFloat(value)
+      if (!value && value !== 0) return true
+      const height = typeof value === 'string' ? parseFloat(value) : value
       return !isNaN(height) && height >= 50 && height <= 300
-    }, 'Height must be between 50-300 cm'),
-  weight: z.string()
+    }, 'Height must be between 50-300 cm')
+    .transform((value) => {
+      if (!value && value !== 0) return ''
+      return typeof value === 'number' ? value.toString() : value
+    }),
+  weight: z.union([z.string(), z.number()])
     .optional()
     .refine((value) => {
-      if (!value) return true
-      const weight = parseFloat(value)
+      if (!value && value !== 0) return true
+      const weight = typeof value === 'string' ? parseFloat(value) : value
       return !isNaN(weight) && weight >= 20 && weight <= 500
-    }, 'Weight must be between 20-500 kg'),
+    }, 'Weight must be between 20-500 kg')
+    .transform((value) => {
+      if (!value && value !== 0) return ''
+      return typeof value === 'number' ? value.toString() : value
+    }),
   diet: z.enum(['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Other'], {
     required_error: ValidationMessages.required,
   }).optional(),

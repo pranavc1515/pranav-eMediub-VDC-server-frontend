@@ -14,6 +14,7 @@ import {
 } from '@/components/ui'
 import toast from '@/components/ui/toast'
 import UserService from '@/services/UserService'
+import type { UserPersonalDetails } from '@/services/UserService'
 import { HiOutlinePencilAlt, HiOutlineCamera } from 'react-icons/hi'
 import type { UserProfileDetailsResponse } from '@/services/UserService'
 import Container from '@/components/shared/Container'
@@ -90,6 +91,15 @@ const Profile = () => {
             image: '',
         }
     })
+
+    // Watch DOB field to automatically calculate age
+    const watchedDob = form.watch('dob')
+    useEffect(() => {
+        if (watchedDob) {
+            const calculatedAge = calculateAge(watchedDob)
+            form.setValue('age', calculatedAge)
+        }
+    }, [watchedDob, form])
 
     useEffect(() => {
         fetchProfileData()
@@ -179,7 +189,22 @@ const Profile = () => {
                 data.phone = userPhone
             }
 
-            const response = await UserService.updatePersonalDetails(data)
+            // Transform form data to match UserPersonalDetails interface
+            const transformedData: UserPersonalDetails = {
+                name: data.name || '',
+                email: data.email || '',
+                phone: data.phone || '',
+                dob: data.dob || '',
+                gender: data.gender || 'Male',
+                marital_status: data.marital_status || 'Single',
+                height: data.height || '',
+                weight: data.weight || '',
+                diet: data.diet || 'Vegetarian',
+                profession: data.profession || '',
+                image: data.image || '',
+            }
+
+            const response = await UserService.updatePersonalDetails(transformedData)
             
             if (response.status) {
                 // Show success message inside the drawer first
@@ -333,11 +358,11 @@ const Profile = () => {
                             </div>
                             <div>
                                 <p className="text-gray-500 text-sm">Height</p>
-                                <p className="font-medium">{profileInfo?.height || 'Not provided'}</p>
+                                <p className="font-medium">{profileInfo?.height ? `${profileInfo.height} cm` : 'Not provided'}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500 text-sm">Weight</p>
-                                <p className="font-medium">{profileInfo?.weight || 'Not provided'}</p>
+                                <p className="font-medium">{profileInfo?.weight ? `${profileInfo.weight} kg` : 'Not provided'}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500 text-sm">Diet</p>
@@ -408,7 +433,12 @@ const Profile = () => {
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormItem label="Full Name" asterisk={true}>
+                            <FormItem 
+                                label="Full Name" 
+                                asterisk={true}
+                                invalid={!!form.formState.errors.name}
+                                errorMessage={form.formState.errors.name?.message}
+                            >
                                 <Controller
                                     name="name"
                                     control={form.control}
@@ -416,12 +446,18 @@ const Profile = () => {
                                         <Input
                                             {...field}
                                             placeholder="Enter your full name"
+                                            invalid={!!form.formState.errors.name}
                                         />
                                     )}
                                 />
                             </FormItem>
 
-                            <FormItem label="Email" asterisk={true}>
+                            <FormItem 
+                                label="Email" 
+                                asterisk={false}
+                                invalid={!!form.formState.errors.email}
+                                errorMessage={form.formState.errors.email?.message}
+                            >
                                 <Controller
                                     name="email"
                                     control={form.control}
@@ -430,6 +466,7 @@ const Profile = () => {
                                             {...field}
                                             type="email"
                                             placeholder="Enter your email"
+                                            invalid={!!form.formState.errors.email}
                                         />
                                     )}
                                 />
@@ -452,7 +489,12 @@ const Profile = () => {
                                 </small>
                             </FormItem>
 
-                            <FormItem label="Date of Birth" asterisk={true}>
+                            <FormItem 
+                                label="Date of Birth" 
+                                asterisk={true}
+                                invalid={!!form.formState.errors.dob}
+                                errorMessage={form.formState.errors.dob?.message}
+                            >
                                 <Controller
                                     name="dob"
                                     control={form.control}
@@ -461,7 +503,11 @@ const Profile = () => {
                                             {...field}
                                             type="date"
                                             max={getTodayDateString()}
-                                            className="w-full rounded-md border border-gray-300 p-2"
+                                            className={`w-full rounded-md border p-2 ${
+                                                form.formState.errors.dob 
+                                                    ? 'border-red-500 focus:border-red-500' 
+                                                    : 'border-gray-300 focus:border-blue-500'
+                                            }`}
                                         />
                                     )}
                                 />
@@ -482,14 +528,23 @@ const Profile = () => {
                                 />
                             </FormItem>
 
-                            <FormItem label="Gender" asterisk={true}>
+                            <FormItem 
+                                label="Gender" 
+                                asterisk={true}
+                                invalid={!!form.formState.errors.gender}
+                                errorMessage={form.formState.errors.gender?.message}
+                            >
                                 <Controller
                                     name="gender"
                                     control={form.control}
                                     render={({ field }) => (
                                         <select
                                             {...field}
-                                            className="w-full rounded-md border border-gray-300 p-2"
+                                            className={`w-full rounded-md border p-2 ${
+                                                form.formState.errors.gender 
+                                                    ? 'border-red-500 focus:border-red-500' 
+                                                    : 'border-gray-300 focus:border-blue-500'
+                                            }`}
                                         >
                                             <option value="">Select Gender</option>
                                             <option value="Male">Male</option>
@@ -500,14 +555,22 @@ const Profile = () => {
                                 />
                             </FormItem>
 
-                            <FormItem label="Marital Status">
+                            <FormItem 
+                                label="Marital Status"
+                                invalid={!!form.formState.errors.marital_status}
+                                errorMessage={form.formState.errors.marital_status?.message}
+                            >
                                 <Controller
                                     name="marital_status"
                                     control={form.control}
                                     render={({ field }) => (
                                         <select
                                             {...field}
-                                            className="w-full rounded-md border border-gray-300 p-2"
+                                            className={`w-full rounded-md border p-2 ${
+                                                form.formState.errors.marital_status 
+                                                    ? 'border-red-500 focus:border-red-500' 
+                                                    : 'border-gray-300 focus:border-blue-500'
+                                            }`}
                                         >
                                             <option value="">Select Marital Status</option>
                                             <option value="Single">Single</option>
@@ -519,7 +582,11 @@ const Profile = () => {
                                 />
                             </FormItem>
 
-                            <FormItem label="Height">
+                            <FormItem 
+                                label="Height (cm)"
+                                invalid={!!form.formState.errors.height}
+                                errorMessage={form.formState.errors.height?.message}
+                            >
                                 <Controller
                                     name="height"
                                     control={form.control}
@@ -529,13 +596,23 @@ const Profile = () => {
                                             type="number"
                                             min="50"
                                             max="300"
+                                            step="0.1"
                                             placeholder="Enter your height in cm"
+                                            invalid={!!form.formState.errors.height}
+                                            onChange={(e) => {
+                                                const value = e.target.value
+                                                field.onChange(value === '' ? '' : parseFloat(value) || 0)
+                                            }}
                                         />
                                     )}
                                 />
                             </FormItem>
 
-                            <FormItem label="Weight">
+                            <FormItem 
+                                label="Weight (kg)"
+                                invalid={!!form.formState.errors.weight}
+                                errorMessage={form.formState.errors.weight?.message}
+                            >
                                 <Controller
                                     name="weight"
                                     control={form.control}
@@ -545,20 +622,34 @@ const Profile = () => {
                                             type="number"
                                             min="20"
                                             max="500"
+                                            step="0.1"
                                             placeholder="Enter your weight in kg"
+                                            invalid={!!form.formState.errors.weight}
+                                            onChange={(e) => {
+                                                const value = e.target.value
+                                                field.onChange(value === '' ? '' : parseFloat(value) || 0)
+                                            }}
                                         />
                                     )}
                                 />
                             </FormItem>
 
-                            <FormItem label="Diet">
+                            <FormItem 
+                                label="Diet"
+                                invalid={!!form.formState.errors.diet}
+                                errorMessage={form.formState.errors.diet?.message}
+                            >
                                 <Controller
                                     name="diet"
                                     control={form.control}
                                     render={({ field }) => (
                                         <select
                                             {...field}
-                                            className="w-full rounded-md border border-gray-300 p-2"
+                                            className={`w-full rounded-md border p-2 ${
+                                                form.formState.errors.diet 
+                                                    ? 'border-red-500 focus:border-red-500' 
+                                                    : 'border-gray-300 focus:border-blue-500'
+                                            }`}
                                         >
                                             <option value="">Select Diet Preference</option>
                                             <option value="Vegetarian">Vegetarian</option>
@@ -570,7 +661,11 @@ const Profile = () => {
                                 />
                             </FormItem>
 
-                            <FormItem label="Profession">
+                            <FormItem 
+                                label="Profession"
+                                invalid={!!form.formState.errors.profession}
+                                errorMessage={form.formState.errors.profession?.message}
+                            >
                                 <Controller
                                     name="profession"
                                     control={form.control}
@@ -578,6 +673,7 @@ const Profile = () => {
                                         <Input
                                             {...field}
                                             placeholder="Enter your profession"
+                                            invalid={!!form.formState.errors.profession}
                                         />
                                     )}
                                 />
@@ -588,6 +684,7 @@ const Profile = () => {
                             <Button
                                 variant="plain"
                                 onClick={() => toggleDrawer(false)}
+                                disabled={submitting}
                             >
                                 Cancel
                             </Button>
@@ -595,6 +692,7 @@ const Profile = () => {
                                 variant="solid"
                                 onClick={form.handleSubmit(handleSubmit)}
                                 loading={submitting}
+                                disabled={submitting}
                             >
                                 Save Changes
                             </Button>
@@ -606,4 +704,4 @@ const Profile = () => {
     )
 }
 
-export default Profile 
+export default Profile
