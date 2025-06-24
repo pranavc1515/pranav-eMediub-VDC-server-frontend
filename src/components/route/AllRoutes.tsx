@@ -10,10 +10,7 @@ import {
 import { useAuth } from '@/auth'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import type { LayoutType } from '@/@types/theme'
-import VideoConsultation from '@/views/doctor/VideoConsultation'
-import UserVideoConsultation from '@/views/user/VideoConsultation'
 
-import PatientRecords from '@/views/doctor/PatientRecords'
 import Prescriptions from '@/views/doctor/Prescriptions'
 import UploadPrescription from '@/views/doctor/UploadPrescription'
 import UserPrescriptions from '@/views/user/Prescriptions'
@@ -29,17 +26,6 @@ const AllRoutes = (props: AllRoutesProps) => {
     const { user } = useAuth()
 
     const doctorRoutes = [
-        {
-            key: 'videoConsultation',
-            path: '/doctor/video-consultation',
-            component: VideoConsultation,
-            authority: ['doctor'],
-            meta: {
-                label: 'Video Consultation',
-                pageTitle: 'Video Consultation',
-                desc: 'Conduct video consultations with patients',
-            },
-        },
         {
             key: 'uploadPrescription',
             path: '/doctor/upload-prescription',
@@ -65,18 +51,6 @@ const AllRoutes = (props: AllRoutesProps) => {
     ]
 
     const patientRoutes = [
-        {
-            key: 'userVideoConsultation',
-            path: '/user/video-consultation/:doctorId',
-            component: UserVideoConsultation,
-            authority: ['user'],
-            meta: {
-                pageContainerType: 'gutterless',
-                label: 'Video Consultation',
-                pageTitle: 'Video Consultation',
-                desc: 'Join video consultation with doctor',
-            },
-        },
         {
             key: 'userPrescriptions',
             path: '/user/prescriptions',

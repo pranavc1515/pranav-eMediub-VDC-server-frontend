@@ -15,7 +15,7 @@ export const publicRoutes: Routes = [
 ]
 
 export const protectedRoutes: Routes = [
-        {
+    {
         key: 'home',
         path: '/home',
         component: lazy(() => import('@/views/user/Dashboard')),
@@ -42,30 +42,14 @@ export const protectedRoutes: Routes = [
             layout: 'blank',
         },
     },
-    {
-        key: 'videoConsultation',
-        path: '/doctor/video-consultation',
-        component: lazy(() => import('@/views/doctor/VideoConsultation')),
-        authority: ['doctor'],
-    },
+
     {
         key: 'doctorVideoCall',
         path: '/doctor/video-consultation/:id',
-        component: lazy(() => import('@/views/doctor/VideoConsultation')),
+        component: lazy(() => import('@/views/Interface/VideoCallInterface')),
         authority: ['doctor'],
     },
-    {
-        key: 'userVideoConsultation',
-        path: '/user/video-consultation',
-        component: lazy(() => import('@/views/user/VideoConsultation')),
-        authority: ['user'],
-    },
-    {
-        key: 'userVideoCall',
-    path: '/user/video-consultation/:id',
-        component: lazy(() => import('@/views/user/VideoCallView')),
-        authority: ['user'],
-    },
+
     {
         key: 'medicalReport',
         path: '/medical-report',
