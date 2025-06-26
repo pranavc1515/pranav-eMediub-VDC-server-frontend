@@ -1,24 +1,51 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { Card, Button, Badge, Avatar, Switcher } from '@/components/ui'
 import Container from '@/components/shared/Container'
 import { useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useDoctors from '@/hooks/useDoctors'
+import useConsultation from '@/hooks/useConsultation'
 import PaymentService from '@/services/PaymentService'
 import ConsultationService from '@/services/ConsultationService'
 import ReactMuiTableListView, {
     Column,
 } from '@/components/shared/ReactMuiTableListView'
+import { HiVideoCamera, HiDownload } from 'react-icons/hi'
+import type { ConsultationRecord } from '@/services/ConsultationService'
 
 interface ExtendedDoctor extends Record<string, unknown> {
     id: number
     fullName: string
-    profilePhoto?: string
-    isOnline: string
+    profilePhoto?: string | null
+    isOnline?: string
+    email?: string | null
+    phoneNumber?: string
+    gender?: string | null
+    dob?: string | null
+    status?: string
+    emailVerified?: boolean
+    certificates?: Array<{ url: string; name: string; uploadedAt: string }>
     DoctorProfessional?: {
-        specialization?: string
-        yearsOfExperience?: number
-        consultationFees?: string
+        specialization?: string | null
+        yearsOfExperience?: number | null
+        consultationFees?: number | string | null
+        qualification?: string | null
+        registrationNumber?: string | null
+    }
+}
+
+type ConsultationWithDoctor = ConsultationRecord & {
+    [key: string]: unknown
+    doctor: {
+        id: string
+        fullName: string
+        email: string
+        profilePhoto: string
+        isOnline: string
+        DoctorProfessional: {
+            specialization: string
+            yearsOfExperience: number
+        }
     }
 }
 
@@ -40,23 +67,20 @@ const problemCategories = [
     { value: 'other', label: 'Other Health Concerns' },
 ]
 
-const statsData = [
-    {
-        title: 'Available Doctors',
-        value: 0,
-        icon: 'user-md',
-    },
-]
-
-const UserHomePage = () => {
+const UserVDC = () => {
     const [selectedCategory, setSelectedCategory] = useState('all')
     const [searchTerm, setSearchTerm] = useState('')
     const [showOnlyAvailable, setShowOnlyAvailable] = useState(true)
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(15)
+    const [consultationCurrentPage, setConsultationCurrentPage] = useState(1)
+    const [consultationPageSize, setConsultationPageSize] = useState(15)
+    const [consultationSearchTerm, setConsultationSearchTerm] = useState('')
+    const [checkingStatus, setCheckingStatus] = useState(false)
 
     const navigate = useNavigate()
     const user = useSessionUser((state) => state.user)
+    const patientId = user?.userId ? Number(user.userId) : 0
 
     // Memoize specialization value
     const specialization = useMemo(
@@ -71,6 +95,34 @@ const UserHomePage = () => {
         initialPage: currentPage,
         pageSize,
     })
+
+    const { consultationHistory, pagination, isLoading, getPatientHistory } =
+        useConsultation({
+            doctorId: 0, // Not needed for patient view
+        })
+
+    useEffect(() => {
+        if (patientId) {
+            getPatientHistory(
+                patientId,
+                consultationCurrentPage,
+                consultationPageSize,
+            )
+        }
+    }, [
+        getPatientHistory,
+        consultationCurrentPage,
+        consultationPageSize,
+        patientId,
+    ])
+
+    // Separate ongoing and completed consultations
+    const ongoingConsultations = consultationHistory.filter(
+        (consultation) => consultation.status === 'ongoing',
+    )
+    const completedConsultations = consultationHistory.filter(
+        (consultation) => consultation.status === 'completed',
+    )
 
     // Memoize handlers
     const handleCategoryChange = useCallback((category: string) => {
@@ -102,6 +154,23 @@ const UserHomePage = () => {
     const handlePageSizeChange = useCallback((newPageSize: number) => {
         setPageSize(newPageSize)
         setCurrentPage(1)
+    }, [])
+
+    const handleConsultationPageChange = useCallback((page: number) => {
+        setConsultationCurrentPage(page)
+    }, [])
+
+    const handleConsultationPageSizeChange = useCallback(
+        (newPageSize: number) => {
+            setConsultationPageSize(newPageSize)
+            setConsultationCurrentPage(1)
+        },
+        [],
+    )
+
+    const handleConsultationSearchChange = useCallback((value: string) => {
+        setConsultationSearchTerm(value)
+        setConsultationCurrentPage(1)
     }, [])
 
     const checkConsultationStatusAndRedirect = async (doctorId: number) => {
@@ -154,6 +223,76 @@ const UserHomePage = () => {
         }
     }
 
+    const handleJoinCall = async (doctorId: number) => {
+        setCheckingStatus(true)
+        try {
+            // Check consultation status before joining
+            const statusResponse =
+                await ConsultationService.checkConsultationStatus(
+                    doctorId,
+                    patientId,
+                )
+
+            if (statusResponse.success) {
+                switch (statusResponse.action) {
+                    case 'rejoin':
+                        // Existing ongoing consultation - rejoin directly
+                        navigate(
+                            `/user/video-consultation/${doctorId}?rejoin=true&consultationId=${statusResponse.consultationId}`,
+                        )
+                        break
+
+                    case 'ended':
+                        // Consultation has ended
+                        alert('This consultation has already ended')
+                        // Refresh the consultation history
+                        getPatientHistory(
+                            patientId,
+                            consultationCurrentPage,
+                            consultationPageSize,
+                        )
+                        break
+
+                    case 'wait':
+                        // Patient is in queue - continue to waiting room
+                        navigate(`/user/video-consultation/${doctorId}`)
+                        break
+
+                    default:
+                        // Normal flow - join or queue
+                        navigate(`/user/video-consultation/${doctorId}`)
+                }
+            } else {
+                // Fallback to normal flow
+                navigate(`/user/video-consultation/${doctorId}`)
+            }
+        } catch (error) {
+            console.error('Error checking consultation status:', error)
+            // Fallback to normal flow
+            navigate(`/user/video-consultation/${doctorId}`)
+        } finally {
+            setCheckingStatus(false)
+        }
+    }
+
+    const handleDownloadPrescription = (consultationId: string) => {
+        const consultation = consultationHistory.find(
+            (c) => c.id === consultationId,
+        )
+        if (consultation?.prescription) {
+            // Create a temporary link element
+            const link = document.createElement('a')
+            link.href = consultation.prescription
+            // Extract filename from URL or use a default name
+            const fileName =
+                consultation.prescription.split('/').pop() || 'prescription.png'
+            link.setAttribute('download', fileName)
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+        }
+    }
+
     const handleConsultNow = (doctor: ExtendedDoctor) => {
         const handleCreateOrder = async () => {
             try {
@@ -163,7 +302,7 @@ const UserHomePage = () => {
                 })
 
                 if (response.success && response.order) {
-                    initializeRazorpay(response.order, doctor.id)
+                    initializeRazorpay(response.order, String(doctor.id))
                 } else {
                     console.error('Failed to create payment order')
                 }
@@ -201,7 +340,7 @@ const UserHomePage = () => {
                             if (verifyResponse.success) {
                                 // Check consultation status before redirecting
                                 await checkConsultationStatusAndRedirect(
-                                    doctorId,
+                                    Number(doctorId),
                                 )
                             } else {
                                 console.error('Payment verification failed')
@@ -230,8 +369,22 @@ const UserHomePage = () => {
         handleCreateOrder()
     }
 
-    // Memoize table columns
-    const columns = useMemo<Array<Column<ExtendedDoctor>>>(
+    // Stats data with ongoing consultations count
+    const statsData = [
+        {
+            title: 'Available Doctors',
+            value: count,
+            icon: 'user-md',
+        },
+        {
+            title: 'Ongoing Consultations',
+            value: ongoingConsultations.length,
+            icon: 'video',
+        },
+    ]
+
+    // Memoize table columns for doctors
+    const doctorColumns = useMemo<Array<Column<ExtendedDoctor>>>(
         () => [
             {
                 Header: 'Doctor',
@@ -322,6 +475,117 @@ const UserHomePage = () => {
         [handleConsultNow],
     )
 
+    // Memoize table columns for consultation history
+    const consultationColumns = useMemo<Column<ConsultationWithDoctor>[]>(
+        () => [
+            {
+                Header: 'Consultation ID',
+                accessor: (row) => `${row.id}`,
+            },
+            {
+                Header: 'Doctor',
+                accessor: (row) => row.doctor?.fullName || '',
+                Cell: ({ row: { original } }) => (
+                    <div>
+                        <div className="font-bold">
+                            {original.doctor?.fullName || 'Unknown Doctor'}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                            {original.doctor?.DoctorProfessional
+                                ?.specialization || 'No specialization'}
+                        </div>
+                    </div>
+                ),
+            },
+            {
+                Header: 'Date & Time',
+                accessor: (row) => row.scheduledDate,
+                Cell: ({ row: { original } }) => (
+                    <div>
+                        <div>{original.scheduledDate}</div>
+                        <div className="text-sm text-gray-500">
+                            {original.startTime}
+                        </div>
+                    </div>
+                ),
+            },
+            {
+                Header: 'Status',
+                accessor: 'status',
+                Cell: ({ value }) => (
+                    <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            value === 'completed'
+                                ? 'bg-green-100 text-green-800'
+                                : value === 'ongoing'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : value === 'cancelled'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-gray-100 text-gray-800'
+                        }`}
+                    >
+                        {String(value).charAt(0).toUpperCase() +
+                            String(value).slice(1)}
+                    </span>
+                ),
+            },
+            {
+                Header: 'Actions',
+                accessor: 'id',
+                Cell: ({ row: { original } }) => (
+                    <div className="flex gap-2 justify-center">
+                        {original.status === 'ongoing' && (
+                            <Button
+                                size="sm"
+                                variant="solid"
+                                icon={<HiVideoCamera />}
+                                onClick={() =>
+                                    handleJoinCall(Number(original.doctor.id))
+                                }
+                                loading={checkingStatus}
+                                disabled={checkingStatus}
+                            >
+                                {checkingStatus ? 'Checking...' : 'Join'}
+                            </Button>
+                        )}
+                        {original.status === 'completed' &&
+                        original.prescription ? (
+                            <div className="flex gap-2">
+                                <Button
+                                    size="sm"
+                                    variant="solid"
+                                    icon={<HiDownload />}
+                                    onClick={() =>
+                                        handleDownloadPrescription(original.id)
+                                    }
+                                >
+                                    Download
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="solid"
+                                    onClick={() =>
+                                        window.open(
+                                            original.prescription as string,
+                                            '_blank',
+                                        )
+                                    }
+                                >
+                                    View
+                                </Button>
+                            </div>
+                        ) : original.status === 'completed' ? (
+                            <span className="text-gray-500">
+                                No prescription added
+                            </span>
+                        ) : null}
+                    </div>
+                ),
+            },
+        ],
+        [checkingStatus],
+    )
+
     const renderDoctorCard = useCallback(
         (doctor: ExtendedDoctor) => (
             <Card className="hover:shadow-md transition-shadow rounded-xl overflow-hidden">
@@ -387,8 +651,65 @@ const UserHomePage = () => {
         [handleConsultNow],
     )
 
-    // Update stats count
-    statsData[0].value = count
+    const renderOngoingConsultationCard = useCallback(
+        (consultation: ConsultationWithDoctor) => (
+            <Card className="hover:shadow-md transition-shadow rounded-xl overflow-hidden">
+                <div className="flex flex-col p-4 gap-4">
+                    <div className="flex items-center gap-4">
+                        <Avatar
+                            size={60}
+                            src={
+                                consultation.doctor?.profilePhoto ||
+                                '/img/avatars/default-avatar.jpg'
+                            }
+                        />
+                        <div>
+                            <h5 className="font-semibold">
+                                {consultation.doctor?.fullName ||
+                                    'Unknown Doctor'}
+                            </h5>
+                            <p className="text-gray-500">
+                                {consultation.doctor?.DoctorProfessional
+                                    ?.specialization || 'No specialization'}
+                            </p>
+                            <div className="flex items-center gap-1">
+                                <span className="text-sm text-gray-600">
+                                    {consultation.scheduledDate} at{' '}
+                                    {consultation.startTime}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <Badge
+                                style={{
+                                    borderRadius: '50px',
+                                    padding: '4px 8px',
+                                }}
+                                className="bg-blue-100 text-blue-800"
+                            >
+                                Ongoing
+                            </Badge>
+                        </div>
+                        <Button
+                            variant="solid"
+                            size="sm"
+                            onClick={() =>
+                                handleJoinCall(Number(consultation.doctor.id))
+                            }
+                            loading={checkingStatus}
+                            disabled={checkingStatus}
+                        >
+                            <span className="icon-video mr-1"></span>
+                            {checkingStatus ? 'Checking...' : 'Join Call'}
+                        </Button>
+                    </div>
+                </div>
+            </Card>
+        ),
+        [handleJoinCall, checkingStatus],
+    )
 
     return (
         <Container className="h-full">
@@ -424,6 +745,24 @@ const UserHomePage = () => {
                     </Card>
                 ))}
             </div>
+
+            {/* Ongoing Consultations Section */}
+            {ongoingConsultations.length > 0 && (
+                <div className="mb-6">
+                    <h4 className="mb-4 text-lg font-semibold">
+                        Ongoing Consultations
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {ongoingConsultations.map((consultation, index) => (
+                            <div key={index}>
+                                {renderOngoingConsultationCard(
+                                    consultation as ConsultationWithDoctor,
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Search and Problem Selection */}
             <Card className="mb-6">
@@ -477,8 +816,11 @@ const UserHomePage = () => {
             {/* Doctors List View */}
             <ReactMuiTableListView
                 tableTitle="eMedihub Doctor's Team"
-                columns={columns}
-                data={doctors}
+                columns={doctorColumns}
+                data={doctors.map((doctor) => ({
+                    ...doctor,
+                    isOnline: doctor.isOnline || 'offline',
+                }))}
                 loading={loading}
                 enablePagination={true}
                 currentPage={currentPage}
@@ -494,8 +836,34 @@ const UserHomePage = () => {
                 enableCardView={true}
                 enableSearch={true}
             />
+
+            {/* Consultation History */}
+            {completedConsultations.length > 0 && (
+                <div className="mt-8">
+                    <ReactMuiTableListView
+                        tableTitle="Consultation History"
+                        columns={consultationColumns}
+                        data={
+                            completedConsultations as ConsultationWithDoctor[]
+                        }
+                        enablePagination={true}
+                        enableSearch={false}
+                        enableCardView={false}
+                        totalItems={pagination.totalCount}
+                        currentPage={consultationCurrentPage}
+                        pageSize={consultationPageSize}
+                        onPageChange={handleConsultationPageChange}
+                        onPageSizeChange={handleConsultationPageSizeChange}
+                        loading={isLoading}
+                        searchTerm={consultationSearchTerm}
+                        onSearchChange={handleConsultationSearchChange}
+                        viewTypeProp="table"
+                        rowsPerPageOptions={[10, 15, 25, 50]}
+                    />
+                </div>
+            )}
         </Container>
     )
 }
 
-export default UserHomePage
+export default UserVDC

@@ -3,15 +3,16 @@ import { Card, Input, Button, Avatar } from '@/components/ui'
 import Container from '@/components/shared/Container'
 import { useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
-import { 
-    HiOutlineVideoCamera, 
-    HiOutlineCalendar, 
+import {
+    HiOutlineVideoCamera,
+    HiOutlineCalendar,
     HiOutlineHeart,
     HiOutlineCube,
     HiOutlineBeaker,
     HiOutlineShieldCheck,
     HiOutlineDocumentText,
-    HiOutlineCog
+    HiOutlineCog,
+    HiOutlineUserGroup,
 } from 'react-icons/hi'
 
 interface ServiceCard {
@@ -35,9 +36,9 @@ const UserDashboard = () => {
             title: 'Virtual Doctor Consultation',
             description: 'Connect with doctors online',
             icon: HiOutlineVideoCamera,
-            route: '/user/video-consultation',
+            route: '/vdc',
             color: 'text-blue-600',
-            bgColor: 'bg-blue-50'
+            bgColor: 'bg-blue-50',
         },
         {
             id: 'appointment',
@@ -46,7 +47,7 @@ const UserDashboard = () => {
             icon: HiOutlineCalendar,
             route: '/user/appointments',
             color: 'text-purple-600',
-            bgColor: 'bg-purple-50'
+            bgColor: 'bg-purple-50',
         },
         {
             id: 'wellness',
@@ -55,7 +56,7 @@ const UserDashboard = () => {
             icon: HiOutlineHeart,
             route: '/user/wellness',
             color: 'text-green-600',
-            bgColor: 'bg-green-50'
+            bgColor: 'bg-green-50',
         },
         {
             id: 'medicines',
@@ -64,7 +65,7 @@ const UserDashboard = () => {
             icon: HiOutlineCube,
             route: '/user/medicines',
             color: 'text-orange-600',
-            bgColor: 'bg-orange-50'
+            bgColor: 'bg-orange-50',
         },
         {
             id: 'lab-test',
@@ -73,7 +74,7 @@ const UserDashboard = () => {
             icon: HiOutlineBeaker,
             route: '/user/lab-tests',
             color: 'text-pink-600',
-            bgColor: 'bg-pink-50'
+            bgColor: 'bg-pink-50',
         },
         {
             id: 'insurance',
@@ -82,8 +83,8 @@ const UserDashboard = () => {
             icon: HiOutlineShieldCheck,
             route: '/user/insurance',
             color: 'text-indigo-600',
-            bgColor: 'bg-indigo-50'
-        }
+            bgColor: 'bg-indigo-50',
+        },
     ]
 
     const quickActions = [
@@ -92,22 +93,22 @@ const UserDashboard = () => {
             title: 'My Prescriptions',
             icon: HiOutlineDocumentText,
             route: '/user/prescriptions',
-            color: 'text-teal-600'
+            color: 'text-teal-600',
         },
         {
-            id: 'medical-reports',
-            title: 'Medical Reports',
-            icon: HiOutlineDocumentText,
-            route: '/user/medical-reports',
-            color: 'text-blue-600'
+            id: 'family',
+            title: 'Family Tree',
+            icon: HiOutlineUserGroup,
+            route: '/user/family',
+            color: 'text-blue-600',
         },
         {
             id: 'profile',
             title: 'Profile Settings',
             icon: HiOutlineCog,
             route: '/user/profile',
-            color: 'text-gray-600'
-        }
+            color: 'text-gray-600',
+        },
     ]
 
     const handleServiceClick = (route: string) => {
@@ -133,13 +134,15 @@ const UserDashboard = () => {
             {/* Header with Greeting */}
             <div className="mb-6">
                 <div className="flex items-center gap-3 mb-4">
-                    <Avatar 
-                        size={50} 
+                    <Avatar
+                        size={50}
                         src={user.avatar || '/img/avatars/default-avatar.jpg'}
                         className="ring-2 ring-blue-100"
                     />
                     <div>
-                        <p className="text-gray-600 text-sm">{getGreeting()}!</p>
+                        <p className="text-gray-600 text-sm">
+                            {getGreeting()}!
+                        </p>
                         <h2 className="text-xl font-semibold text-gray-900">
                             {user.userName || 'User'}
                         </h2>
@@ -167,7 +170,9 @@ const UserDashboard = () => {
 
             {/* Quick Actions */}
             <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Quick Access</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                    Quick Access
+                </h3>
                 <div className="grid grid-cols-3 gap-3">
                     {quickActions.map((action) => (
                         <Card
@@ -177,8 +182,12 @@ const UserDashboard = () => {
                             onClick={() => handleServiceClick(action.route)}
                         >
                             <div className="text-center">
-                                <action.icon className={`h-6 w-6 mx-auto mb-2 ${action.color}`} />
-                                <p className="text-xs font-medium text-gray-700">{action.title}</p>
+                                <action.icon
+                                    className={`h-6 w-6 mx-auto mb-2 ${action.color}`}
+                                />
+                                <p className="text-xs font-medium text-gray-700">
+                                    {action.title}
+                                </p>
                             </div>
                         </Card>
                     ))}
@@ -187,7 +196,9 @@ const UserDashboard = () => {
 
             {/* Main Services */}
             <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Our Services</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Our Services
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
                     {services.map((service) => (
                         <Card
@@ -197,8 +208,12 @@ const UserDashboard = () => {
                             onClick={() => handleServiceClick(service.route)}
                         >
                             <div className="text-center">
-                                <div className={`w-16 h-16 ${service.bgColor} rounded-full flex items-center justify-center mx-auto mb-3`}>
-                                    <service.icon className={`h-8 w-8 ${service.color}`} />
+                                <div
+                                    className={`w-16 h-16 ${service.bgColor} rounded-full flex items-center justify-center mx-auto mb-3`}
+                                >
+                                    <service.icon
+                                        className={`h-8 w-8 ${service.color}`}
+                                    />
                                 </div>
                                 <h4 className="font-semibold text-gray-900 text-sm mb-1">
                                     {service.title}
@@ -215,10 +230,13 @@ const UserDashboard = () => {
             {/* Health Tips or Banner */}
             <Card className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50">
                 <div className="p-4">
-                    <h4 className="font-semibold text-gray-900 mb-2">💡 Health Tip of the Day</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">
+                        💡 Health Tip of the Day
+                    </h4>
                     <p className="text-gray-600 text-sm">
-                        Stay hydrated! Drinking enough water helps maintain your body temperature, 
-                        lubricates joints, and helps transport nutrients to cells.
+                        Stay hydrated! Drinking enough water helps maintain your
+                        body temperature, lubricates joints, and helps transport
+                        nutrients to cells.
                     </p>
                 </div>
             </Card>
@@ -226,4 +244,4 @@ const UserDashboard = () => {
     )
 }
 
-export default UserDashboard 
+export default UserDashboard

@@ -382,7 +382,7 @@ const DoctorVDC = () => {
                 ),
             },
             {
-                Header: 'Patient',
+                Header: 'User',
                 accessor: (row) => row.patient?.name || '',
                 Cell: ({ row: { original } }) => {
                     const patient = original.patient
@@ -719,7 +719,7 @@ const DoctorVDC = () => {
         <Container className="h-full">
             <div className="mb-8 flex justify-between items-center">
                 <div>
-                    <h3 className="mb-2">Doctor Dashboard</h3>
+                    <h3 className="mb-2">Video Doctor Consultation</h3>
                     <p className="text-gray-500">
                         Welcome back, {user.userName}
                     </p>
@@ -771,7 +771,7 @@ const DoctorVDC = () => {
                         </div>
                     </div>
                 </Card>
-                <Card className="hover:shadow-lg transition-shadow">
+                {/* <Card className="hover:shadow-lg transition-shadow">
                     <div className="flex items-center gap-4">
                         <div className="rounded-full p-3 bg-primary-100 text-primary-600">
                             <span className="text-2xl icon-video"></span>
@@ -789,7 +789,7 @@ const DoctorVDC = () => {
                             </div>
                         </div>
                     </div>
-                </Card>
+                </Card> */}
                 <Card className="hover:shadow-lg transition-shadow">
                     <div className="flex items-center gap-4">
                         <div className="rounded-full p-3 bg-primary-100 text-primary-600">
@@ -805,7 +805,7 @@ const DoctorVDC = () => {
                         </div>
                     </div>
                 </Card>
-                <Card className="hover:shadow-lg transition-shadow">
+                {/* <Card className="hover:shadow-lg transition-shadow">
                     <div className="flex items-center gap-4">
                         <div className="rounded-full p-3 bg-primary-100 text-primary-600">
                             <span className="text-2xl icon-check-circle"></span>
@@ -819,11 +819,11 @@ const DoctorVDC = () => {
                             </div>
                         </div>
                     </div>
-                </Card>
+                </Card> */}
             </div>
 
             {/* Ongoing Consultations Section */}
-            {ongoingConsultations.length > 0 && (
+            {/* {ongoingConsultations.length > 0 && (
                 <div className="mb-6">
                     <h4 className="mb-4 text-lg font-semibold">
                         Ongoing Consultations
@@ -836,7 +836,7 @@ const DoctorVDC = () => {
                         ))}
                     </div>
                 </div>
-            )}
+            )} */}
 
             {/* Patient Queue */}
             <Card className="mb-6">

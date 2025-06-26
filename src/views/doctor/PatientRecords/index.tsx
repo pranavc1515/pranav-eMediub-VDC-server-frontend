@@ -104,7 +104,7 @@ const PatientRecords = () => {
                         variant="solid"
                         onClick={() => {
                             // Navigate to video consultation page with the patient details
-                            window.location.href = `/doctor/video-consultation?patientId=${record.id}`
+                            window.location.href = `/vdc`
                         }}
                     >
                         Start Consultation
