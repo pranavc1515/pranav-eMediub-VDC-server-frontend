@@ -81,7 +81,11 @@ function AuthProvider({ children }: AuthProviderProps) {
         if (redirectUrl && redirectUrl.startsWith('/')) {
             navigatorRef.current?.navigate(redirectUrl)
         } else {
-            navigatorRef.current?.navigate(appConfig.authenticatedEntryPath)
+            // Check if user is a doctor and redirect to their profile instead of home
+            const defaultPath = user?.authority?.includes('doctor') 
+                ? '/doctor/profile' 
+                : appConfig.authenticatedEntryPath
+            navigatorRef.current?.navigate(defaultPath)
         }
     }
 

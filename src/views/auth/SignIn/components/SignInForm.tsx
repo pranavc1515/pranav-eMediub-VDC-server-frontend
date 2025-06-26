@@ -212,7 +212,9 @@ const SignInForm = ({
         if (result.status === 'success') {
             const isComplete = profile.isProfileComplete
             const redirectPath = isComplete
-                ? appConfig.authenticatedEntryPath
+                ? userType === 'doctor'
+                    ? '/doctor/profile'
+                    : appConfig.authenticatedEntryPath
                 : userType === 'doctor'
                   ? '/profile-setup'
                   : '/user-profile-setup'

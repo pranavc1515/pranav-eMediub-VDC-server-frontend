@@ -5,9 +5,16 @@ import { useAuth } from '@/auth'
 const { authenticatedEntryPath } = appConfig
 
 const PublicRoute = () => {
-    const { authenticated } = useAuth()
+    const { authenticated, user } = useAuth()
 
-    return authenticated ? <Navigate to={authenticatedEntryPath} /> : <Outlet />
+    const getRedirectPath = () => {
+        if (user?.authority?.includes('doctor')) {
+            return '/doctor/profile'
+        }
+        return authenticatedEntryPath
+    }
+
+    return authenticated ? <Navigate to={getRedirectPath()} /> : <Outlet />
 }
 
 export default PublicRoute
