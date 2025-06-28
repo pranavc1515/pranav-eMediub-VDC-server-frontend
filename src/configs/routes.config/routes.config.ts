@@ -49,7 +49,12 @@ export const protectedRoutes: Routes = [
         component: lazy(() => import('@/views/Interface/VideoCallInterface')),
         authority: ['doctor'],
     },
-
+    {
+        key: 'userVideoCall',
+        path: '/user/video-consultation/:id',
+        component: lazy(() => import('@/views/user/VideoCallView')),
+        authority: ['user'],
+    },
     {
         key: 'medicalReport',
         path: '/medical-report',
