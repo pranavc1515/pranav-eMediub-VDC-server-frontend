@@ -18,11 +18,7 @@ const dropdownItemList: DropdownList[] = [
         path: '/user/profile',
         icon: <PiUserCircleDuotone />,
     },
-    {
-        label: 'Account Settings',
-        path: '/user/settings',
-        icon: <PiGearDuotone />,
-    }
+    
 ]
 
 const _UserDropdown = () => {
