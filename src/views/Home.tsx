@@ -1,5 +1,6 @@
 import { memo, Suspense, lazy } from 'react'
 import { useSessionUser } from '@/store/authStore'
+import { useStoredUser } from '@/hooks/useStoredUser'
 import type { Meta } from '@/@types/routes'
 
 const DoctorVDC = lazy(() => import('./components/doctorVDC'))
@@ -7,7 +8,18 @@ const UserVDC = lazy(() => import('./components/userVDC'))
 
 const Home = <T extends Meta>(props: T): JSX.Element => {
     const user = useSessionUser((state) => state.user)
-    const isDoctor = user.authority?.includes('doctor') || false
+    const { isDoctor, userData, userType, loginTimestamp } = useStoredUser()
+    
+    // Log stored user data for demonstration (remove in production)
+    console.log('Stored user data:', {
+        userType,
+        userData,
+        loginTimestamp,
+        isDoctor,
+    })
+    
+    // Use stored data as fallback if zustand store is empty
+    const isDoctorUser = isDoctor || user.authority?.includes('doctor') || false
 
     return (
         <Suspense
@@ -19,7 +31,7 @@ const Home = <T extends Meta>(props: T): JSX.Element => {
                 </div>
             }
         >
-            {isDoctor ? <DoctorVDC /> : <UserVDC />}
+            {isDoctorUser ? <DoctorVDC /> : <UserVDC />}
         </Suspense>
     )
 }

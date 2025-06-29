@@ -4,6 +4,7 @@ import appConfig from '@/configs/app.config'
 import { useSessionUser, useToken } from '@/store/authStore'
 import { apiSignOut, apiSignUp } from '@/services/AuthService'
 import { REDIRECT_URL_KEY } from '@/constants/app.constant'
+import { clearAllUserData } from '@/utils/userStorage'
 import { useNavigate } from 'react-router-dom'
 import type {
     SignInCredential,
@@ -102,6 +103,8 @@ function AuthProvider({ children }: AuthProviderProps) {
         setToken('')
         setUser({})
         setSessionSignedIn(false)
+        // Clear all user data from localStorage
+        clearAllUserData()
     }
 
     const signIn = async (values: SignInCredential): AuthResult => {

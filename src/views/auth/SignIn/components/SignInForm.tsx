@@ -14,6 +14,7 @@ import DoctorService from '@/services/DoctorService'
 import { useToken } from '@/store/authStore'
 import appConfig from '@/configs/app.config'
 import TermsAndConditionsModal from '@/components/shared/TermsAndConditionsModal'
+import { saveUserToStorage, type UserStorageData } from '@/utils/userStorage'
 
 import type { ReactNode } from 'react'
 import type { CommonProps } from '@/@types/common'
@@ -198,8 +199,12 @@ const SignInForm = ({
         setToken(token)
         localStorage.setItem('token', token)
 
-        const profile = createUserProfile(data, phoneNumber)
-        saveUserToStorage(profile, userType)
+        const profile = createUserProfile(data, phoneNumber, token)
+        const storageSaved = saveUserToStorage(profile)
+        
+        if (!storageSaved) {
+            console.warn('Failed to save user data to localStorage, but continuing with authentication')
+        }
 
         const result = await signIn({
             email: phoneNumber,
@@ -225,34 +230,43 @@ const SignInForm = ({
         }
     }
 
-    const createUserProfile = (data: any, phone: string) => {
+    const createUserProfile = (data: any, phone: string, token: string): UserStorageData => {
         if (userType === 'doctor') {
             const user = data.doctor
+            const professional = user.DoctorProfessional || {}
+            
             return {
                 userId: user.id,
-                userName: user.name,
+                userName: user.name || user.fullName || 'Doctor',
                 authority: ['doctor'],
                 avatar: user.profilePhoto,
                 email: user.email,
-                phoneNumber: user.phoneNumber,
+                phoneNumber: user.phoneNumber || phone,
                 isProfileComplete: isProfileComplete,
+                userType: 'doctor',
+                loginTimestamp: new Date().toISOString(),
+                token: token,
+                // Doctor-specific data
+                specialization: professional.specialization,
+                consultationFees: professional.consultationFees,
             }
         }
 
         const user = data.patient
         return {
             userId: user.id,
-            userName: user.name,
+            userName: user.name || user.fullName || 'User',
             authority: ['user'],
             avatar: user.profilePhoto,
             email: user.email,
-            phoneNumber: user.phoneNumber || user.phone,
+            phoneNumber: user.phoneNumber || user.phone || phone,
             isProfileComplete: user.isProfileComplete,
+            userType: 'user',
+            loginTimestamp: new Date().toISOString(),
+            token: token,
+            // User-specific data
+            patientId: user.id,
         }
-    }
-
-    const saveUserToStorage = (profile: any, userType: string) => {
-        localStorage.setItem(userType, JSON.stringify(profile))
     }
 
     return (
