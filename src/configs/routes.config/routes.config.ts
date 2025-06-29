@@ -98,12 +98,7 @@ export const protectedRoutes: Routes = [
         component: lazy(() => import('@/views/user/Settings')),
         authority: ['user'],
     },
-    {
-        key: 'userFamily',
-        path: '/user/family',
-        component: lazy(() => import('@/views/user/Family')),
-        authority: ['user'],
-    },
+
     /** Example purpose only, please remove */
     {
         key: 'singleMenuItem',
