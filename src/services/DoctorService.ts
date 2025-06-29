@@ -128,6 +128,7 @@ const DoctorService = {
             consultationFees: number
             availableDays: string[]
             certificates?: File[]
+            certificatesToRemove?: string[]
         },
     ) {
         const formData = new FormData()
@@ -151,6 +152,11 @@ const DoctorService = {
             data.certificates.forEach((file) => {
                 formData.append('certificates', file)
             })
+        }
+        
+        // Add certificates to remove if provided
+        if (data.certificatesToRemove && data.certificatesToRemove.length > 0) {
+            formData.append('certificatesToRemove', JSON.stringify(data.certificatesToRemove))
         }
 
         return ApiService.fetchDataWithAxios<{

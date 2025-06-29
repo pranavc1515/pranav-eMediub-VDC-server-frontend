@@ -51,6 +51,7 @@ const Profile = () => {
     >([])
 
     const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+    const [certificatesToRemove, setCertificatesToRemove] = useState<string[]>([])
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -112,7 +113,11 @@ const Profile = () => {
             <div className="flex justify-end mb-4 gap-4">
                 <Button
                     variant="solid"
-                    onClick={() => setProfessionalDrawerOpen(true)}
+                    onClick={() => {
+                    setProfessionalDrawerOpen(true)
+                    setCertificatesToRemove([])
+                    setSelectedFiles([])
+                }}
                 >
                     Edit Professional Details
                 </Button>
@@ -176,9 +181,13 @@ const Profile = () => {
                                     profile.DoctorProfessional.certificates.map((cert, index) => (
                                         <div key={index} className="bg-gray-50 rounded-lg p-3 border">
                                             <div className="flex items-center justify-between">
-                                                <div className="flex-1">
-                                                    <p className="text-sm font-medium text-gray-900 truncate">
-                                                        {cert.name}
+                                                <div className="flex-1 min-w-0 mr-3">
+                                                    <p 
+                                                        className="text-sm font-medium text-gray-900 truncate" 
+                                                        title={cert.name}
+                                                        style={{ maxWidth: '200px' }}
+                                                    >
+                                                        {cert.name.length > 25 ? `${cert.name.substring(0, 25)}...` : cert.name}
                                                     </p>
                                                     <p className="text-xs text-gray-500 mt-1">
                                                         Uploaded: {new Date(cert.uploadedAt).toLocaleDateString()}
@@ -188,7 +197,7 @@ const Profile = () => {
                                                     href={cert.url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="ml-3 inline-flex items-center px-3 py-1 rounded-md bg-blue-100 text-blue-700 text-sm hover:bg-blue-200 transition-colors"
+                                                    className="inline-flex items-center px-3 py-1 rounded-md bg-blue-100 text-blue-700 text-sm hover:bg-blue-200 transition-colors whitespace-nowrap"
                                                 >
                                                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -477,6 +486,7 @@ const Profile = () => {
                 onClose={() => {
                     setProfessionalDrawerOpen(false)
                     setSelectedFiles([])
+                    setCertificatesToRemove([])
                     setProfessionalFormError('')
                 }}
                 title="Edit Professional Details"
@@ -612,30 +622,157 @@ const Profile = () => {
                                 ))}
                             </div>
                         </FormItem>
-                        <FormItem label="Certificates (PDF, JPG, JPEG, PNG - Max 5MB each)">
-                            <input
-                                type="file"
-                                multiple
-                                accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                                onChange={(e) => {
-                                    const files = Array.from(e.target.files || [])
-                                    setSelectedFiles(files)
-                                }}
-                                className="w-full rounded-md border border-gray-300 p-2"
-                            />
-                            <p className="text-sm text-gray-500 mt-1">
-                                Upload medical certificates, qualifications, or registration documents. Maximum 10 files allowed.
-                            </p>
-                            {selectedFiles.length > 0 && (
-                                <div className="mt-2">
-                                    <p className="text-sm font-medium">Selected files:</p>
-                                    <ul className="text-sm text-gray-600">
-                                        {selectedFiles.map((file, index) => (
-                                            <li key={index}>{file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)</li>
+                        <FormItem label="Certificates Management">
+                            {/* Show existing certificates */}
+                            {profile?.DoctorProfessional?.certificates && profile.DoctorProfessional.certificates.length > 0 && (
+                                <div className="mb-4">
+                                    <p className="text-sm font-medium mb-2">Current Certificates:</p>
+                                    <div className="space-y-2">
+                                        {profile.DoctorProfessional.certificates
+                                            .filter(cert => !certificatesToRemove.includes(cert.key))
+                                            .map((cert, index) => (
+                                            <div key={cert.key} className="flex items-center justify-between bg-gray-50 rounded-lg p-3 border">
+                                                <div className="flex-1 min-w-0 mr-3">
+                                                    <p 
+                                                        className="text-sm font-medium text-gray-900 truncate" 
+                                                        title={cert.name}
+                                                    >
+                                                        {cert.name.length > 30 ? `${cert.name.substring(0, 30)}...` : cert.name}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        Uploaded: {new Date(cert.uploadedAt).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <a
+                                                        href={cert.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs hover:bg-blue-200 transition-colors"
+                                                    >
+                                                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                        </svg>
+                                                        View
+                                                    </a>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setCertificatesToRemove(prev => 
+                                                                prev.includes(cert.key) 
+                                                                    ? prev.filter(key => key !== cert.key)
+                                                                    : [...prev, cert.key]
+                                                            )
+                                                        }}
+                                                        className={`inline-flex items-center px-2 py-1 rounded-md text-xs transition-colors ${
+                                                            certificatesToRemove.includes(cert.key)
+                                                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                        }`}
+                                                    >
+                                                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                        {certificatesToRemove.includes(cert.key) ? 'Undo' : 'Remove'}
+                                                    </button>
+                                                </div>
+                                            </div>
                                         ))}
-                                    </ul>
+                                    </div>
+                                    
+                                    {/* Show removed certificates */}
+                                    {certificatesToRemove.length > 0 && (
+                                        <div className="mt-4">
+                                            <p className="text-sm font-medium mb-2 text-red-600">Certificates Marked for Removal:</p>
+                                            <div className="space-y-2">
+                                                {profile.DoctorProfessional.certificates
+                                                    .filter(cert => certificatesToRemove.includes(cert.key))
+                                                    .map((cert, index) => (
+                                                    <div key={cert.key} className="flex items-center justify-between bg-red-50 rounded-lg p-3 border border-red-200 opacity-75">
+                                                        <div className="flex-1 min-w-0 mr-3">
+                                                            <p 
+                                                                className="text-sm font-medium text-red-800 truncate line-through" 
+                                                                title={cert.name}
+                                                            >
+                                                                {cert.name.length > 30 ? `${cert.name.substring(0, 30)}...` : cert.name}
+                                                            </p>
+                                                            <p className="text-xs text-red-600 mt-1">
+                                                                Will be removed when you save changes
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setCertificatesToRemove(prev => 
+                                                                        prev.filter(key => key !== cert.key)
+                                                                    )
+                                                                }}
+                                                                className="inline-flex items-center px-2 py-1 rounded-md bg-green-100 text-green-700 text-xs hover:bg-green-200 transition-colors"
+                                                            >
+                                                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                                                </svg>
+                                                                Undo
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    {certificatesToRemove.length > 0 && (
+                                        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
+                                            <p className="text-sm text-yellow-800">
+                                                <strong>{certificatesToRemove.length} certificate(s)</strong> marked for removal. Changes will be saved when you submit the form.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
+                            
+                            {/* Upload new certificates */}
+                            <div>
+                                <p className="text-sm font-medium mb-2">Add New Certificates:</p>
+                                <input
+                                    type="file"
+                                    multiple
+                                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                    onChange={(e) => {
+                                        const files = Array.from(e.target.files || [])
+                                        setSelectedFiles(files)
+                                    }}
+                                    className="w-full rounded-md border border-gray-300 p-2"
+                                />
+                                <p className="text-sm text-gray-500 mt-1">
+                                    Upload medical certificates, qualifications, or registration documents. PDF, JPG, JPEG, PNG - Max 5MB each, Maximum 10 files.
+                                </p>
+                                {selectedFiles.length > 0 && (
+                                    <div className="mt-2">
+                                        <p className="text-sm font-medium">Selected new files:</p>
+                                        <ul className="text-sm text-gray-600">
+                                            {selectedFiles.map((file, index) => (
+                                                <li key={index} className="flex items-center justify-between">
+                                                    <span>{file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSelectedFiles(prev => prev.filter((_, i) => i !== index))
+                                                        }}
+                                                        className="ml-2 text-red-600 hover:text-red-800"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
                         </FormItem>
                         {professionalFormError && (
                             <div className="text-red-500 text-sm mb-4">
@@ -648,6 +785,7 @@ const Profile = () => {
                                 onClick={() => {
                                     setProfessionalDrawerOpen(false)
                                     setSelectedFiles([])
+                                    setCertificatesToRemove([])
                                     setProfessionalFormError('')
                                 }}
                             >
@@ -733,6 +871,7 @@ const Profile = () => {
                                         ),
                                         availableDays,
                                         certificates: selectedFiles.length > 0 ? selectedFiles : undefined,
+                                        certificatesToRemove: certificatesToRemove.length > 0 ? certificatesToRemove : undefined,
                                     }
 
                                     const submitFn = async () => {
@@ -761,6 +900,7 @@ const Profile = () => {
                                                 )
                                                 setProfessionalDrawerOpen(false)
                                                 setSelectedFiles([])
+                                                setCertificatesToRemove([])
                                             } else {
                                                 setProfessionalFormError(
                                                     'Failed to update professional details. Please try again.',
