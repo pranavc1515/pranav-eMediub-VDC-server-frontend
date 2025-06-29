@@ -13,7 +13,7 @@ import type { LayoutType } from '@/@types/theme'
 
 import Prescriptions from '@/views/doctor/Prescriptions'
 import UploadPrescription from '@/views/doctor/UploadPrescription'
-import UserPrescriptions from '@/views/user/Prescriptions'
+
 
 interface ViewsProps {
     pageContainerType?: 'default' | 'gutterless' | 'contained'
@@ -51,17 +51,6 @@ const AllRoutes = (props: AllRoutesProps) => {
     ]
 
     const patientRoutes = [
-        {
-            key: 'userPrescriptions',
-            path: '/user/prescriptions',
-            component: UserPrescriptions,
-            authority: ['user'],
-            meta: {
-                label: 'My Prescriptions',
-                pageTitle: 'My Prescriptions',
-                desc: 'View and manage your prescriptions',
-            },
-        },
     ]
 
     const combinedProtectedRoutes = [
