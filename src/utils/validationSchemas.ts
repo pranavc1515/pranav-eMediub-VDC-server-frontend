@@ -198,6 +198,25 @@ export const DoctorProfessionalDetailsSchema = z.object({
   
   availableDays: z.array(z.string())
     .min(1, 'At least one day must be selected'),
+  
+  certificates: z.array(z.instanceof(File))
+    .optional()
+    .refine((files) => {
+      if (!files || files.length === 0) return true
+      // Check file size (5MB max per file)
+      return files.every(file => file.size <= 5 * 1024 * 1024)
+    }, 'Each certificate file must be less than 5MB')
+    .refine((files) => {
+      if (!files || files.length === 0) return true
+      // Check file types (PDF, JPG, JPEG, PNG)
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
+      return files.every(file => allowedTypes.includes(file.type))
+    }, 'Certificate files must be PDF, JPG, JPEG, or PNG format')
+    .refine((files) => {
+      if (!files || files.length === 0) return true
+      // Maximum 10 certificates
+      return files.length <= 10
+    }, 'Maximum 10 certificate files allowed'),
 })
 
 // User schemas

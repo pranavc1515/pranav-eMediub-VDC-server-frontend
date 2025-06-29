@@ -478,6 +478,97 @@ const ProfileSetup = () => {
                                     />
                                 </FormItem>
                                 
+                                <FormItem
+                                    label="Communication Languages"
+                                    asterisk={true}
+                                    invalid={!!professionalForm.formState.errors.communicationLanguages}
+                                    errorMessage={professionalForm.formState.errors.communicationLanguages?.message}
+                                >
+                                    <Controller
+                                        name="communicationLanguages"
+                                        control={professionalForm.control}
+                                        render={({ field }) => (
+                                            <Select
+                                                {...field}
+                                                isMulti
+                                                placeholder="Select languages you can communicate in"
+                                                options={languageOptions}
+                                                value={languageOptions.filter(option => 
+                                                    field.value?.includes(option.value)
+                                                )}
+                                                onChange={(selectedOptions) => {
+                                                    const values = selectedOptions?.map(opt => opt.value) || []
+                                                    field.onChange(values)
+                                                }}
+                                            />
+                                        )}
+                                    />
+                                </FormItem>
+                                
+                                <FormItem
+                                    label="Available Days"
+                                    asterisk={true}
+                                    invalid={!!professionalForm.formState.errors.availableDays}
+                                    errorMessage={professionalForm.formState.errors.availableDays?.message}
+                                >
+                                    <Controller
+                                        name="availableDays"
+                                        control={professionalForm.control}
+                                        render={({ field }) => {
+                                            const daysOptions = [
+                                                { value: 'Monday', label: 'Monday' },
+                                                { value: 'Tuesday', label: 'Tuesday' },
+                                                { value: 'Wednesday', label: 'Wednesday' },
+                                                { value: 'Thursday', label: 'Thursday' },
+                                                { value: 'Friday', label: 'Friday' },
+                                                { value: 'Saturday', label: 'Saturday' },
+                                                { value: 'Sunday', label: 'Sunday' },
+                                            ]
+                                            return (
+                                                <Select
+                                                    {...field}
+                                                    isMulti
+                                                    placeholder="Select available days"
+                                                    options={daysOptions}
+                                                    value={daysOptions.filter(option => 
+                                                        field.value?.includes(option.value)
+                                                    )}
+                                                    onChange={(selectedOptions) => {
+                                                        const values = selectedOptions?.map(opt => opt.value) || []
+                                                        field.onChange(values)
+                                                    }}
+                                                />
+                                            )
+                                        }}
+                                    />
+                                </FormItem>
+                                
+                                <FormItem
+                                    label="Certificates (PDF, JPG, JPEG, PNG - Max 5MB each)"
+                                    invalid={!!professionalForm.formState.errors.certificates}
+                                    errorMessage={professionalForm.formState.errors.certificates?.message}
+                                >
+                                    <Controller
+                                        name="certificates"
+                                        control={professionalForm.control}
+                                        render={({ field }) => (
+                                            <input
+                                                type="file"
+                                                multiple
+                                                accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                                onChange={(e) => {
+                                                    const files = Array.from(e.target.files || [])
+                                                    field.onChange(files)
+                                                }}
+                                                className="w-full rounded-md border border-gray-300 p-2"
+                                            />
+                                        )}
+                                    />
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Upload medical certificates, qualifications, or registration documents. Maximum 10 files allowed.
+                                    </p>
+                                </FormItem>
+                                
                                 <div className="flex gap-4 mt-6">
                                     <Button
                                         type="button"

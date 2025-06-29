@@ -453,7 +453,11 @@ const Profile = () => {
             {/* Professional Details Drawer */}
             <Drawer
                 isOpen={professionalDrawerOpen}
-                onClose={() => setProfessionalDrawerOpen(false)}
+                onClose={() => {
+                    setProfessionalDrawerOpen(false)
+                    setSelectedFiles([])
+                    setProfessionalFormError('')
+                }}
                 title="Edit Professional Details"
             >
                 <div className="p-4">
@@ -529,23 +533,6 @@ const Profile = () => {
                                 }
                             />
                         </FormItem>
-                        <FormItem label="Certificates">
-                            <input
-                                type="file"
-                                multiple
-                                accept=".pdf,.jpg,.jpeg,.png"
-                                onChange={(e) => {
-                                    const files = Array.from(
-                                        e.target.files || [],
-                                    )
-                                    setSelectedFiles(files)
-                                }}
-                                className="w-full"
-                            />
-                            <p className="text-sm text-gray-500 mt-1">
-                                Upload your certificates (PDF, JPG, JPEG, PNG)
-                            </p>
-                        </FormItem>
                         <FormItem label="Communication Languages">
                             <Select
                                 id="communicationLanguages"
@@ -604,6 +591,31 @@ const Profile = () => {
                                 ))}
                             </div>
                         </FormItem>
+                        <FormItem label="Certificates (PDF, JPG, JPEG, PNG - Max 5MB each)">
+                            <input
+                                type="file"
+                                multiple
+                                accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                onChange={(e) => {
+                                    const files = Array.from(e.target.files || [])
+                                    setSelectedFiles(files)
+                                }}
+                                className="w-full rounded-md border border-gray-300 p-2"
+                            />
+                            <p className="text-sm text-gray-500 mt-1">
+                                Upload medical certificates, qualifications, or registration documents. Maximum 10 files allowed.
+                            </p>
+                            {selectedFiles.length > 0 && (
+                                <div className="mt-2">
+                                    <p className="text-sm font-medium">Selected files:</p>
+                                    <ul className="text-sm text-gray-600">
+                                        {selectedFiles.map((file, index) => (
+                                            <li key={index}>{file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </FormItem>
                         {professionalFormError && (
                             <div className="text-red-500 text-sm mb-4">
                                 {professionalFormError}
@@ -612,7 +624,11 @@ const Profile = () => {
                         <div className="flex gap-2">
                             <Button
                                 variant="default"
-                                onClick={() => setProfessionalDrawerOpen(false)}
+                                onClick={() => {
+                                    setProfessionalDrawerOpen(false)
+                                    setSelectedFiles([])
+                                    setProfessionalFormError('')
+                                }}
                             >
                                 Cancel
                             </Button>
@@ -695,6 +711,7 @@ const Profile = () => {
                                             ).value,
                                         ),
                                         availableDays,
+                                        certificates: selectedFiles.length > 0 ? selectedFiles : undefined,
                                     }
 
                                     const submitFn = async () => {
@@ -722,6 +739,7 @@ const Profile = () => {
                                                         : null,
                                                 )
                                                 setProfessionalDrawerOpen(false)
+                                                setSelectedFiles([])
                                             } else {
                                                 setProfessionalFormError(
                                                     'Failed to update professional details. Please try again.',
