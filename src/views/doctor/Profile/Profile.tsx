@@ -723,13 +723,7 @@ const Profile = () => {
                                         </div>
                                     )}
                                     
-                                    {certificatesToRemove.length > 0 && (
-                                        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
-                                            <p className="text-sm text-yellow-800">
-                                                <strong>{certificatesToRemove.length} certificate(s)</strong> marked for removal. Changes will be saved when you submit the form.
-                                            </p>
-                                        </div>
-                                    )}
+                                    
                                 </div>
                             )}
                             

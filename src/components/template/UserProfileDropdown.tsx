@@ -26,7 +26,7 @@ const dropdownItemList: DropdownList[] = [
 ]
 
 const _UserDropdown = () => {
-    const { avatar, userName, email } = useSessionUser((state) => state.user)
+    const { avatar, image, userName, email } = useSessionUser((state) => state.user)
 
     const { signOut } = useAuth()
 
@@ -34,8 +34,9 @@ const _UserDropdown = () => {
         signOut()
     }
 
+    const userImage = image || avatar
     const avatarProps = {
-        ...(avatar ? { src: avatar } : { icon: <PiUserDuotone /> }),
+        ...(userImage ? { src: userImage } : { icon: <PiUserDuotone /> }),
     }
 
     return (

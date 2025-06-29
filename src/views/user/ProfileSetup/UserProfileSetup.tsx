@@ -8,7 +8,8 @@ import { Form, FormItem } from '@/components/ui/Form'
 import Input from '@/components/ui/Input'
 import Alert from '@/components/ui/Alert'
 import UserService from '@/services/UserService'
-import { useToken } from '@/store/authStore'
+import type { UserPersonalDetails } from '@/services/UserService'
+import { useToken, useSessionUser } from '@/store/authStore'
 import { useAuth } from '@/auth'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -55,6 +56,7 @@ const UserProfileSetup = () => {
     const navigate = useNavigate()
     const { token } = useToken()
     const { user } = useAuth()
+    const setUser = useSessionUser((state) => state.setUser)
 
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
@@ -101,6 +103,15 @@ const UserProfileSetup = () => {
                 console.log('Profile Response', profileResponse)
                 if (profileResponse.success && profileResponse.data) {
                     const userProfile = profileResponse.data
+                    
+                    // Update auth store with profile data
+                    setUser({
+                        ...user,
+                        userName: userProfile.fullName || user?.userName,
+                        email: userProfile.email || user?.email,
+                        image: userProfile.image || user?.image,
+                    })
+                    
                     // Check if profile is already complete
                     if (userProfile.isProfileComplete) {
                         navigate('/home')
@@ -180,10 +191,33 @@ const UserProfileSetup = () => {
                 data.phone = userPhone
             }
 
-            const response = await UserService.updatePersonalDetails(data)
+            // Transform form data to match UserPersonalDetails interface
+            const transformedData: UserPersonalDetails = {
+                name: data.name || '',
+                email: data.email || '',
+                phone: data.phone || '',
+                dob: data.dob || '',
+                gender: data.gender || 'Male',
+                marital_status: data.marital_status || 'Single',
+                height: data.height || '',
+                weight: data.weight || '',
+                diet: data.diet || 'Vegetarian',
+                profession: data.profession || '',
+                image: data.image || '',
+            }
+
+            const response = await UserService.updatePersonalDetails(transformedData)
             
             if (response.status) {
                 setSuccess('Profile setup completed successfully!')
+                
+                // Update auth store with the profile data
+                setUser({
+                    ...user,
+                    userName: transformedData.name || user?.userName,
+                    email: transformedData.email || user?.email,
+                    image: transformedData.image || user?.image,
+                })
                 
                 // Redirect to home after a short delay
                 setTimeout(() => {

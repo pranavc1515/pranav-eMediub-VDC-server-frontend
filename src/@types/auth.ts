@@ -47,6 +47,7 @@ export type User = {
     email?: string | null
     phoneNumber?: string | null
     authority?: string[]
+    image?: string | null
 }
 
 export type Token = {

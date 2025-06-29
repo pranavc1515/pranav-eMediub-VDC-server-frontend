@@ -136,7 +136,7 @@ const UserDashboard = <T extends Meta>(props: T): JSX.Element => {
                 <div className="flex items-center gap-3 mb-4">
                     <Avatar
                         size={50}
-                        src={user.avatar || '/img/avatars/default-avatar.jpg'}
+                        src={user.image || user.avatar || '/img/avatars/default-avatar.jpg'}
                         className="ring-2 ring-blue-100"
                     />
                     <div>

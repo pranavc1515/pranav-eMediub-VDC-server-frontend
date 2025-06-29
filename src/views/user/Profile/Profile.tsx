@@ -19,6 +19,7 @@ import { HiOutlinePencilAlt, HiOutlineCamera } from 'react-icons/hi'
 import type { UserProfileDetailsResponse } from '@/services/UserService'
 import Container from '@/components/shared/Container'
 import { useAuth } from '@/auth'
+import { useSessionUser } from '@/store/authStore'
 import { getTodayDateString } from '@/utils/dateUtils'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -63,6 +64,7 @@ interface SelectOption {
 
 const Profile = () => {
     const { user } = useAuth()
+    const setUser = useSessionUser((state) => state.setUser)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [profileData, setProfileData] = useState<UserProfileDetailsResponse | null>(null)
     const [loading, setLoading] = useState(true)
@@ -118,6 +120,19 @@ const Profile = () => {
             
             const response = await UserService.getProfileDetails()
             setProfileData(response)
+            
+            // Update auth store with profile data
+            if (response?.data) {
+                const profileInfo = response.data
+                
+                // Update user object in auth store with the image
+                setUser({
+                    ...user,
+                    userName: profileInfo.name || user?.userName,
+                    email: profileInfo.email || user?.email,
+                    image: profileInfo.image || user?.image,
+                })
+            }
             
             // Pre-fill form data
             if (response?.data) {
@@ -210,6 +225,14 @@ const Profile = () => {
             if (response.status) {
                 // Show success message inside the drawer first
                 setSuccess(response.message || 'Profile updated successfully!')
+                
+                // Update auth store immediately with the submitted data
+                setUser({
+                    ...user,
+                    userName: transformedData.name || user?.userName,
+                    email: transformedData.email || user?.email,
+                    image: transformedData.image || user?.image,
+                })
                 
                 // Refresh profile data
                 await fetchProfileData()
