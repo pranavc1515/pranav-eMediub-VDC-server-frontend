@@ -170,19 +170,40 @@ const Profile = () => {
 
                         {/* Certificates */}
                         <div className="mt-6 w-full">
-                            <p className="text-gray-600 mb-2">Certificates</p>
-                            <div className="flex flex-wrap justify-center gap-2">
-                                {profile?.certificates?.map((cert, index) => (
-                                    <a
-                                        key={index}
-                                        href={cert.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm hover:bg-blue-200"
-                                    >
-                                        <span>{cert.name}</span>
-                                    </a>
-                                ))}
+                            <p className="text-gray-600 mb-2 font-medium">Certificates</p>
+                            <div className="space-y-2">
+                                {profile?.DoctorProfessional?.certificates && profile.DoctorProfessional.certificates.length > 0 ? (
+                                    profile.DoctorProfessional.certificates.map((cert, index) => (
+                                        <div key={index} className="bg-gray-50 rounded-lg p-3 border">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                                        {cert.name}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        Uploaded: {new Date(cert.uploadedAt).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                                <a
+                                                    href={cert.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="ml-3 inline-flex items-center px-3 py-1 rounded-md bg-blue-100 text-blue-700 text-sm hover:bg-blue-200 transition-colors"
+                                                >
+                                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                    View
+                                                </a>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-4 text-gray-500 text-sm">
+                                        No certificates uploaded yet
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

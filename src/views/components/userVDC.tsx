@@ -24,13 +24,19 @@ interface ExtendedDoctor extends Record<string, unknown> {
     dob?: string | null
     status?: string
     emailVerified?: boolean
-    certificates?: Array<{ url: string; name: string; uploadedAt: string }>
     DoctorProfessional?: {
         specialization?: string | null
         yearsOfExperience?: number | null
         consultationFees?: number | string | null
         qualification?: string | null
         registrationNumber?: string | null
+        certificates?: Array<{
+            key: string
+            url: string
+            name: string
+            type: string
+            uploadedAt: string
+        }>
     }
 }
 

@@ -10,11 +10,6 @@ type DoctorProfile = {
     status: string
     emailVerified: boolean
     profilePhoto: string | null
-    certificates: Array<{
-        url: string
-        name: string
-        uploadedAt: string
-    }>
     isOnline?: string
     lastSeen?: string
     isProfileComplete?: boolean
@@ -26,12 +21,18 @@ type DoctorProfile = {
         registrationNumber: string | null
         registrationState: string | null
         expiryDate: string | null
-        certificates: string[]
+        certificates: Array<{
+            key: string
+            url: string
+            name: string
+            type: string
+            uploadedAt: string
+        }>
         clinicName: string | null
         status: string
         yearsOfExperience: number | null
         communicationLanguages: string[]
-        consultationFees: number | null
+        consultationFees: string | number | null
         availableDays: string[]
         availableTimeSlots: Record<string, unknown>
         timeCreated: string
@@ -159,7 +160,7 @@ const DoctorService = {
         }>({
             url: `/api/doctors/professional-details/${doctorId}`,
             method: 'PUT',
-            data: formData as any,
+            data: formData as unknown as Record<string, unknown>,
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
