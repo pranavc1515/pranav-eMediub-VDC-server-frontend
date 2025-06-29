@@ -96,13 +96,6 @@ const UserDashboard = () => {
             color: 'text-teal-600',
         },
         {
-            id: 'family',
-            title: 'Family Tree',
-            icon: HiOutlineUserGroup,
-            route: '/user/family',
-            color: 'text-blue-600',
-        },
-        {
             id: 'profile',
             title: 'Profile Settings',
             icon: HiOutlineCog,

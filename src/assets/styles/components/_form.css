@@ -23,7 +23,7 @@
 }
 
 .form-explain {
-  @apply text-error absolute font-semibold;
+  @apply text-error font-semibold text-sm mt-1 block relative;
 }
 
 .form-container {

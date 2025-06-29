@@ -10,11 +10,6 @@ type DoctorProfile = {
     status: string
     emailVerified: boolean
     profilePhoto: string | null
-    certificates: Array<{
-        url: string
-        name: string
-        uploadedAt: string
-    }>
     isOnline?: string
     lastSeen?: string
     isProfileComplete?: boolean
@@ -26,12 +21,18 @@ type DoctorProfile = {
         registrationNumber: string | null
         registrationState: string | null
         expiryDate: string | null
-        certificates: string[]
+        certificates: Array<{
+            key: string
+            url: string
+            name: string
+            type: string
+            uploadedAt: string
+        }>
         clinicName: string | null
         status: string
         yearsOfExperience: number | null
         communicationLanguages: string[]
-        consultationFees: number | null
+        consultationFees: string | number | null
         availableDays: string[]
         availableTimeSlots: Record<string, unknown>
         timeCreated: string
@@ -121,14 +122,43 @@ const DoctorService = {
             registrationNumber: string
             registrationState: string
             expiryDate: string
-            certificates?: string[]
             clinicName: string
             yearsOfExperience: number
             communicationLanguages: string[]
             consultationFees: number
             availableDays: string[]
+            certificates?: File[]
+            certificatesToRemove?: string[]
         },
     ) {
+        const formData = new FormData()
+        
+        // Add text fields
+        formData.append('qualification', data.qualification)
+        formData.append('specialization', data.specialization)
+        formData.append('registrationNumber', data.registrationNumber)
+        formData.append('registrationState', data.registrationState)
+        formData.append('expiryDate', data.expiryDate)
+        formData.append('clinicName', data.clinicName)
+        formData.append('yearsOfExperience', data.yearsOfExperience.toString())
+        formData.append('consultationFees', data.consultationFees.toString())
+        
+        // Convert arrays to JSON strings as required by the API
+        formData.append('communicationLanguages', JSON.stringify(data.communicationLanguages))
+        formData.append('availableDays', JSON.stringify(data.availableDays))
+        
+        // Add certificate files if provided
+        if (data.certificates && data.certificates.length > 0) {
+            data.certificates.forEach((file) => {
+                formData.append('certificates', file)
+            })
+        }
+        
+        // Add certificates to remove if provided
+        if (data.certificatesToRemove && data.certificatesToRemove.length > 0) {
+            formData.append('certificatesToRemove', JSON.stringify(data.certificatesToRemove))
+        }
+
         return ApiService.fetchDataWithAxios<{
             success: boolean
             message: string
@@ -136,7 +166,10 @@ const DoctorService = {
         }>({
             url: `/api/doctors/professional-details/${doctorId}`,
             method: 'PUT',
-            data,
+            data: formData as unknown as Record<string, unknown>,
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
         })
     },
 
