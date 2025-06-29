@@ -78,7 +78,7 @@ const navigationConfig: NavigationTree[] = [
     {
         key: 'doctorReports',
         path: '/doctor/reports',
-        title: 'Reports',
+        title: 'Patient Reports',
         translateKey: 'nav.doctorReports',
         icon: 'report',
         type: NAV_ITEM_TYPE_ITEM,

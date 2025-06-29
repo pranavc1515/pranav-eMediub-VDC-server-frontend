@@ -21,6 +21,13 @@ import { format } from 'date-fns'
 import { useForm, Controller } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useSessionUser } from '@/store/authStore'
+
+// Select option interface
+interface SelectOption {
+    value: string
+    label: string
+}
 
 // Validation schema
 const uploadReportSchema = z.object({
@@ -35,6 +42,7 @@ const uploadReportSchema = z.object({
 type UploadReportFormData = z.infer<typeof uploadReportSchema>
 
 const DoctorReports = () => {
+    const user = useSessionUser((state) => state.user)
     const [reports, setReports] = useState<ReportData[]>([])
     const [filteredReports, setFilteredReports] = useState<ReportData[]>([])
     const [loading, setLoading] = useState(false)
@@ -45,6 +53,30 @@ const DoctorReports = () => {
     const [uploading, setUploading] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [filterStatus, setFilterStatus] = useState<string>('all')
+
+    // Select options with counts
+    const getFilterOptions = (): SelectOption[] => {
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+        
+        const allCount = reports.length
+        const recentCount = reports.filter(report => {
+            const reportDate = new Date(report.created_at)
+            return reportDate >= thirtyDaysAgo
+        }).length
+        const olderCount = reports.filter(report => {
+            const reportDate = new Date(report.created_at)
+            return reportDate < thirtyDaysAgo
+        }).length
+
+        return [
+            { value: 'all', label: `All Reports (${allCount})` },
+            { value: 'recent', label: `Recent (${recentCount})` },
+            { value: 'older', label: `Older (${olderCount})` },
+        ]
+    }
+
+    const filterOptions = getFilterOptions()
 
     const {
         control,
@@ -62,6 +94,13 @@ const DoctorReports = () => {
         },
     })
 
+    // Auto-populate doctor information when component mounts or user changes
+    useEffect(() => {
+        if (user.userName) {
+            setValue('doctor_name', user.userName)
+        }
+    }, [user.userName, setValue])
+
     // Fetch reports on component mount
     useEffect(() => {
         fetchReports()
@@ -71,6 +110,27 @@ const DoctorReports = () => {
     useEffect(() => {
         let filtered = reports
 
+        // Apply date-based filtering
+        if (filterStatus === 'recent') {
+            const thirtyDaysAgo = new Date()
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+            
+            filtered = filtered.filter(report => {
+                const reportDate = new Date(report.created_at)
+                return reportDate >= thirtyDaysAgo
+            })
+        } else if (filterStatus === 'older') {
+            const thirtyDaysAgo = new Date()
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+            
+            filtered = filtered.filter(report => {
+                const reportDate = new Date(report.created_at)
+                return reportDate < thirtyDaysAgo
+            })
+        }
+        // 'all' shows all reports, so no additional filtering needed
+
+        // Apply search filtering
         if (searchTerm) {
             filtered = filtered.filter(
                 report =>
@@ -115,6 +175,7 @@ const DoctorReports = () => {
                 report_date: format(data.report_date, 'yyyy-MM-dd'),
                 doctor_name: data.doctor_name,
                 target_user_id: data.target_user_id,
+                doctor_id: user.userId ? parseInt(user.userId.toString()) : undefined, // Auto-populate doctor_id from localStorage
             }
 
             const response = await ReportsService.uploadReports(uploadData)
@@ -131,6 +192,9 @@ const DoctorReports = () => {
                 reset()
                 setUploadFiles([])
                 setShowUploadModal(false)
+                
+                // Refresh the default doctor name after reset
+                setValue('doctor_name', user.userName)
                 
                 // Refresh reports list
                 fetchReports()
@@ -187,11 +251,23 @@ const DoctorReports = () => {
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Patient Reports</h1>
-                    <p className="text-gray-600 mt-1">Manage medical reports for your patients</p>
+                    <div className="flex items-center gap-2 mt-1">
+                        <p className="text-gray-600">Upload and manage medical reports for your patients</p>
+                        {filteredReports.length > 0 && (
+                            <Badge className="bg-blue-100 text-blue-800">
+                                {filteredReports.length} {filteredReports.length === 1 ? 'report' : 'reports'}
+                                {filterStatus !== 'all' && ` (${filterStatus})`}
+                            </Badge>
+                        )}
+                    </div>
                 </div>
                 <Button
                     variant="solid"
-                    onClick={() => setShowUploadModal(true)}
+                    onClick={() => {
+                        setShowUploadModal(true)
+                        // Ensure doctor name is populated when opening modal
+                        setValue('doctor_name', user.userName)
+                    }}
                     className="flex items-center gap-2"
                 >
                     <HiOutlinePlus />
@@ -211,16 +287,17 @@ const DoctorReports = () => {
                         />
                     </div>
                     <div className="w-full md:w-48">
-                        <Select
-                            placeholder="Filter by status"
-                            value={filterStatus}
-                            onChange={(option) => setFilterStatus(option?.value || 'all')}
-                            options={[
-                                { value: 'all', label: 'All Reports' },
-                                { value: 'recent', label: 'Recent' },
-                                { value: 'older', label: 'Older' },
-                            ]}
+                        <Select<SelectOption>
+                            placeholder="Filter by date"
+                            value={filterOptions.find(option => option.value === filterStatus)}
+                            onChange={(option: SelectOption | null) => setFilterStatus(option?.value || 'all')}
+                            options={filterOptions}
                         />
+                        {filterStatus !== 'all' && (
+                            <p className="text-xs text-gray-500 mt-1">
+                                {filterStatus === 'recent' ? 'Last 30 days' : 'Older than 30 days'}
+                            </p>
+                        )}
                     </div>
                 </div>
             </Card>
@@ -233,15 +310,22 @@ const DoctorReports = () => {
                 <Card className="p-8 text-center">
                     <HiOutlineDocument className="text-6xl text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        {searchTerm ? 'No matching reports found' : 'No reports yet'}
+                        {searchTerm || filterStatus !== 'all' 
+                            ? 'No matching reports found' 
+                            : 'No reports yet'}
                     </h3>
                     <p className="text-gray-600 mb-4">
-                        {searchTerm 
-                            ? 'Try adjusting your search terms'
-                            : 'Upload your first patient report to get started'
-                        }
+                        {searchTerm ? (
+                            'Try adjusting your search terms or filter options'
+                        ) : filterStatus === 'recent' ? (
+                            'No reports found in the last 30 days'
+                        ) : filterStatus === 'older' ? (
+                            'No reports older than 30 days found'
+                        ) : (
+                            'Upload your first patient report to get started'
+                        )}
                     </p>
-                    {!searchTerm && (
+                    {(!searchTerm && filterStatus === 'all') && (
                         <Button
                             variant="solid"
                             onClick={() => setShowUploadModal(true)}
@@ -382,10 +466,19 @@ const DoctorReports = () => {
                                     name="doctor_name"
                                     control={control}
                                     render={({ field }) => (
-                                        <Input
-                                            {...field}
-                                            placeholder="Enter doctor's name"
-                                        />
+                                        <div className="relative">
+                                            <Input
+                                                {...field}
+                                                placeholder="Doctor name (auto-filled)"
+                                                readOnly
+                                                className="bg-gray-50 dark:bg-gray-800"
+                                            />
+                                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                                <Badge className="bg-green-100 text-green-800 text-xs px-2 py-1">
+                                                    Auto-filled
+                                                </Badge>
+                                            </div>
+                                        </div>
                                     )}
                                 />
                             </FormItem>
