@@ -6,6 +6,7 @@ import Form from '@/components/ui/Form'
 import FormItem from '@/components/ui/Form/FormItem'
 import FormContainer from '@/components/ui/Form/FormContainer'
 import Upload from '@/components/ui/Upload'
+import { useSessionUser } from '@/store/authStore'
 import type { AddFamilyMemberRequest } from '@/services/FamilyService'
 
 interface AddFamilyMemberFormProps {
@@ -70,6 +71,7 @@ const dietOptions = [
 ]
 
 const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMemberFormProps) => {
+    const { user } = useSessionUser()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formData, setFormData] = useState<FormData>({
         name: '',
@@ -142,12 +144,19 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
 
         setIsSubmitting(true)
         try {
-            // Get userId from localStorage for nodeUserId
+            // Get userId from auth store or localStorage as fallback
+            const authUserId = user.userId ? parseInt(user.userId, 10) : null
             const storedUserId = localStorage.getItem('userId')
-            const userIdFromStorage = storedUserId ? parseInt(storedUserId, 10) : 0
+            const userIdFromStorage = storedUserId ? parseInt(storedUserId, 10) : null
+            
+            const finalNodeUserId = nodeUserId || authUserId || userIdFromStorage
+            
+            if (!finalNodeUserId) {
+                throw new Error('User ID not found. Please log in again.')
+            }
             
             const requestData: AddFamilyMemberRequest = {
-                nodeUserId: nodeUserId || userIdFromStorage, // Use nodeUserId if provided, otherwise use userId from localStorage
+                nodeUserId: finalNodeUserId,
                 relationName: formData.relationName,
                 name: formData.name,
                 phone: formData.phone,
@@ -163,6 +172,10 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
                 image: formData.image,
             }
             await onSubmit(requestData)
+        } catch (error) {
+            console.error('Error adding family member:', error)
+            // The error will be handled by the parent component
+            throw error
         } finally {
             setIsSubmitting(false)
         }

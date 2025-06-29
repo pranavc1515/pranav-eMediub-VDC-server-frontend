@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, Button, Badge, Avatar, Drawer, Notification } from '@/components/ui'
 import { toast } from '@/components/ui/toast'
 import { HiPlus, HiEye, HiPencil, HiTrash, HiUsers } from 'react-icons/hi2'
+import { useSessionUser } from '@/store/authStore'
 import FamilyService, { 
     type FamilyMember, 
     type FamilyTreeResponse,
@@ -14,6 +15,7 @@ import EditFamilyMemberForm from './components/EditFamilyMemberForm'
 import FamilyTreeCard from './components/FamilyTreeCard'
 
 const Family = () => {
+    const { user } = useSessionUser()
     const [familyData, setFamilyData] = useState<FamilyTreeResponse | null>(null)
     const [loading, setLoading] = useState(false)
     const [addDrawerOpen, setAddDrawerOpen] = useState(false)
@@ -115,12 +117,23 @@ const Family = () => {
     }
 
     const openAddDrawer = (nodeUserId?: number) => {
-        // Get user ID from localStorage instead of API response
+        // Get user ID from auth store or localStorage as fallback
+        const authUserId = user.userId ? parseInt(user.userId, 10) : null
         const storedUserId = localStorage.getItem('userId')
         const userIdFromStorage = storedUserId ? parseInt(storedUserId, 10) : null
         
-        // Use the provided nodeUserId if available, otherwise use the user ID from localStorage
-        setSelectedNodeId(nodeUserId || userIdFromStorage)
+        const finalNodeUserId = nodeUserId || authUserId || userIdFromStorage
+        
+        if (!finalNodeUserId) {
+            toast.push(
+                <Notification type="danger" title="Error">
+                    User ID not found. Please log in again.
+                </Notification>
+            )
+            return
+        }
+        
+        setSelectedNodeId(finalNodeUserId)
         setAddDrawerOpen(true)
     }
 
