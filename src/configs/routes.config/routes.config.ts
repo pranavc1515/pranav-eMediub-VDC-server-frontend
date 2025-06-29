@@ -80,6 +80,18 @@ export const protectedRoutes: Routes = [
         authority: ['user'],
     },
     {
+        key: 'userReports',
+        path: '/user/reports',
+        component: lazy(() => import('@/views/user/Reports')),
+        authority: ['user'],
+    },
+    {
+        key: 'doctorReports',
+        path: '/doctor/reports',
+        component: lazy(() => import('@/views/doctor/Reports')),
+        authority: ['doctor'],
+    },
+    {
         key: 'termsConditions',
         path: '/terms-conditions',
         component: lazy(() => import('@/views/terms-conditions')),
