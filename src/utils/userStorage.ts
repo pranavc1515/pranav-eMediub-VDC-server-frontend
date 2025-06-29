@@ -12,8 +12,23 @@ export interface UserStorageData {
     // Additional doctor-specific data
     specialization?: string
     consultationFees?: number | string
-    // Additional user-specific data
+    // Additional user-specific data (from profile API)
     patientId?: string | number
+    isPhoneVerify?: number
+    isEmailVerify?: number
+    age?: string | null
+    dob?: string
+    gender?: string
+    marital_status?: string
+    language?: string
+    height?: string
+    weight?: string
+    diet?: string
+    profession?: string
+    smoking_routine?: string | null
+    drinking_routine?: string | null
+    activity_routine?: string | null
+    image?: string | null
 }
 
 export interface StorageKeys {

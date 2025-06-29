@@ -12,7 +12,6 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import type { LayoutType } from '@/@types/theme'
 
 import Prescriptions from '@/views/doctor/Prescriptions'
-import UploadPrescription from '@/views/doctor/UploadPrescription'
 
 
 interface ViewsProps {
@@ -26,17 +25,6 @@ const AllRoutes = (props: AllRoutesProps) => {
     const { user } = useAuth()
 
     const doctorRoutes = [
-        {
-            key: 'uploadPrescription',
-            path: '/doctor/upload-prescription',
-            component: UploadPrescription,
-            authority: ['doctor'],
-            meta: {
-                label: 'Upload Prescription',
-                pageTitle: 'Upload Prescription',
-                desc: 'Upload or generate prescriptions for patients',
-            },
-        },
         {
             key: 'prescriptions',
             path: '/doctor/prescriptions',

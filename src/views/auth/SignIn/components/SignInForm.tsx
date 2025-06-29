@@ -14,7 +14,8 @@ import DoctorService from '@/services/DoctorService'
 import { useToken } from '@/store/authStore'
 import appConfig from '@/configs/app.config'
 import TermsAndConditionsModal from '@/components/shared/TermsAndConditionsModal'
-import { saveUserToStorage, type UserStorageData } from '@/utils/userStorage'
+import { saveUserToStorage, updateUserData, type UserStorageData } from '@/utils/userStorage'
+import UserService from '@/services/UserService'
 
 import type { ReactNode } from 'react'
 import type { CommonProps } from '@/@types/common'
@@ -206,6 +207,15 @@ const SignInForm = ({
             console.warn('Failed to save user data to localStorage, but continuing with authentication')
         }
 
+        // For users, fetch additional profile details from API
+        if (userType === 'user') {
+            try {
+                await fetchAndStoreUserProfileDetails()
+            } catch (error) {
+                console.warn('Failed to fetch user profile details, but continuing with authentication:', error)
+            }
+        }
+
         const result = await signIn({
             email: phoneNumber,
             password: '',
@@ -227,6 +237,53 @@ const SignInForm = ({
             navigate(redirectPath)
         } else {
             setMessage?.(result.message || 'Authentication failed')
+        }
+    }
+
+    const fetchAndStoreUserProfileDetails = async () => {
+        try {
+            const profileResponse = await UserService.getProfileDetails()
+            
+            if (profileResponse.status && profileResponse.data) {
+                const profileData = profileResponse.data
+                
+                // Update stored user data with comprehensive profile details
+                const profileUpdates: Partial<UserStorageData> = {
+                    userId: profileData.id, // Set the correct user ID from profile API
+                    userName: profileData.name || undefined,
+                    email: profileData.email || undefined,
+                    phoneNumber: profileData.phone || undefined,
+                    patientId: profileData.id, // Also set patientId for backward compatibility
+                    isPhoneVerify: profileData.isPhoneVerify,
+                    isEmailVerify: profileData.isEmailVerify,
+                    age: profileData.age,
+                    dob: profileData.dob,
+                    gender: profileData.gender,
+                    marital_status: profileData.marital_status,
+                    language: profileData.language,
+                    height: profileData.height,
+                    weight: profileData.weight,
+                    diet: profileData.diet,
+                    profession: profileData.profession,
+                    smoking_routine: profileData.smoking_routine,
+                    drinking_routine: profileData.drinking_routine,
+                    activity_routine: profileData.activity_routine,
+                    image: profileData.image,
+                    avatar: profileData.image, // Use image as avatar
+                }
+
+                // Update the stored user data
+                const updateSuccess = updateUserData(profileUpdates)
+                
+                if (updateSuccess) {
+                    console.log('User profile details fetched and stored successfully')
+                } else {
+                    console.warn('Failed to update user profile details in storage')
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching user profile details:', error)
+            throw error
         }
     }
 

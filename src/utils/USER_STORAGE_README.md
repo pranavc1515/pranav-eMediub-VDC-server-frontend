@@ -32,8 +32,23 @@ interface UserStorageData {
     // Doctor-specific data
     specialization?: string
     consultationFees?: number | string
-    // User-specific data
+    // Enhanced user-specific data (automatically fetched from profile API)
     patientId?: string | number
+    isPhoneVerify?: number
+    isEmailVerify?: number
+    age?: string | null
+    dob?: string
+    gender?: string
+    marital_status?: string
+    language?: string
+    height?: string
+    weight?: string
+    diet?: string
+    profession?: string
+    smoking_routine?: string | null
+    drinking_routine?: string | null
+    activity_routine?: string | null
+    image?: string | null
 }
 ```
 
@@ -119,7 +134,20 @@ function MyComponent() {
         isUser,
         userName,
         userEmail,
-        refreshUserData
+        refreshUserData,
+        // Enhanced user profile fields
+        age,
+        gender,
+        profession,
+        isPhoneVerified,
+        isEmailVerified,
+        profileImage,
+        height,
+        weight,
+        diet,
+        // Doctor-specific fields
+        specialization,
+        consultationFees
     } = useStoredUser()
 
     if (loading) return <div>Loading...</div>
@@ -129,8 +157,26 @@ function MyComponent() {
             <h1>Welcome, {userName}!</h1>
             <p>User Type: {userType}</p>
             <p>Logged in: {isLoggedIn ? 'Yes' : 'No'}</p>
-            {isDoctor && <p>Doctor Dashboard</p>}
-            {isUser && <p>Patient Dashboard</p>}
+            
+            {isUser && (
+                <div>
+                    <h2>Patient Profile</h2>
+                    <p>Age: {age || 'Not provided'}</p>
+                    <p>Gender: {gender || 'Not specified'}</p>
+                    <p>Profession: {profession || 'Not provided'}</p>
+                    <p>Phone Verified: {isPhoneVerified ? 'Yes' : 'No'}</p>
+                    <p>Email Verified: {isEmailVerified ? 'Yes' : 'No'}</p>
+                    {profileImage && <img src={profileImage} alt="Profile" />}
+                </div>
+            )}
+            
+            {isDoctor && (
+                <div>
+                    <h2>Doctor Dashboard</h2>
+                    <p>Specialization: {specialization || 'Not specified'}</p>
+                    <p>Consultation Fees: {consultationFees || 'Not set'}</p>
+                </div>
+            )}
         </div>
     )
 }
@@ -170,7 +216,16 @@ When users/doctors log in, the system now stores:
 5. **Profile Status** - Whether profile setup is complete
 6. **Login Timestamp** - When the user logged in
 7. **Authentication Token** - For API authorization
-8. **Type-specific Data** - Specialization for doctors, patient ID for users
+8. **Type-specific Data** - Specialization for doctors, comprehensive profile for users
+
+### Automatic Profile Fetching for Users
+For users (patients), the system automatically:
+- Calls `/api/patients/profile-details` immediately after receiving the authentication token
+- Fetches comprehensive profile information including personal details, health data, and preferences
+- Updates the stored user data with all profile fields
+- Provides enhanced data access through the `useStoredUser` hook
+
+This ensures that user profile information is always up-to-date and available offline.
 
 ### Backward Compatibility
 The system maintains backward compatibility by:

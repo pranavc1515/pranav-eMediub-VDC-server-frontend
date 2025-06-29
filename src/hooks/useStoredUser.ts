@@ -77,9 +77,28 @@ export const useStoredUser = () => {
         userName: userData?.userName,
         userEmail: userData?.email,
         userPhone: userData?.phoneNumber,
-        userAvatar: userData?.avatar,
+        userAvatar: userData?.avatar || userData?.image,
         isProfileComplete: userData?.isProfileComplete,
         loginTimestamp: userData?.loginTimestamp,
+        // Enhanced user profile fields
+        isPhoneVerified: userData?.isPhoneVerify === 1,
+        isEmailVerified: userData?.isEmailVerify === 1,
+        age: userData?.age,
+        dateOfBirth: userData?.dob,
+        gender: userData?.gender,
+        maritalStatus: userData?.marital_status,
+        language: userData?.language,
+        height: userData?.height,
+        weight: userData?.weight,
+        diet: userData?.diet,
+        profession: userData?.profession,
+        smokingRoutine: userData?.smoking_routine,
+        drinkingRoutine: userData?.drinking_routine,
+        activityRoutine: userData?.activity_routine,
+        profileImage: userData?.image,
+        // Doctor-specific convenience getters
+        specialization: userData?.specialization,
+        consultationFees: userData?.consultationFees,
     }
 }
 

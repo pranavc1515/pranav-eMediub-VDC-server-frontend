@@ -8,14 +8,40 @@ const UserVDC = lazy(() => import('./components/userVDC'))
 
 const Home = <T extends Meta>(props: T): JSX.Element => {
     const user = useSessionUser((state) => state.user)
-    const { isDoctor, userData, userType, loginTimestamp } = useStoredUser()
+    const { 
+        isDoctor, 
+        userData, 
+        userType, 
+        loginTimestamp,
+        userName,
+        age,
+        gender,
+        profession,
+        isPhoneVerified,
+        isEmailVerified,
+        specialization,
+        consultationFees,
+        profileImage
+    } = useStoredUser()
     
-    // Log stored user data for demonstration (remove in production)
-    console.log('Stored user data:', {
+    // Log enhanced stored user data for demonstration (remove in production)
+    console.log('Enhanced stored user data:', {
         userType,
-        userData,
+        userName,
+        age,
+        gender,
+        profession,
+        isPhoneVerified,
+        isEmailVerified,
         loginTimestamp,
         isDoctor,
+        // Doctor-specific data
+        specialization,
+        consultationFees,
+        // Profile image
+        profileImage,
+        // Full user data object
+        userData,
     })
     
     // Use stored data as fallback if zustand store is empty
