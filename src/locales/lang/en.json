@@ -1,22 +1,26 @@
 {
     "nav": {
         "home": "Home",
+        "aboutUs": "About Us",
+        "termsConditions": "Terms & Conditions",
+        "razerpayTest": "Razerpay Test",
         "videoDoctorConsultation": "Video Doctor Consultation",
 
-        "singleMenuItem": "Single menu item",
+        "singleMenuItem": "Single Menu Item",
         "collapseMenu": {
-            "collapseMenu": "Collapse menu item",
+            "collapseMenu": "Collapse Menu",
             "item1": "Collapse menu item 1",
             "item2": "Collapse menu item 2"
         },
         "groupMenu": {
-            "groupMenu": "Group menu",
+            "groupMenu": "Group Menu",
             "single": "Group single menu item",
             "collapse": {
                 "collapse": "Group collapse menu",
                 "item1": "Group collapse menu item 1",
                 "item2": "Group collapse menu item 2"
             }
-        }
+        },
+        "family": "Family"
     }
 }

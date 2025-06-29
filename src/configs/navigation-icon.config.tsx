@@ -29,6 +29,7 @@ const navigationIcon: NavigationIcons = {
     'file-text': <PiFileTextDuotone />,
     monitor: <PiMonitorDuotone />,
     'file-upload': <PiUploadDuotone />,
+    family: <PiUsersDuotone />,
 }
 
 export default navigationIcon
