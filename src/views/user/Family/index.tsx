@@ -1,14 +1,21 @@
 import { useState, useEffect } from 'react'
-import { Card, Button, Badge, Avatar, Drawer, Notification } from '@/components/ui'
+import {
+    Card,
+    Button,
+    Badge,
+    Avatar,
+    Drawer,
+    Notification,
+} from '@/components/ui'
 import { toast } from '@/components/ui/toast'
 import { HiPlus, HiEye, HiPencil, HiTrash, HiUsers } from 'react-icons/hi2'
 import { useSessionUser } from '@/store/authStore'
-import FamilyService, { 
-    type FamilyMember, 
+import FamilyService, {
+    type FamilyMember,
     type FamilyTreeResponse,
     type AddFamilyMemberRequest,
     type UpdateFamilyMemberRequest,
-    type RemoveFamilyMemberRequest
+    type RemoveFamilyMemberRequest,
 } from '@/services/FamilyService'
 import AddFamilyMemberForm from './components/AddFamilyMemberForm'
 import EditFamilyMemberForm from './components/EditFamilyMemberForm'
@@ -16,12 +23,16 @@ import FamilyTreeCard from './components/FamilyTreeCard'
 
 const Family = () => {
     const { user } = useSessionUser()
-    const [familyData, setFamilyData] = useState<FamilyTreeResponse | null>(null)
+    const [familyData, setFamilyData] = useState<FamilyTreeResponse | null>(
+        null,
+    )
     const [loading, setLoading] = useState(false)
     const [addDrawerOpen, setAddDrawerOpen] = useState(false)
     const [editDrawerOpen, setEditDrawerOpen] = useState(false)
     const [viewDrawerOpen, setViewDrawerOpen] = useState(false)
-    const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(null)
+    const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(
+        null,
+    )
     const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null)
 
     useEffect(() => {
@@ -37,7 +48,7 @@ const Family = () => {
             toast.push(
                 <Notification type="danger" title="Error">
                     Failed to fetch family tree
-                </Notification>
+                </Notification>,
             )
         } finally {
             setLoading(false)
@@ -50,7 +61,7 @@ const Family = () => {
             toast.push(
                 <Notification type="success" title="Success">
                     Family member added successfully
-                </Notification>
+                </Notification>,
             )
             setAddDrawerOpen(false)
             fetchFamilyTree()
@@ -58,20 +69,25 @@ const Family = () => {
             toast.push(
                 <Notification type="danger" title="Error">
                     Failed to add family member
-                </Notification>
+                </Notification>,
             )
         }
     }
 
-    const handleUpdateMember = async (memberData: UpdateFamilyMemberRequest) => {
+    const handleUpdateMember = async (
+        memberData: UpdateFamilyMemberRequest,
+    ) => {
         if (!selectedMember) return
-        
+
         try {
-            await FamilyService.updateFamilyMember(selectedMember.id, memberData)
+            await FamilyService.updateFamilyMember(
+                selectedMember.id,
+                memberData,
+            )
             toast.push(
                 <Notification type="success" title="Success">
                     Family member updated successfully
-                </Notification>
+                </Notification>,
             )
             setEditDrawerOpen(false)
             setSelectedMember(null)
@@ -80,7 +96,7 @@ const Family = () => {
             toast.push(
                 <Notification type="danger" title="Error">
                     Failed to update family member
-                </Notification>
+                </Notification>,
             )
         }
     }
@@ -88,20 +104,20 @@ const Family = () => {
     const handleRemoveMember = async (relatedUserId: number) => {
         try {
             const requestData: RemoveFamilyMemberRequest = {
-                userId: relatedUserId
+                userId: relatedUserId,
             }
             await FamilyService.removeFamilyMember(relatedUserId, requestData)
             toast.push(
                 <Notification type="success" title="Success">
                     Family member removed successfully
-                </Notification>
+                </Notification>,
             )
             fetchFamilyTree()
         } catch (error) {
             toast.push(
                 <Notification type="danger" title="Error">
                     Failed to remove family member
-                </Notification>
+                </Notification>,
             )
         }
     }
@@ -120,19 +136,21 @@ const Family = () => {
         // Get user ID from auth store or localStorage as fallback
         const authUserId = user.userId ? parseInt(user.userId, 10) : null
         const storedUserId = localStorage.getItem('userId')
-        const userIdFromStorage = storedUserId ? parseInt(storedUserId, 10) : null
-        
+        const userIdFromStorage = storedUserId
+            ? parseInt(storedUserId, 10)
+            : null
+
         const finalNodeUserId = nodeUserId || authUserId || userIdFromStorage
-        
+
         if (!finalNodeUserId) {
             toast.push(
                 <Notification type="danger" title="Error">
                     User ID not found. Please log in again.
-                </Notification>
+                </Notification>,
             )
             return
         }
-        
+
         setSelectedNodeId(finalNodeUserId)
         setAddDrawerOpen(true)
     }
@@ -148,16 +166,26 @@ const Family = () => {
                             alt={member.name}
                             className="ring-2 ring-blue-100"
                         >
-                            {!member.image && member.name?.charAt(0).toUpperCase()}
+                            {!member.image &&
+                                member.name?.charAt(0).toUpperCase()}
                         </Avatar>
                         <div className="flex-1">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 {member.name}
                             </h3>
                             <div className="flex flex-wrap gap-2 mt-2">
-                                <Badge content={member.relation_type} className="bg-blue-100 text-blue-800" />
-                                <Badge content={member.gender} className="bg-purple-100 text-purple-800" />
-                                <Badge content={`${member.age} years`} className="bg-green-100 text-green-800" />
+                                <Badge
+                                    content={member.relation_type}
+                                    className="bg-blue-100 text-blue-800"
+                                />
+                                <Badge
+                                    content={member.gender}
+                                    className="bg-purple-100 text-purple-800"
+                                />
+                                <Badge
+                                    content={`${member.age} years`}
+                                    className="bg-green-100 text-green-800"
+                                />
                             </div>
                             <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                                 <p>📧 {member.email}</p>
@@ -190,7 +218,11 @@ const Family = () => {
                                 variant="plain"
                                 icon={<HiTrash />}
                                 onClick={() => {
-                                    if (confirm('Are you sure you want to remove this family member?')) {
+                                    if (
+                                        confirm(
+                                            'Are you sure you want to remove this family member?',
+                                        )
+                                    ) {
                                         handleRemoveMember(member.id)
                                     }
                                 }}
@@ -199,23 +231,14 @@ const Family = () => {
                                 Remove
                             </Button>
                         </div>
-                        <Button
-                            size="sm"
-                            variant="solid"
-                            icon={<HiPlus />}
-                            onClick={() => openAddDrawer(member.id)}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white"
-                        >
-                            Add Relative
-                        </Button>
                     </div>
                 </div>
             </Card>
-            
+
             {member.relatives && member.relatives.length > 0 && (
                 <div className="ml-8 mt-4 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
-                    {member.relatives.map((relative) => 
-                        renderFamilyMember(relative, level + 1)
+                    {member.relatives.map((relative) =>
+                        renderFamilyMember(relative, level + 1),
                     )}
                 </div>
             )}
@@ -259,31 +282,11 @@ const Family = () => {
                         <div className="flex items-center">
                             <HiUsers className="text-2xl text-blue-600 mr-3" />
                             <div>
-                                <h3 className="text-lg font-semibold">Total Members</h3>
+                                <h3 className="text-lg font-semibold">
+                                    Total Members
+                                </h3>
                                 <p className="text-2xl font-bold text-blue-600">
                                     {familyData.data.familyTree?.length || 0}
-                                </p>
-                            </div>
-                        </div>
-                    </Card>
-                    <Card className="p-4">
-                        <div className="flex items-center">
-                            <HiUsers className="text-2xl text-green-600 mr-3" />
-                            <div>
-                                <h3 className="text-lg font-semibold">User ID</h3>
-                                <p className="text-2xl font-bold text-green-600">
-                                    {localStorage.getItem('userId') || 'Not Set'}
-                                </p>
-                            </div>
-                        </div>
-                    </Card>
-                    <Card className="p-4">
-                        <div className="flex items-center">
-                            <HiUsers className="text-2xl text-purple-600 mr-3" />
-                            <div>
-                                <h3 className="text-lg font-semibold">Total Relatives</h3>
-                                <p className="text-2xl font-bold text-purple-600">
-                                    {familyData.data.user.totalRelativMembers || 0}
                                 </p>
                             </div>
                         </div>
@@ -294,10 +297,11 @@ const Family = () => {
             {/* Family Tree */}
             <Card className="p-6">
                 <h2 className="text-xl font-semibold mb-4">Family Members</h2>
-                {familyData?.data.familyTree && familyData.data.familyTree.length > 0 ? (
+                {familyData?.data.familyTree &&
+                familyData.data.familyTree.length > 0 ? (
                     <div className="space-y-4">
-                        {familyData.data.familyTree.map((member) => 
-                            renderFamilyMember(member)
+                        {familyData.data.familyTree.map((member) =>
+                            renderFamilyMember(member),
                         )}
                     </div>
                 ) : (
@@ -377,4 +381,4 @@ const Family = () => {
     )
 }
 
-export default Family 
+export default Family

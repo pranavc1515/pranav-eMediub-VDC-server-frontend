@@ -70,7 +70,11 @@ const dietOptions = [
     { value: 'Other', label: 'Other' },
 ]
 
-const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMemberFormProps) => {
+const AddFamilyMemberForm = ({
+    nodeUserId,
+    onSubmit,
+    onCancel,
+}: AddFamilyMemberFormProps) => {
     const { user } = useSessionUser()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formData, setFormData] = useState<FormData>({
@@ -117,9 +121,9 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
     }
 
     const handleInputChange = (field: keyof FormData, value: string) => {
-        setFormData(prev => ({ ...prev, [field]: value }))
+        setFormData((prev) => ({ ...prev, [field]: value }))
         if (errors[field]) {
-            setErrors(prev => ({ ...prev, [field]: '' }))
+            setErrors((prev) => ({ ...prev, [field]: '' }))
         }
     }
 
@@ -137,7 +141,7 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        
+
         if (!validateForm()) {
             return
         }
@@ -147,14 +151,17 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
             // Get userId from auth store or localStorage as fallback
             const authUserId = user.userId ? parseInt(user.userId, 10) : null
             const storedUserId = localStorage.getItem('userId')
-            const userIdFromStorage = storedUserId ? parseInt(storedUserId, 10) : null
-            
-            const finalNodeUserId = nodeUserId || authUserId || userIdFromStorage
-            
+            const userIdFromStorage = storedUserId
+                ? parseInt(storedUserId, 10)
+                : null
+
+            const finalNodeUserId =
+                nodeUserId || authUserId || userIdFromStorage
+
             if (!finalNodeUserId) {
                 throw new Error('User ID not found. Please log in again.')
             }
-            
+
             const requestData: AddFamilyMemberRequest = {
                 nodeUserId: finalNodeUserId,
                 relationName: formData.relationName,
@@ -191,7 +198,7 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
                             <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                                 Basic Information
                             </h4>
-                            
+
                             <FormItem
                                 label="Name"
                                 invalid={!!errors.name}
@@ -200,7 +207,12 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
                             >
                                 <Input
                                     value={formData.name}
-                                    onChange={(e) => handleInputChange('name', e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            'name',
+                                            e.target.value,
+                                        )
+                                    }
                                     placeholder="Enter full name"
                                 />
                             </FormItem>
@@ -214,8 +226,16 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
                                 <Select
                                     options={relationOptions}
                                     placeholder="Select relation"
-                                    value={relationOptions.find(opt => opt.value === formData.relationName)}
-                                    onChange={(option) => handleInputChange('relationName', option?.value || '')}
+                                    value={relationOptions.find(
+                                        (opt) =>
+                                            opt.value === formData.relationName,
+                                    )}
+                                    onChange={(option) =>
+                                        handleInputChange(
+                                            'relationName',
+                                            option?.value || '',
+                                        )
+                                    }
                                 />
                             </FormItem>
 
@@ -228,8 +248,15 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
                                 <Select
                                     options={genderOptions}
                                     placeholder="Select gender"
-                                    value={genderOptions.find(opt => opt.value === formData.gender)}
-                                    onChange={(option) => handleInputChange('gender', option?.value || '')}
+                                    value={genderOptions.find(
+                                        (opt) => opt.value === formData.gender,
+                                    )}
+                                    onChange={(option) =>
+                                        handleInputChange(
+                                            'gender',
+                                            option?.value || '',
+                                        )
+                                    }
                                 />
                             </FormItem>
 
@@ -242,18 +269,20 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
                                 <Input
                                     type="number"
                                     value={formData.age}
-                                    onChange={(e) => handleInputChange('age', e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange('age', e.target.value)
+                                    }
                                     placeholder="Enter age"
                                 />
                             </FormItem>
 
-                            <FormItem
-                                label="Date of Birth"
-                            >
+                            <FormItem label="Date of Birth">
                                 <Input
                                     type="date"
                                     value={formData.dob}
-                                    onChange={(e) => handleInputChange('dob', e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange('dob', e.target.value)
+                                    }
                                 />
                             </FormItem>
 
@@ -266,8 +295,17 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
                                 <Select
                                     options={maritalStatusOptions}
                                     placeholder="Select marital status"
-                                    value={maritalStatusOptions.find(opt => opt.value === formData.marital_status)}
-                                    onChange={(option) => handleInputChange('marital_status', option?.value || '')}
+                                    value={maritalStatusOptions.find(
+                                        (opt) =>
+                                            opt.value ===
+                                            formData.marital_status,
+                                    )}
+                                    onChange={(option) =>
+                                        handleInputChange(
+                                            'marital_status',
+                                            option?.value || '',
+                                        )
+                                    }
                                 />
                             </FormItem>
                         </div>
@@ -277,7 +315,7 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
                             <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                                 Contact & Additional Information
                             </h4>
-                            
+
                             <FormItem
                                 label="Phone Number"
                                 invalid={!!errors.phone}
@@ -286,62 +324,84 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
                             >
                                 <Input
                                     value={formData.phone}
-                                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            'phone',
+                                            e.target.value,
+                                        )
+                                    }
                                     placeholder="Enter phone number"
                                 />
                             </FormItem>
 
-                            <FormItem
-                                label="Email"
-                            >
+                            <FormItem label="Email">
                                 <Input
                                     type="email"
                                     value={formData.email}
-                                    onChange={(e) => handleInputChange('email', e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            'email',
+                                            e.target.value,
+                                        )
+                                    }
                                     placeholder="Enter email address"
                                 />
                             </FormItem>
 
-                            <FormItem
-                                label="Profession"
-                            >
+                            <FormItem label="Profession">
                                 <Input
                                     value={formData.profession}
-                                    onChange={(e) => handleInputChange('profession', e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            'profession',
+                                            e.target.value,
+                                        )
+                                    }
                                     placeholder="Enter profession"
                                 />
                             </FormItem>
 
-                            <FormItem
-                                label="Height (cm)"
-                            >
+                            <FormItem label="Height (cm)">
                                 <Input
                                     type="number"
                                     value={formData.height}
-                                    onChange={(e) => handleInputChange('height', e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            'height',
+                                            e.target.value,
+                                        )
+                                    }
                                     placeholder="Enter height in cm"
                                 />
                             </FormItem>
 
-                            <FormItem
-                                label="Weight (kg)"
-                            >
+                            <FormItem label="Weight (kg)">
                                 <Input
                                     type="number"
                                     value={formData.weight}
-                                    onChange={(e) => handleInputChange('weight', e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            'weight',
+                                            e.target.value,
+                                        )
+                                    }
                                     placeholder="Enter weight in kg"
                                 />
                             </FormItem>
 
-                            <FormItem
-                                label="Diet"
-                            >
+                            <FormItem label="Diet">
                                 <Select
                                     options={dietOptions}
                                     placeholder="Select diet type"
-                                    value={dietOptions.find(opt => opt.value === formData.diet)}
-                                    onChange={(option) => handleInputChange('diet', option?.value || '')}
+                                    value={dietOptions.find(
+                                        (opt) => opt.value === formData.diet,
+                                    )}
+                                    onChange={(option) =>
+                                        handleInputChange(
+                                            'diet',
+                                            option?.value || '',
+                                        )
+                                    }
                                 />
                             </FormItem>
                         </div>
@@ -349,9 +409,7 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
 
                     {/* Image Upload */}
                     <div className="mt-6">
-                        <FormItem
-                            label="Profile Image"
-                        >
+                        <FormItem label="Profile Image">
                             <Upload
                                 onChange={handleImageUpload}
                                 showList={false}
@@ -361,9 +419,9 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
                                 <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
                                     {formData.image ? (
                                         <div className="space-y-2">
-                                            <img 
-                                                src={formData.image} 
-                                                alt="Preview" 
+                                            <img
+                                                src={formData.image}
+                                                alt="Preview"
                                                 className="w-20 h-20 object-cover rounded-full mx-auto"
                                             />
                                             <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -373,7 +431,9 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
                                     ) : (
                                         <div className="space-y-2">
                                             <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto flex items-center justify-center">
-                                                <span className="text-2xl">📷</span>
+                                                <span className="text-2xl">
+                                                    📷
+                                                </span>
                                             </div>
                                             <p className="text-sm text-gray-600 dark:text-gray-400">
                                                 Click to upload image
@@ -410,4 +470,4 @@ const AddFamilyMemberForm = ({ nodeUserId, onSubmit, onCancel }: AddFamilyMember
     )
 }
 
-export default AddFamilyMemberForm 
+export default AddFamilyMemberForm
