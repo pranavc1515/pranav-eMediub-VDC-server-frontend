@@ -5,6 +5,31 @@ const phoneRegex = /^(\+91)?[6-9]\d{9}$/
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
 
+// Helper function to format phone number with +91 prefix
+export const formatPhoneNumber = (phone: string): string => {
+  if (!phone) return phone
+  
+  // Remove any existing spaces, dashes, or other formatting
+  const cleanPhone = phone.replace(/[\s\-\(\)]/g, '')
+  
+  // If already starts with +91, return as is
+  if (cleanPhone.startsWith('+91')) {
+    return cleanPhone
+  }
+  
+  // If starts with 91 (without +), add the +
+  if (cleanPhone.startsWith('91') && cleanPhone.length === 12) {
+    return '+' + cleanPhone
+  }
+  
+  // If it's a 10-digit Indian number, add +91
+  if (/^[6-9]\d{9}$/.test(cleanPhone)) {
+    return '+91' + cleanPhone
+  }
+  
+  return cleanPhone
+}
+
 // Common validation messages
 export const ValidationMessages = {
   required: 'This field is required',
@@ -14,7 +39,6 @@ export const ValidationMessages = {
   passwordMismatch: 'Passwords do not match',
   invalidDate: 'Please enter a valid date',
   futureDateNotAllowed: 'Future dates are not allowed',
-  minimumAge: 'Age must be at least 18 years',
   maximumAge: 'Age cannot exceed 120 years',
   invalidUrl: 'Please enter a valid URL',
   invalidNumber: 'Please enter a valid number',
@@ -45,7 +69,8 @@ export const BaseValidations = {
   
   phone: z.string()
     .min(1, ValidationMessages.required)
-    .regex(phoneRegex, ValidationMessages.invalidPhone),
+    .transform(formatPhoneNumber)
+    .refine((phone) => phoneRegex.test(phone), ValidationMessages.invalidPhone),
   
   password: z.string()
     .min(1, ValidationMessages.required)
@@ -67,11 +92,6 @@ export const BaseValidations = {
       const birthDate = new Date(date)
       return birthDate <= new Date()
     }, ValidationMessages.futureDateNotAllowed)
-    .refine((date) => {
-      const birthDate = new Date(date)
-      const age = calculateAge(birthDate)
-      return age >= 18
-    }, ValidationMessages.minimumAge)
     .refine((date) => {
       const birthDate = new Date(date)
       const age = calculateAge(birthDate)

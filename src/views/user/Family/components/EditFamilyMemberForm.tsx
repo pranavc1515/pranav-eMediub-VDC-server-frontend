@@ -7,6 +7,7 @@ import FormItem from '@/components/ui/Form/FormItem'
 import FormContainer from '@/components/ui/Form/FormContainer'
 import Upload from '@/components/ui/Upload'
 import type { FamilyMember, UpdateFamilyMemberRequest } from '@/services/FamilyService'
+import { formatPhoneNumber } from '@/utils/validationSchemas'
 
 interface EditFamilyMemberFormProps {
     member: FamilyMember
@@ -94,12 +95,24 @@ const EditFamilyMemberForm = ({ member, onSubmit, onCancel }: EditFamilyMemberFo
         if (!formData.name.trim()) {
             newErrors.name = 'Name is required'
         }
+        
+        if (formData.phone && formData.phone.trim()) {
+            const formattedPhone = formatPhoneNumber(formData.phone)
+            const phoneRegex = /^(\+91)?[6-9]\d{9}$/
+            if (!phoneRegex.test(formattedPhone)) {
+                newErrors.phone = 'Please enter a valid 10-digit phone number'
+            }
+        }
 
         setErrors(newErrors)
         return Object.keys(newErrors).length === 0
     }
 
     const handleInputChange = (field: keyof FormData, value: string) => {
+        if (field === 'phone') {
+            value = formatPhoneNumber(value)
+        }
+        
         setFormData(prev => ({ ...prev, [field]: value }))
         if (errors[field]) {
             setErrors(prev => ({ ...prev, [field]: '' }))
@@ -237,6 +250,7 @@ const EditFamilyMemberForm = ({ member, onSubmit, onCancel }: EditFamilyMemberFo
                                     value={formData.phone}
                                     onChange={(e) => handleInputChange('phone', e.target.value)}
                                     placeholder="+91XXXXXXXXXX"
+                                    prefix="+91"
                                 />
                             </FormItem>
 

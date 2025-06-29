@@ -8,6 +8,7 @@ import FormContainer from '@/components/ui/Form/FormContainer'
 import Upload from '@/components/ui/Upload'
 import { useSessionUser } from '@/store/authStore'
 import type { AddFamilyMemberRequest } from '@/services/FamilyService'
+import { formatPhoneNumber } from '@/utils/validationSchemas'
 
 interface AddFamilyMemberFormProps {
     nodeUserId: number | null
@@ -105,6 +106,13 @@ const AddFamilyMemberForm = ({
         }
         if (!formData.phone.trim()) {
             newErrors.phone = 'Phone number is required'
+        } else {
+            // Validate phone number format
+            const formattedPhone = formatPhoneNumber(formData.phone)
+            const phoneRegex = /^(\+91)?[6-9]\d{9}$/
+            if (!phoneRegex.test(formattedPhone)) {
+                newErrors.phone = 'Please enter a valid 10-digit phone number'
+            }
         }
         if (!formData.age.trim()) {
             newErrors.age = 'Age is required'
@@ -121,6 +129,11 @@ const AddFamilyMemberForm = ({
     }
 
     const handleInputChange = (field: keyof FormData, value: string) => {
+        // Format phone number when it changes
+        if (field === 'phone') {
+            value = formatPhoneNumber(value)
+        }
+        
         setFormData((prev) => ({ ...prev, [field]: value }))
         if (errors[field]) {
             setErrors((prev) => ({ ...prev, [field]: '' }))
@@ -331,6 +344,7 @@ const AddFamilyMemberForm = ({
                                         )
                                     }
                                     placeholder="Enter phone number"
+                                    prefix="+91"
                                 />
                             </FormItem>
 
