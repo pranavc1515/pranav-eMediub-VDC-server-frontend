@@ -162,7 +162,7 @@ const Profile = () => {
                                     {profile.DoctorProfessional.status}
                                 </div>
                             )}
-                            {profile.status === 'active' ? (
+                            {profile.status === 'Active' ? (
                                 <div className="inline-block rounded-full bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1">
                                     Active
                                 </div>
