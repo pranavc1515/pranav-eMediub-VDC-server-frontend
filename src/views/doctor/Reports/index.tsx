@@ -22,6 +22,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useSessionUser } from '@/store/authStore'
+import { useSearchParams } from 'react-router-dom'
 
 // Select option interface
 interface SelectOption {
@@ -43,6 +44,7 @@ type UploadReportFormData = z.infer<typeof uploadReportSchema>
 
 const DoctorReports = () => {
     const user = useSessionUser((state) => state.user)
+    const [searchParams, setSearchParams] = useSearchParams()
     const [reports, setReports] = useState<ReportData[]>([])
     const [filteredReports, setFilteredReports] = useState<ReportData[]>([])
     const [loading, setLoading] = useState(false)
@@ -106,6 +108,28 @@ const DoctorReports = () => {
         fetchReports()
     }, [])
 
+    // Check for patientId URL parameter and auto-open upload modal
+    useEffect(() => {
+        const patientId = searchParams.get('patientId')
+        if (patientId) {
+            const patientIdNumber = parseInt(patientId)
+            if (!isNaN(patientIdNumber) && patientIdNumber > 0) {
+                // Set the patient ID in the form
+                setValue('target_user_id', patientIdNumber)
+                // Set doctor name if available
+                if (user.userName) {
+                    setValue('doctor_name', user.userName)
+                }
+                // Open the upload modal
+                setShowUploadModal(true)
+                // Remove the patientId parameter from URL to clean it up
+                const newSearchParams = new URLSearchParams(searchParams)
+                newSearchParams.delete('patientId')
+                setSearchParams(newSearchParams, { replace: true })
+            }
+        }
+    }, [searchParams, setValue, user.userName, setSearchParams])
+
     // Filter reports based on search and status
     useEffect(() => {
         let filtered = reports
@@ -150,7 +174,7 @@ const DoctorReports = () => {
             if (response.status && response.data) {
                 setReports(response.data)
             }
-        } catch (error) {
+        } catch {
             toast.push(
                 <Notification type="danger" title="Error">
                     Failed to fetch reports
@@ -201,10 +225,11 @@ const DoctorReports = () => {
             } else {
                 throw new Error(response.message)
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to upload report'
             toast.push(
                 <Notification type="danger" title="Error">
-                    {error.message || 'Failed to upload report'}
+                    {errorMessage}
                 </Notification>,
                 { placement: 'top-center' }
             )
@@ -231,7 +256,7 @@ const DoctorReports = () => {
                     )
                     fetchReports()
                 }
-            } catch (error) {
+            } catch {
                 toast.push(
                     <Notification type="danger" title="Error">
                         Failed to delete report
