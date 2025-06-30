@@ -788,9 +788,7 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
     if (showConsultationComplete && !isDoctor) {
         return (
             <ConsultationComplete
-                onRedirectToPrescriptions={() =>
-                    navigate('/user/prescriptions')
-                }
+                onRedirectToReport={() => navigate('/user/reports')}
             />
         )
     }
@@ -888,7 +886,7 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                 </div>
 
                 {/* Prescription Button (Only for doctors) */}
-                {isDoctor && (
+                {/* {isDoctor && (
                     <div className="absolute top-4 right-4 z-10">
                         <Button
                             variant="solid"
@@ -902,7 +900,7 @@ const VideoCallInterface = ({ onCallEnd }: VideoCallInterfaceProps) => {
                             Create Prescription
                         </Button>
                     </div>
-                )}
+                )} */}
             </div>
 
             <CallControls

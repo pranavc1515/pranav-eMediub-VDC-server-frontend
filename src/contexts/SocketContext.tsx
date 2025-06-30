@@ -37,16 +37,30 @@ export const SocketContextProvider: React.FC<SocketContextProviderProps> = ({
     const { user } = useAuth()
 
     useEffect(() => {
-        if (!user?.userId) return
+        // Get user ID - the authStore should have already mapped it to userId
+        const userId = user?.userId
+        if (!userId) {
+            console.log('SocketContext - No valid user ID found:', {
+                user,
+                userId,
+            })
+            return
+        }
 
         // Determine if user is a doctor
         const isDoctor = user.authority?.includes('doctor') || false
+        console.log(
+            'SocketContext - User type:',
+            isDoctor ? 'doctor' : 'patient',
+            'UserID:',
+            userId,
+        )
 
         // Initialize socket with appropriate user type
         const newSocket = io(API_URL, {
             query: {
                 userType: isDoctor ? 'doctor' : 'patient',
-                userId: user.userId,
+                userId: userId,
             },
             transports: ['websocket', 'polling'],
             secure: true,
@@ -55,7 +69,7 @@ export const SocketContextProvider: React.FC<SocketContextProviderProps> = ({
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
             timeout: 20000,
-            withCredentials: true
+            withCredentials: true,
         })
 
         // Set up event listeners

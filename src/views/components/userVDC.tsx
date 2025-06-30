@@ -582,7 +582,7 @@ const UserVDC = () => {
                             </div>
                         ) : original.status === 'completed' ? (
                             <span className="text-gray-500">
-                                No prescription added
+                                No report added
                             </span>
                         ) : null}
                     </div>

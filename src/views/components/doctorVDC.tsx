@@ -324,12 +324,9 @@ const DoctorVDC = () => {
         document.body.removeChild(link)
     }
 
-    const handleAddPrescription = (
-        consultationId: string,
-        patientId: number,
-    ) => {
+    const handleAddReport = (consultationId: string, patientId: number) => {
         setPrescriptionDetails(consultationId, patientId.toString())
-        navigate('/doctor/upload-prescription')
+        navigate('/doctor/reports?patientId=' + patientId)
     }
 
     const handleToggleAvailability = () => {
@@ -572,13 +569,13 @@ const DoctorVDC = () => {
                                         variant="solid"
                                         icon={<HiPlus />}
                                         onClick={() =>
-                                            handleAddPrescription(
+                                            handleAddReport(
                                                 data.id as string,
                                                 data.patientId as number,
                                             )
                                         }
                                     >
-                                        Add Now
+                                        Add Report
                                     </Button>
                                 </div>
                             )}
@@ -587,7 +584,7 @@ const DoctorVDC = () => {
                 },
             },
         ],
-        [handleDownloadPrescription, handleAddPrescription],
+        [handleDownloadPrescription, handleAddReport],
     )
 
     const renderPatientQueueCard = useCallback(

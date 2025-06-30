@@ -329,7 +329,7 @@ const DoctorVDC = () => {
         patientId: number,
     ) => {
         setPrescriptionDetails(consultationId, patientId.toString())
-        navigate('/doctor/upload-prescription')
+        navigate('/doctor/reports?patientId=' + patientId)
     }
 
     const handleToggleAvailability = () => {
@@ -578,7 +578,7 @@ const DoctorVDC = () => {
                                             )
                                         }
                                     >
-                                        Add Now
+                                        Add Report
                                     </Button>
                                 </div>
                             )}

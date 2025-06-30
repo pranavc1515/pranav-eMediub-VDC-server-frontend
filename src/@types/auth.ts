@@ -42,12 +42,17 @@ export type AuthResult = Promise<{
 
 export type User = {
     userId?: string | null
+    patientId?: string | null
+    id?: string | null
     avatar?: string | null
     userName?: string | null
+    firstName?: string | null
+    lastName?: string | null
     email?: string | null
     phoneNumber?: string | null
     authority?: string[]
     image?: string | null
+    [key: string]: any // Allow additional properties from localStorage
 }
 
 export type Token = {

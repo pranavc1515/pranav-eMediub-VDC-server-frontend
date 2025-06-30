@@ -1,4 +1,4 @@
-import { useRef, useImperativeHandle, forwardRef } from 'react'
+import { useRef, useImperativeHandle, forwardRef, useEffect } from 'react'
 import AuthContext from './AuthContext'
 import appConfig from '@/configs/app.config'
 import { useSessionUser, useToken } from '@/store/authStore'
@@ -68,11 +68,17 @@ function AuthProvider({ children }: AuthProviderProps) {
     const setSessionSignedIn = useSessionUser(
         (state) => state.setSessionSignedIn,
     )
+    const loadUserFromStorage = useSessionUser((state) => state.loadUserFromStorage)
     const { token, setToken } = useToken()
 
-    const authenticated = Boolean(token && signedIn)
+    const authenticated = Boolean((token && signedIn) || (user?.userId && user?.authority?.length > 0))
 
     const navigatorRef = useRef<IsolatedNavigatorRef>(null)
+
+    // Load user data from localStorage on initialization
+    useEffect(() => {
+        loadUserFromStorage()
+    }, [loadUserFromStorage])
 
     const redirect = () => {
         const search = window.location.search

@@ -36,6 +36,7 @@ export interface StorageKeys {
     DOCTOR_DATA: 'doctor_data'
     CURRENT_USER_TYPE: 'current_user_type'
     LOGIN_TIMESTAMP: 'login_timestamp'
+    SESSION_USER: 'sessionUser'
 }
 
 const STORAGE_KEYS: StorageKeys = {
@@ -43,6 +44,7 @@ const STORAGE_KEYS: StorageKeys = {
     DOCTOR_DATA: 'doctor_data',
     CURRENT_USER_TYPE: 'current_user_type',
     LOGIN_TIMESTAMP: 'login_timestamp',
+    SESSION_USER: 'sessionUser',
 }
 
 class UserStorageManager {
@@ -58,7 +60,9 @@ class UserStorageManager {
     }
 
     private getStorageKey(userType: 'user' | 'doctor'): string {
-        return userType === 'doctor' ? STORAGE_KEYS.DOCTOR_DATA : STORAGE_KEYS.USER_DATA
+        return userType === 'doctor'
+            ? STORAGE_KEYS.DOCTOR_DATA
+            : STORAGE_KEYS.USER_DATA
     }
 
     /**
@@ -77,23 +81,31 @@ class UserStorageManager {
             }
 
             const storageKey = this.getStorageKey(userData.userType)
-            
+
             // Store user-specific data
             localStorage.setItem(storageKey, JSON.stringify(dataToStore))
-            
+
             // Store current user type
-            localStorage.setItem(STORAGE_KEYS.CURRENT_USER_TYPE, userData.userType)
-            
+            localStorage.setItem(
+                STORAGE_KEYS.CURRENT_USER_TYPE,
+                userData.userType,
+            )
+
             // Store login timestamp
-            localStorage.setItem(STORAGE_KEYS.LOGIN_TIMESTAMP, dataToStore.loginTimestamp)
-            
+            localStorage.setItem(
+                STORAGE_KEYS.LOGIN_TIMESTAMP,
+                dataToStore.loginTimestamp,
+            )
+
             // Store token (maintaining backward compatibility)
             localStorage.setItem('token', userData.token)
-            
+
             // Legacy storage for backward compatibility
             localStorage.setItem(userData.userType, JSON.stringify(dataToStore))
 
-            console.log(`${userData.userType} data saved successfully to localStorage`)
+            console.log(
+                `${userData.userType} data saved successfully to localStorage`,
+            )
             return true
         } catch (error) {
             console.error('Error saving user data to localStorage:', error)
@@ -117,12 +129,15 @@ class UserStorageManager {
 
             const storageKey = this.getStorageKey(currentUserType)
             const storedData = localStorage.getItem(storageKey)
-            
+
             if (!storedData) return null
-            
+
             return JSON.parse(storedData) as UserStorageData
         } catch (error) {
-            console.error('Error retrieving user data from localStorage:', error)
+            console.error(
+                'Error retrieving user data from localStorage:',
+                error,
+            )
             return null
         }
     }
@@ -132,9 +147,12 @@ class UserStorageManager {
      */
     getCurrentUserType(): 'user' | 'doctor' | null {
         if (!this.isLocalStorageAvailable()) return null
-        
+
         try {
-            return localStorage.getItem(STORAGE_KEYS.CURRENT_USER_TYPE) as 'user' | 'doctor' | null
+            return localStorage.getItem(STORAGE_KEYS.CURRENT_USER_TYPE) as
+                | 'user'
+                | 'doctor'
+                | null
         } catch (error) {
             console.error('Error getting current user type:', error)
             return null
@@ -154,7 +172,7 @@ class UserStorageManager {
      */
     getLoginTimestamp(): string | null {
         if (!this.isLocalStorageAvailable()) return null
-        
+
         try {
             return localStorage.getItem(STORAGE_KEYS.LOGIN_TIMESTAMP)
         } catch (error) {
@@ -198,8 +216,10 @@ class UserStorageManager {
             localStorage.removeItem(STORAGE_KEYS.DOCTOR_DATA)
             localStorage.removeItem(STORAGE_KEYS.CURRENT_USER_TYPE)
             localStorage.removeItem(STORAGE_KEYS.LOGIN_TIMESTAMP)
+            localStorage.removeItem(STORAGE_KEYS.SESSION_USER)
             localStorage.removeItem('token')
-            
+
+            window.location.reload()
             // Remove legacy storage
             localStorage.removeItem('user')
             localStorage.removeItem('doctor')
@@ -222,17 +242,20 @@ class UserStorageManager {
             const storageKey = this.getStorageKey(userType)
             localStorage.removeItem(storageKey)
             localStorage.removeItem(userType) // Legacy
-            
+
             // If this was the current user, clear current user type
             if (this.getCurrentUserType() === userType) {
                 localStorage.removeItem(STORAGE_KEYS.CURRENT_USER_TYPE)
                 localStorage.removeItem(STORAGE_KEYS.LOGIN_TIMESTAMP)
                 localStorage.removeItem('token')
             }
-            
+
             return true
         } catch (error) {
-            console.error(`Error clearing ${userType} data from localStorage:`, error)
+            console.error(
+                `Error clearing ${userType} data from localStorage:`,
+                error,
+            )
             return false
         }
     }
@@ -264,12 +287,16 @@ const userStorageManager = new UserStorageManager()
 export default userStorageManager
 
 // Export convenient functions for direct use
-export const saveUserToStorage = (userData: UserStorageData) => userStorageManager.saveUserData(userData)
-export const getUserFromStorage = (userType?: 'user' | 'doctor') => userStorageManager.getUserData(userType)
+export const saveUserToStorage = (userData: UserStorageData) =>
+    userStorageManager.saveUserData(userData)
+export const getUserFromStorage = (userType?: 'user' | 'doctor') =>
+    userStorageManager.getUserData(userType)
 export const getCurrentUser = () => userStorageManager.getUserData()
 export const getCurrentUserType = () => userStorageManager.getCurrentUserType()
 export const getCurrentUserId = () => userStorageManager.getCurrentUserId()
 export const isUserLoggedIn = () => userStorageManager.isUserLoggedIn()
-export const updateUserData = (updates: Partial<UserStorageData>) => userStorageManager.updateUserData(updates)
+export const updateUserData = (updates: Partial<UserStorageData>) =>
+    userStorageManager.updateUserData(updates)
 export const clearAllUserData = () => userStorageManager.clearUserData()
-export const clearUserTypeData = (userType: 'user' | 'doctor') => userStorageManager.clearUserTypeData(userType) 
+export const clearUserTypeData = (userType: 'user' | 'doctor') =>
+    userStorageManager.clearUserTypeData(userType)
