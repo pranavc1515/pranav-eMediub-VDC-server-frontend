@@ -95,14 +95,6 @@ const EditFamilyMemberForm = ({ member, onSubmit, onCancel }: EditFamilyMemberFo
         if (!formData.name.trim()) {
             newErrors.name = 'Name is required'
         }
-        
-        if (formData.phone && formData.phone.trim()) {
-            const formattedPhone = formatPhoneNumber(formData.phone)
-            const phoneRegex = /^(\+91)?[6-9]\d{9}$/
-            if (!phoneRegex.test(formattedPhone)) {
-                newErrors.phone = 'Please enter a valid 10-digit phone number'
-            }
-        }
 
         setErrors(newErrors)
         return Object.keys(newErrors).length === 0
@@ -110,7 +102,8 @@ const EditFamilyMemberForm = ({ member, onSubmit, onCancel }: EditFamilyMemberFo
 
     const handleInputChange = (field: keyof FormData, value: string) => {
         if (field === 'phone') {
-            value = formatPhoneNumber(value)
+            value = value.replace(/^\+91/, '')
+            value = value.replace(/[^\d]/g, '')
         }
         
         setFormData(prev => ({ ...prev, [field]: value }))
@@ -249,8 +242,9 @@ const EditFamilyMemberForm = ({ member, onSubmit, onCancel }: EditFamilyMemberFo
                                 <Input
                                     value={formData.phone}
                                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                                    placeholder="+91XXXXXXXXXX"
+                                    placeholder="XXXXXXXXXX"
                                     prefix="+91"
+                                    maxLength={10}
                                 />
                             </FormItem>
 

@@ -106,13 +106,8 @@ const AddFamilyMemberForm = ({
         }
         if (!formData.phone.trim()) {
             newErrors.phone = 'Phone number is required'
-        } else {
-            // Validate phone number format
-            const formattedPhone = formatPhoneNumber(formData.phone)
-            const phoneRegex = /^(\+91)?[6-9]\d{9}$/
-            if (!phoneRegex.test(formattedPhone)) {
-                newErrors.phone = 'Please enter a valid 10-digit phone number'
-            }
+        } else if (formData.phone.length !== 10) {
+            newErrors.phone = 'Phone number must be 10 digits'
         }
         if (!formData.age.trim()) {
             newErrors.age = 'Age is required'
@@ -129,9 +124,11 @@ const AddFamilyMemberForm = ({
     }
 
     const handleInputChange = (field: keyof FormData, value: string) => {
-        // Format phone number when it changes
         if (field === 'phone') {
-            value = formatPhoneNumber(value)
+            // Remove any non-digit characters and +91 prefix
+            value = value.replace(/^\+91/, '').replace(/[^\d]/g, '')
+            // Limit to 10 digits
+            value = value.slice(0, 10)
         }
         
         setFormData((prev) => ({ ...prev, [field]: value }))
@@ -179,7 +176,7 @@ const AddFamilyMemberForm = ({
                 nodeUserId: finalNodeUserId,
                 relationName: formData.relationName,
                 name: formData.name,
-                phone: formData.phone,
+                phone: `+91${formData.phone}`,
                 email: formData.email,
                 age: formData.age,
                 dob: formData.dob,
@@ -343,8 +340,9 @@ const AddFamilyMemberForm = ({
                                             e.target.value,
                                         )
                                     }
-                                    placeholder="Enter phone number"
+                                    placeholder="Enter 10 digit number"
                                     prefix="+91"
+                                    maxLength={10}
                                 />
                             </FormItem>
 
