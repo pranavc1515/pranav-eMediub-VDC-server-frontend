@@ -83,6 +83,12 @@ export const SocketContextProvider: React.FC<SocketContextProviderProps> = ({
 
         newSocket.on('disconnect', (reason) => {
             console.log('Socket disconnected:', reason)
+            // Don't automatically reconnect on client-initiated disconnects
+            if (reason === 'io client disconnect') {
+                console.log('Client initiated disconnect, not auto-reconnecting')
+                return
+            }
+            // For other disconnect reasons, the socket will auto-reconnect due to reconnection settings
         })
 
         // Store socket in state

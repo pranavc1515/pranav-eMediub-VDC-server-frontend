@@ -12,7 +12,7 @@ export type ConsultationResponse = {
     roomName?: string
     doctorId?: number
     patientId?: number
-    data?: any
+    data?: unknown
 }
 
 export type ConsultationStatusResponse = {

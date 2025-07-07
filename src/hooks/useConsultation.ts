@@ -26,7 +26,6 @@ interface UseConsultationReturn {
     consultationHistory: ConsultationRecord[]
     pagination: PaginationInfo
     startConsultation: (patientId: number) => Promise<ConsultationResponse>
-    nextConsultation: () => Promise<ConsultationResponse>
     getDoctorHistory: (page?: number, limit?: number) => Promise<void>
     getPatientHistory: (patientId: number, page?: number, limit?: number) => Promise<void>
     cancelConsultation: (
@@ -78,20 +77,7 @@ const useConsultation = ({
         }
     }
 
-    const nextConsultation = async (): Promise<ConsultationResponse> => {
-        try {
-            setIsLoading(true)
-            setError(null)
-            const response =
-                await ConsultationService.nextConsultation(doctorId)
-            return response
-        } catch (err) {
-            handleError(err as AxiosError<ApiErrorData>)
-            throw err
-        } finally {
-            setIsLoading(false)
-        }
-    }
+
 
     const getDoctorHistory = useCallback(
         async (page: number = 1, limit: number = 15): Promise<void> => {
@@ -197,7 +183,6 @@ const useConsultation = ({
         consultationHistory,
         pagination,
         startConsultation,
-        nextConsultation,
         getDoctorHistory,
         getPatientHistory,
         cancelConsultation,

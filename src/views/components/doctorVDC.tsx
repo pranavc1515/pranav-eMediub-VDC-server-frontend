@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { Card, Button, Badge, Avatar } from '@/components/ui'
+import { Card, Button, Badge } from '@/components/ui'
 import Container from '@/components/shared/Container'
 import { useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
@@ -15,16 +15,12 @@ import ReactMuiTableListView, {
 } from '@/components/shared/ReactMuiTableListView'
 import { HiVideoCamera, HiDownload, HiPlus } from 'react-icons/hi'
 import type { ConsultationRecord } from '@/services/ConsultationService'
+import type { PatientQueueEntry } from '@/services/PatientQueue'
 
-interface QueueData extends Record<string, unknown> {
-    id: number
-    doctorId: number
-    patientId: number
-    status: 'waiting' | 'in_consultation' | 'left'
-    position: number
+interface QueueData extends PatientQueueEntry {
     roomName: string
     joinedAt: string
-    patient: {
+    patient: PatientQueueEntry['patient'] & {
         name: string
         phone?: string
         email?: string
@@ -258,11 +254,11 @@ const DoctorVDC = () => {
                                 'Starting new consultation for patient:',
                                 patientId,
                                 'Room:',
-                                queueEntry.roomName,
+                                `room-${queueEntry.id}`,
                             )
                             handleStartConsultation(
                                 patientId,
-                                queueEntry.roomName || `room-${Date.now()}`,
+                                `room-${queueEntry.id}`,
                             )
                         } else {
                             console.error(
@@ -280,10 +276,7 @@ const DoctorVDC = () => {
                     (p) => p.patientId === patientId,
                 )
                 if (queueEntry) {
-                    handleStartConsultation(
-                        patientId,
-                        queueEntry.roomName || `room-${Date.now()}`,
-                    )
+                    handleStartConsultation(patientId, `room-${queueEntry.id}`)
                 } else {
                     console.error(
                         'Queue entry not found for patient:',
@@ -299,10 +292,7 @@ const DoctorVDC = () => {
                 (p) => p.patientId === patientId,
             )
             if (queueEntry) {
-                handleStartConsultation(
-                    patientId,
-                    queueEntry.roomName || `room-${Date.now()}`,
-                )
+                handleStartConsultation(patientId, `room-${queueEntry.id}`)
             } else {
                 console.error('Queue entry not found for patient:', patientId)
                 alert('Unable to find patient in queue')
@@ -840,11 +830,18 @@ const DoctorVDC = () => {
                 <ReactMuiTableListView<QueueData>
                     tableTitle="Patients Queue"
                     columns={patientQueueColumns}
-                    data={patientQueueData.map((queue) => ({
-                        ...queue,
-                        roomName: queue.roomName || `room-${queue.id}`,
-                        joinedAt: queue.joinedAt || new Date().toISOString(),
-                    }))}
+                    data={patientQueueData.map(
+                        (queue) =>
+                            ({
+                                ...queue,
+                                roomName: `${queue.roomName}`,
+                                joinedAt: new Date().toISOString(),
+                                patient: {
+                                    ...queue.patient,
+                                    name: queue.patient.name,
+                                },
+                            }) as QueueData,
+                    )}
                     enablePagination={true}
                     enableSearch={false}
                     enableCardView={false}

@@ -1,8 +1,17 @@
 import ApiService from './ApiService'
 
+interface ConsultationData {
+    consultationId: string
+    startTime: string
+    scheduledDate: string
+    doctorId: number
+    patientId: number
+}
+
 interface TokenResponse {
     success: boolean
     token: string
+    consultationData?: ConsultationData
 }
 
 interface RoomResponse {
