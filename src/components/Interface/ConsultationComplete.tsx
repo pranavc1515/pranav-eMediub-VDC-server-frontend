@@ -1,5 +1,6 @@
-import React from 'react'
-import { Button } from '@/components/ui'
+import React, { useEffect } from 'react'
+import { Button, Notification } from '@/components/ui'
+import { toast } from '@/components/ui/toast'
 import { FaCheckCircle, FaNotesMedical, FaHeart } from 'react-icons/fa'
 
 interface ConsultationCompleteProps {
@@ -9,6 +10,24 @@ interface ConsultationCompleteProps {
 const ConsultationComplete: React.FC<ConsultationCompleteProps> = ({
     onRedirectToReport,
 }) => {
+    // Show welcome completion notification when component mounts
+    useEffect(() => {
+        toast.push(
+            <Notification type="success" title="Consultation Complete">
+                Your video consultation has been successfully completed. Thank you for using our service!
+            </Notification>
+        )
+    }, [])
+
+    const handleRedirectToReport = () => {
+        toast.push(
+            <Notification type="info" title="Viewing Reports">
+                Redirecting to your consultation reports and prescriptions...
+            </Notification>
+        )
+        onRedirectToReport()
+    }
+
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-white/95 backdrop-blur-sm z-[30]">
             <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4 text-center border border-gray-200">
@@ -47,7 +66,7 @@ const ConsultationComplete: React.FC<ConsultationCompleteProps> = ({
                         size="lg"
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 shadow-lg transition-all duration-200"
                         icon={<FaNotesMedical />}
-                        onClick={onRedirectToReport}
+                        onClick={handleRedirectToReport}
                     >
                         View My Reports
                     </Button>

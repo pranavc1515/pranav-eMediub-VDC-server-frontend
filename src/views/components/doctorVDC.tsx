@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { Card, Button, Badge } from '@/components/ui'
+import { Card, Button, Badge, Notification } from '@/components/ui'
+import { toast } from '@/components/ui/toast'
 import Container from '@/components/shared/Container'
 import { useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
@@ -68,6 +69,7 @@ const DoctorVDC = () => {
     const [isAvailable, setIsAvailable] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [checkingStatus, setCheckingStatus] = useState(false)
+    const [previousQueueData, setPreviousQueueData] = useState<PatientQueueEntry[]>([])
 
     const navigate = useNavigate()
     const { socket } = useSocketContext()
@@ -81,17 +83,101 @@ const DoctorVDC = () => {
         doctorId: parseInt(user.userId),
     })
 
-    console.log('patientQueueData', typeof patientQueueData)
+    // Debug log for queue updates
+    useEffect(() => {
+        console.log('Queue Data Updated:', patientQueueData)
+    }, [patientQueueData])
 
     const { consultationHistory, pagination, isLoading, getDoctorHistory } =
         useConsultation({ doctorId })
 
-    // Effect to handle doctor's queue updates
+    // Enhanced queue monitoring with notifications
+    const monitorQueueChanges = useCallback(
+        (newQueueData: PatientQueueEntry[]) => {
+            console.log('Monitoring Queue Changes:', {
+                previous: previousQueueData,
+                new: newQueueData,
+            })
+
+            // Only process if we have previous data to compare against
+            // For first load, just save the data
+            if (previousQueueData.length === 0) {
+                console.log('Initial queue data set')
+                setPreviousQueueData(newQueueData)
+                return
+            }
+
+            // Check for new patients joining
+            const newPatients = newQueueData.filter(
+                (newPatient) =>
+                    !previousQueueData.some(
+                        (prevPatient) =>
+                            prevPatient.patientId === newPatient.patientId,
+                    ),
+            )
+
+            // Check for patients leaving
+            const leftPatients = previousQueueData.filter(
+                (prevPatient) =>
+                    !newQueueData.some(
+                        (newPatient) =>
+                            newPatient.patientId === prevPatient.patientId,
+                    ),
+            )
+
+            console.log('Queue Changes Detected:', {
+                newPatients,
+                leftPatients,
+            })
+
+            // Notify about new patients joining
+            newPatients.forEach((patient) => {
+                console.log('New patient notification:', patient)
+                toast.push(
+                    <Notification type="info" title="New Patient in Queue">
+                        {patient.patient?.name || 'A patient'} has joined your
+                        consultation queue at position #{patient.position}
+                    </Notification>,
+                )
+            })
+
+            // Notify about patients leaving
+            leftPatients.forEach((patient) => {
+                console.log('Patient left notification:', patient)
+                toast.push(
+                    <Notification type="warning" title="Patient Left Queue">
+                        {patient.patient?.name || 'A patient'} has left your
+                        consultation queue
+                    </Notification>,
+                )
+            })
+
+            // Update previous queue data
+            setPreviousQueueData(newQueueData)
+        },
+        [previousQueueData],
+    )
+
+    // Effect to handle doctor's queue updates with improved socket handling
     useEffect(() => {
         if (socket) {
+            console.log('Setting up socket listeners for queue changes')
+            
             // Listen for queue updates
             socket.on('QUEUE_CHANGED', () => {
-                // Fetch latest queue when socket event is received
+                console.log('QUEUE_CHANGED event received')
+                fetchQueue()
+            })
+
+            // Listen for patient join events specifically
+            socket.on('PATIENT_JOINED_QUEUE', (data) => {
+                console.log('PATIENT_JOINED_QUEUE event received:', data)
+                fetchQueue()
+            })
+
+            // Listen for patient leave events
+            socket.on('PATIENT_LEFT_QUEUE', (data) => {
+                console.log('PATIENT_LEFT_QUEUE event received:', data)
                 fetchQueue()
             })
 
@@ -99,10 +185,20 @@ const DoctorVDC = () => {
             fetchQueue()
 
             return () => {
+                console.log('Cleaning up socket listeners')
                 socket.off('QUEUE_CHANGED')
+                socket.off('PATIENT_JOINED_QUEUE')
+                socket.off('PATIENT_LEFT_QUEUE')
             }
         }
     }, [user.userId, fetchQueue, socket])
+
+    // Monitor queue changes and trigger notifications
+    useEffect(() => {
+        if (patientQueueData && Array.isArray(patientQueueData)) {
+            monitorQueueChanges(patientQueueData)
+        }
+    }, [patientQueueData, monitorQueueChanges])
 
     useEffect(() => {
         if (doctorId) {
@@ -174,6 +270,14 @@ const DoctorVDC = () => {
                 setPatientId(patientId)
                 setRoomName(response.roomName || roomName)
 
+                // Show success notification
+                toast.push(
+                    <Notification type="success" title="Consultation Started">
+                        Successfully started consultation with patient.
+                        Redirecting to video call...
+                    </Notification>,
+                )
+
                 // Create room for video call
                 await createRoom(patientId, response.roomName || roomName)
 
@@ -188,8 +292,11 @@ const DoctorVDC = () => {
                     'Failed to start consultation:',
                     response.message || response.error,
                 )
-                alert(
-                    `Failed to start consultation: ${response.message || response.error}`,
+                toast.push(
+                    <Notification type="danger" title="Consultation Error">
+                        Failed to start consultation:{' '}
+                        {response.message || response.error}
+                    </Notification>,
                 )
             }
         } catch (error) {
@@ -227,6 +334,15 @@ const DoctorVDC = () => {
                             'Rejoining existing consultation:',
                             statusResponse.consultationId,
                         )
+                        toast.push(
+                            <Notification
+                                type="info"
+                                title="Rejoining Consultation"
+                            >
+                                Reconnecting to ongoing consultation with
+                                patient...
+                            </Notification>,
+                        )
                         navigate(
                             `/doctor/video-consultation/${patientId}?rejoin=true&consultationId=${statusResponse.consultationId}`,
                         )
@@ -234,7 +350,14 @@ const DoctorVDC = () => {
 
                     case 'ended':
                         // Consultation has ended
-                        alert('This consultation has already ended')
+                        toast.push(
+                            <Notification
+                                type="warning"
+                                title="Consultation Ended"
+                            >
+                                This consultation has already been completed.
+                            </Notification>,
+                        )
                         // Refresh the queue and consultation history
                         fetchQueue()
                         getDoctorHistory(
@@ -287,6 +410,12 @@ const DoctorVDC = () => {
             }
         } catch (error) {
             console.error('Error checking consultation status:', error)
+            toast.push(
+                <Notification type="warning" title="Status Check Failed">
+                    Could not verify consultation status. Attempting to start
+                    new consultation...
+                </Notification>,
+            )
             // Fallback to normal flow
             const queueEntry = patientQueueData.find(
                 (p) => p.patientId === patientId,
@@ -295,7 +424,12 @@ const DoctorVDC = () => {
                 handleStartConsultation(patientId, `room-${queueEntry.id}`)
             } else {
                 console.error('Queue entry not found for patient:', patientId)
-                alert('Unable to find patient in queue')
+                toast.push(
+                    <Notification type="danger" title="Patient Not Found">
+                        Unable to find patient in queue. Please refresh and try
+                        again.
+                    </Notification>,
+                )
             }
         } finally {
             setCheckingStatus(false)
@@ -312,10 +446,22 @@ const DoctorVDC = () => {
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
+
+        // Show success notification
+        toast.push(
+            <Notification type="success" title="Download Started">
+                Prescription download has been initiated
+            </Notification>,
+        )
     }
 
     const handleAddReport = (consultationId: string, patientId: number) => {
         setPrescriptionDetails(consultationId, patientId.toString())
+        toast.push(
+            <Notification type="info" title="Creating Report">
+                Redirecting to create consultation report...
+            </Notification>,
+        )
         navigate('/doctor/reports?patientId=' + patientId)
     }
 
@@ -323,6 +469,15 @@ const DoctorVDC = () => {
         setIsAvailable((prev) => {
             const newAvailability = !prev
             emitAvailabilityChange(newAvailability)
+
+            // Show notification for availability change
+            toast.push(
+                <Notification type="success" title="Availability Updated">
+                    You are now {newAvailability ? 'available' : 'unavailable'}{' '}
+                    for consultations
+                </Notification>,
+            )
+
             return newAvailability
         })
     }

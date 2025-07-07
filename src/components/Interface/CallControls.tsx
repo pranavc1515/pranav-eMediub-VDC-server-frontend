@@ -4,6 +4,8 @@ import {
     HiPhone,
     HiVideoCameraSlash,
 } from 'react-icons/hi2'
+import { toast } from '@/components/ui/toast'
+import { Notification } from '@/components/ui'
 
 interface CallControlsProps {
     isMicOn: boolean
@@ -22,12 +24,32 @@ const CallControls = ({
     onToggleVideo,
     onEndCall,
 }: CallControlsProps) => {
+    const handleToggleMic = () => {
+        onToggleMic()
+        // No notification needed for mic toggle
+    }
+
+    const handleToggleVideo = () => {
+        onToggleVideo()
+        // No notification needed for video toggle
+    }
+
+    const handleEndCall = () => {
+        // Show confirmation notification
+        toast.push(
+            <Notification type="warning" title="Ending Call">
+                Ending consultation call...
+            </Notification>,
+        )
+        onEndCall()
+    }
+
     return (
         <div className="h-20 bg-gray-800 flex items-center justify-center gap-6 px-6 shadow-inner border-t border-gray-700">
             {/* Mic toggle */}
             <button
                 aria-label={isMicOn ? 'Mute Microphone' : 'Unmute Microphone'}
-                onClick={onToggleMic}
+                onClick={handleToggleMic}
                 disabled={isConnecting}
                 className={`
                     relative rounded-full p-4 transition-colors duration-200
@@ -42,7 +64,7 @@ const CallControls = ({
             {/* Video toggle */}
             <button
                 aria-label={isVideoOn ? 'Turn off camera' : 'Turn on camera'}
-                onClick={onToggleVideo}
+                onClick={handleToggleVideo}
                 disabled={isConnecting}
                 className={`
                     relative rounded-full p-4 transition-colors duration-200
@@ -61,7 +83,7 @@ const CallControls = ({
             {/* End call */}
             <button
                 aria-label="End call"
-                onClick={onEndCall}
+                onClick={handleEndCall}
                 disabled={isConnecting}
                 className="
                     relative rounded-full p-4 bg-red-700 hover:bg-red-800 focus:outline-none
@@ -77,4 +99,4 @@ const CallControls = ({
     )
 }
 
-export default CallControls 
+export default CallControls

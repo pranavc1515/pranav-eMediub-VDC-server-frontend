@@ -44,10 +44,19 @@ const Family = () => {
             setLoading(true)
             const data = await FamilyService.getFamilyTree()
             setFamilyData(data)
+            
+            // Show success notification only if there are family members
+            if (data?.data?.familyTree?.length > 0) {
+                toast.push(
+                    <Notification type="success" title="Family Tree Loaded">
+                        Successfully loaded {data.data.familyTree.length} family member{data.data.familyTree.length !== 1 ? 's' : ''}
+                    </Notification>,
+                )
+            }
         } catch (error) {
             toast.push(
-                <Notification type="danger" title="Error">
-                    Failed to fetch family tree
+                <Notification type="danger" title="Loading Error">
+                    Failed to load family tree. Please try again.
                 </Notification>,
             )
         } finally {
@@ -144,8 +153,8 @@ const Family = () => {
 
         if (!finalNodeUserId) {
             toast.push(
-                <Notification type="danger" title="Error">
-                    User ID not found. Please log in again.
+                <Notification type="danger" title="Authentication Required">
+                    Please log in to add family members.
                 </Notification>,
             )
             return

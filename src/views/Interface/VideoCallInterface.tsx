@@ -25,6 +25,8 @@ import { useSocketContext } from '@/contexts/SocketContext'
 import { useVideoCall } from '@/contexts/VideoCallContext'
 import useConsultation from '@/hooks/useConsultation'
 import usePatientQueue from '@/hooks/usePatientQueue'
+import { toast } from '@/components/ui/toast'
+import { Notification } from '@/components/ui'
 
 import WaitingRoom from '@/components/Interface/WaitingRoom'
 import CallControls from '@/components/Interface/CallControls'
@@ -231,7 +233,7 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
             // Stop all Twilio tracks immediately
             twilioTracksRef.current.forEach((track, trackId) => {
                 try {
-                    if (track && typeof track.stop === 'function') {
+                    if (track && 'stop' in track && typeof track.stop === 'function') {
                         track.stop()
                         console.log(`Stopped track ${trackId}`)
                     }
@@ -442,6 +444,17 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
             socket.on('CONSULTATION_ENDED', () => {
                 try {
                     setConsultationStatus('ended')
+                    
+                    // Show notification for consultation end
+                    toast.push(
+                        <Notification type="info" title="Consultation Ended">
+                            {isDoctor 
+                                ? 'You have successfully completed the consultation.'
+                                : 'Your consultation has been completed. Thank you!'
+                            }
+                        </Notification>
+                    )
+
                     if (isDoctor) {
                         // Doctor sees ended message and redirects to /vdc
                         setError('Consultation has ended')
@@ -520,6 +533,11 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
                     patientId,
                     userId: user?.userId,
                 })
+                toast.push(
+                    <Notification type="danger" title="Connection Error">
+                        Missing required user information. Please refresh and try again.
+                    </Notification>
+                )
                 return
             }
 
@@ -550,6 +568,11 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
                         console.log(
                             'Action: rejoin - ongoing consultation found',
                         )
+                        toast.push(
+                            <Notification type="info" title="Rejoining Call">
+                                Reconnecting to ongoing consultation...
+                            </Notification>
+                        )
                         setIsWaiting(false)
                         setConsultationId(response.consultationId!)
                         setActualRoomName(response.roomName!)
@@ -566,6 +589,14 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
                     case 'ended':
                         // Consultation has ended
                         console.log('Action: ended - consultation has ended')
+                        toast.push(
+                            <Notification type="warning" title="Consultation Ended">
+                                {isDoctor 
+                                    ? 'This consultation has already been completed.'
+                                    : 'Your consultation has been completed successfully.'
+                                }
+                            </Notification>
+                        )
                         if (isDoctor) {
                             setError('Consultation has ended')
                             setTimeout(() => {
@@ -806,7 +837,7 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
             // Stop all tracked Twilio tracks
             twilioTracksRef.current.forEach((track, trackId) => {
                 try {
-                    if (track && typeof track.stop === 'function') {
+                    if (track && 'stop' in track && typeof track.stop === 'function') {
                         track.stop()
                         console.log(`Stopped tracked track ${trackId}`)
                     }
@@ -1058,8 +1089,9 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
                         videoElement.style.position = 'relative'
 
                         // Track this video track
+                        const trackId = 'sid' in videoTrack ? videoTrack.sid : `video-${Date.now()}`
                         twilioTracksRef.current.set(
-                            `local-video-${videoTrack.sid}`,
+                            `local-video-${trackId}`,
                             videoTrack,
                         )
 
@@ -1090,8 +1122,9 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
             // Track audio track
             if (audioTrack) {
+                const audioTrackId = 'sid' in audioTrack ? audioTrack.sid : `audio-${Date.now()}`
                 twilioTracksRef.current.set(
-                    `local-audio-${audioTrack.sid}`,
+                    `local-audio-${audioTrackId}`,
                     audioTrack,
                 )
             }
@@ -1111,6 +1144,13 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
             console.log('Connected to room:', room.name, 'SID:', room.sid)
             setRoom(room)
             handleRoomEvents(room)
+
+            // Show success notification for room connection
+            toast.push(
+                <Notification type="success" title="Connected">
+                    Successfully connected to video consultation
+                </Notification>
+            )
 
             // Notify backend about participant joining
             try {
@@ -1174,6 +1214,14 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
             console.log(`Participant ${participant.identity} connected`)
             setRemoteParticipantIdentity(participant.identity)
+
+            // Show notification when participant joins
+            const participantType = participant.identity?.startsWith('D-') ? 'Doctor' : 'Patient'
+            toast.push(
+                <Notification type="success" title="Participant Joined">
+                    {participantType} has joined the consultation
+                </Notification>
+            )
 
             // Update participant count when a participant connects
             if (room) {
@@ -1399,6 +1447,14 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
     const handleParticipantDisconnected = (participant: RemoteParticipant) => {
         console.log(`Participant ${participant.identity} disconnected`)
         setRemoteParticipantIdentity(null)
+
+        // Show notification when participant leaves
+        const participantType = participant.identity?.startsWith('D-') ? 'Doctor' : 'Patient'
+        toast.push(
+            <Notification type="warning" title="Participant Left">
+                {participantType} has left the consultation
+            </Notification>
+        )
 
         // Update participant count when a participant disconnects
         if (room) {
