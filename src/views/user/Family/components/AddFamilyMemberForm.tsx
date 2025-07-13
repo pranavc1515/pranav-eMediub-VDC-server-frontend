@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import PhoneInput from '@/components/ui/Input/PhoneInput'
 import Select from '@/components/ui/Select'
 import Form from '@/components/ui/Form'
 import FormItem from '@/components/ui/Form/FormItem'
@@ -108,6 +109,8 @@ const AddFamilyMemberForm = ({
             newErrors.phone = 'Phone number is required'
         } else if (formData.phone.length !== 10) {
             newErrors.phone = 'Phone number must be 10 digits'
+        } else if (!/^[6-9]/.test(formData.phone)) {
+            newErrors.phone = 'Phone number must start with 6, 7, 8, or 9'
         }
         if (!formData.age.trim()) {
             newErrors.age = 'Age is required'
@@ -124,13 +127,6 @@ const AddFamilyMemberForm = ({
     }
 
     const handleInputChange = (field: keyof FormData, value: string) => {
-        if (field === 'phone') {
-            // Remove any non-digit characters and +91 prefix
-            value = value.replace(/^\+91/, '').replace(/[^\d]/g, '')
-            // Limit to 10 digits
-            value = value.slice(0, 10)
-        }
-        
         setFormData((prev) => ({ ...prev, [field]: value }))
         if (errors[field]) {
             setErrors((prev) => ({ ...prev, [field]: '' }))
@@ -332,17 +328,15 @@ const AddFamilyMemberForm = ({
                                 errorMessage={errors.phone}
                                 asterisk
                             >
-                                <Input
+                                <PhoneInput
                                     value={formData.phone}
-                                    onChange={(e) =>
+                                    onChange={(value) =>
                                         handleInputChange(
                                             'phone',
-                                            e.target.value,
+                                            value,
                                         )
                                     }
                                     placeholder="Enter 10 digit number"
-                                    prefix="+91"
-                                    maxLength={10}
                                 />
                             </FormItem>
 

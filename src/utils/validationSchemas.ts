@@ -1,16 +1,34 @@
 import { z } from 'zod'
 
 // Common validation patterns
+// Updated phone regex to allow any 10-digit number starting with 6-9 (Indian mobile numbers)
 const phoneRegex = /^(\+91)?[6-9]\d{9}$/
+// More permissive regex for general validation
+const generalPhoneRegex = /^(\+91)?\d{10}$/
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+
+// Helper function to clean phone number input
+export const cleanPhoneNumber = (phone: string): string => {
+  if (!phone) return phone
+  
+  // Remove all non-digit characters except + at the beginning
+  let cleanPhone = phone.replace(/[^\d+]/g, '')
+  
+  // Remove + if it's not followed by 91
+  if (cleanPhone.startsWith('+') && !cleanPhone.startsWith('+91')) {
+    cleanPhone = cleanPhone.substring(1)
+  }
+  
+  return cleanPhone
+}
 
 // Helper function to format phone number with +91 prefix
 export const formatPhoneNumber = (phone: string): string => {
   if (!phone) return phone
   
-  // Remove any existing spaces, dashes, or other formatting
-  const cleanPhone = phone.replace(/[\s\-\(\)]/g, '')
+  // Clean the phone number first
+  const cleanPhone = cleanPhoneNumber(phone)
   
   // If already starts with +91, return as is
   if (cleanPhone.startsWith('+91')) {
@@ -22,19 +40,40 @@ export const formatPhoneNumber = (phone: string): string => {
     return '+' + cleanPhone
   }
   
-  // If it's a 10-digit Indian number, add +91
-  if (/^[6-9]\d{9}$/.test(cleanPhone)) {
+  // If it's a 10-digit number, add +91
+  if (/^\d{10}$/.test(cleanPhone)) {
     return '+91' + cleanPhone
   }
   
   return cleanPhone
 }
 
+// Helper function to validate phone number format
+export const validatePhoneNumber = (phone: string): { isValid: boolean; error?: string } => {
+  if (!phone) {
+    return { isValid: false, error: 'Phone number is required' }
+  }
+  
+  const cleanPhone = cleanPhoneNumber(phone)
+  
+  // Check if it's exactly 10 digits
+  if (!/^\d{10}$/.test(cleanPhone)) {
+    return { isValid: false, error: 'Phone number must be exactly 10 digits' }
+  }
+  
+  // Check if it starts with valid Indian mobile prefix (6-9)
+  if (!/^[6-9]/.test(cleanPhone)) {
+    return { isValid: false, error: 'Phone number must start with 6, 7, 8, or 9' }
+  }
+  
+  return { isValid: true }
+}
+
 // Common validation messages
 export const ValidationMessages = {
   required: 'This field is required',
   invalidEmail: 'Please enter a valid email address',
-  invalidPhone: 'Please enter a valid 10-digit phone number',
+  invalidPhone: 'Please enter a valid 10-digit phone number starting with 6, 7, 8, or 9',
   weakPassword: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character',
   passwordMismatch: 'Passwords do not match',
   invalidDate: 'Please enter a valid date',
@@ -70,7 +109,10 @@ export const BaseValidations = {
   phone: z.string()
     .min(1, ValidationMessages.required)
     .transform(formatPhoneNumber)
-    .refine((phone) => phoneRegex.test(phone), ValidationMessages.invalidPhone),
+    .refine((phone) => {
+      const validation = validatePhoneNumber(phone.replace('+91', ''))
+      return validation.isValid
+    }, ValidationMessages.invalidPhone),
   
   password: z.string()
     .min(1, ValidationMessages.required)

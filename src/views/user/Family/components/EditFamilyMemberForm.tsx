@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import PhoneInput from '@/components/ui/Input/PhoneInput'
 import Select from '@/components/ui/Select'
 import Form from '@/components/ui/Form'
 import FormItem from '@/components/ui/Form/FormItem'
@@ -101,11 +102,6 @@ const EditFamilyMemberForm = ({ member, onSubmit, onCancel }: EditFamilyMemberFo
     }
 
     const handleInputChange = (field: keyof FormData, value: string) => {
-        if (field === 'phone') {
-            value = value.replace(/^\+91/, '')
-            value = value.replace(/[^\d]/g, '')
-        }
-        
         setFormData(prev => ({ ...prev, [field]: value }))
         if (errors[field]) {
             setErrors(prev => ({ ...prev, [field]: '' }))
@@ -239,12 +235,10 @@ const EditFamilyMemberForm = ({ member, onSubmit, onCancel }: EditFamilyMemberFo
                                 invalid={!!errors.phone}
                                 errorMessage={errors.phone}
                             >
-                                <Input
+                                <PhoneInput
                                     value={formData.phone}
-                                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                                    onChange={(value) => handleInputChange('phone', value)}
                                     placeholder="XXXXXXXXXX"
-                                    prefix="+91"
-                                    maxLength={10}
                                 />
                             </FormItem>
 

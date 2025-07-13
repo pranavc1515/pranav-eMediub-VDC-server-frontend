@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import Input from '@/components/ui/Input'
+import PhoneInput from '@/components/ui/Input/PhoneInput'
 import Button from '@/components/ui/Button'
 import { FormItem, Form } from '@/components/ui/Form'
 import Checkbox from '@/components/ui/Checkbox'
@@ -30,8 +31,11 @@ interface SignInFormProps extends CommonProps {
 const phoneSchema = z.object({
     phone: z
         .string()
-        .min(10, 'Please enter a valid phone number')
-        .nonempty('Please enter your phone number'),
+        .min(1, 'Please enter your phone number')
+        .refine((phone) => {
+            const cleanPhone = phone.replace(/[^\d]/g, '')
+            return cleanPhone.length === 10 && /^[6-9]/.test(cleanPhone)
+        }, 'Please enter a valid 10-digit phone number starting with 6, 7, 8, or 9'),
 })
 
 const otpSchema = z.object({
@@ -383,11 +387,10 @@ const SignInForm = ({
                             name="phone"
                             control={phoneForm.control}
                             render={({ field }) => (
-                                <Input
-                                    type="tel"
+                                <PhoneInput
+                                    value={field.value}
+                                    onChange={field.onChange}
                                     placeholder="Mobile number"
-                                    prefix="+91"
-                                    {...field}
                                 />
                             )}
                         />
