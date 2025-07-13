@@ -14,6 +14,7 @@ type Auth = {
     signIn: (values: SignInCredential) => AuthResult
     signUp: (values: SignUpCredential) => AuthResult
     signOut: () => void
+    deleteAccount: () => Promise<boolean>
     oAuthSignIn: (
         callback: (payload: OauthSignInCallbackPayload) => void,
     ) => void
@@ -42,6 +43,7 @@ const AuthContext = createContext<Auth>({
     signIn: async () => defaultFunctionPlaceHolder(),
     signUp: async () => defaultFunctionPlaceHolder(),
     signOut: () => {},
+    deleteAccount: async () => false,
     oAuthSignIn: defaultOAuthSignInPlaceHolder,
 })
 

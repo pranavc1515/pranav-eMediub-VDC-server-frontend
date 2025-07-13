@@ -1,4 +1,5 @@
 import ApiService from './ApiService'
+import { apiPrefix } from '@/configs/endpoint.config'
 
 export async function apiGetNotificationCount() {
     return ApiService.fetchDataWithAxios<{
@@ -34,5 +35,12 @@ export async function apiGetSearchResult<T>(params: { query: string }) {
         url: '/search/query',
         method: 'get',
         params,
+    })
+}
+
+export async function fetchUserTerms() {
+    return ApiService.fetchDataWithAxios({
+        url: `${apiPrefix}/patients/settings/terms`,
+        method: 'get',
     })
 }

@@ -1,24 +1,16 @@
 import ApiService from './ApiService'
-import endpointConfig from '@/configs/endpoint.config'
-import type {
-    SignInCredential,
-    SignUpCredential,
-    ForgotPassword,
-    ResetPassword,
-    SignInResponse,
-    SignUpResponse,
-} from '@/@types/auth'
+import endpointConfig, { apiPrefix } from '@/configs/endpoint.config'
+import type { SignUpCredential } from '@/@types/auth'
 
-export async function apiSignIn(data: SignInCredential) {
-    return ApiService.fetchDataWithAxios<SignInResponse>({
+export async function apiSignIn() {
+    return ApiService.fetchDataWithAxios({
         url: endpointConfig.signIn,
         method: 'post',
-        data,
     })
 }
 
 export async function apiSignUp(data: SignUpCredential) {
-    return ApiService.fetchDataWithAxios<SignUpResponse>({
+    return ApiService.fetchDataWithAxios({
         url: endpointConfig.signUp,
         method: 'post',
         data,
@@ -32,18 +24,9 @@ export async function apiSignOut() {
     })
 }
 
-export async function apiForgotPassword<T>(data: ForgotPassword) {
-    return ApiService.fetchDataWithAxios<T>({
-        url: endpointConfig.forgotPassword,
-        method: 'post',
-        data,
-    })
-}
-
-export async function apiResetPassword<T>(data: ResetPassword) {
-    return ApiService.fetchDataWithAxios<T>({
-        url: endpointConfig.resetPassword,
-        method: 'post',
-        data,
+export async function apiDeleteAccount() {
+    return ApiService.fetchDataWithAxios({
+        url: `${apiPrefix}/patients/do-delete-account`,
+        method: 'delete',
     })
 }

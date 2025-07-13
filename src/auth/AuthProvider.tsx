@@ -2,7 +2,7 @@ import { useRef, useImperativeHandle, forwardRef, useEffect } from 'react'
 import AuthContext from './AuthContext'
 import appConfig from '@/configs/app.config'
 import { useSessionUser, useToken } from '@/store/authStore'
-import { apiSignOut, apiSignUp } from '@/services/AuthService'
+import { apiSignOut, apiSignUp, apiDeleteAccount } from '@/services/AuthService'
 import { REDIRECT_URL_KEY } from '@/constants/app.constant'
 import { clearAllUserData, getCurrentUser } from '@/utils/userStorage'
 import { useNavigate } from 'react-router-dom'
@@ -224,6 +224,18 @@ function AuthProvider({ children }: AuthProviderProps) {
         }
     }
 
+    const deleteAccount = async (): Promise<boolean> => {
+        try {
+            await apiDeleteAccount()
+            handleSignOut()
+            navigatorRef.current?.navigate(appConfig.unAuthenticatedEntryPath)
+            return true
+        } catch (error) {
+            console.error('Error deleting account:', error)
+            return false
+        }
+    }
+
     const oAuthSignIn = (
         callback: (payload: OauthSignInCallbackPayload) => void,
     ) => {
@@ -241,6 +253,7 @@ function AuthProvider({ children }: AuthProviderProps) {
                 signIn,
                 signUp,
                 signOut,
+                deleteAccount,
                 oAuthSignIn,
             }}
         >

@@ -68,7 +68,7 @@ const ConsultationComplete: React.FC<ConsultationCompleteProps> = ({
                         icon={<FaNotesMedical />}
                         onClick={handleRedirectToReport}
                     >
-                        View My Reports
+                        View Medical Reports
                     </Button>
 
                     <p className="text-xs text-gray-500 mt-4">
