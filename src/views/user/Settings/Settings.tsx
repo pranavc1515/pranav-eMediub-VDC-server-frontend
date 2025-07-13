@@ -154,10 +154,10 @@ const Settings = () => {
                 isOpen={deleteDialogOpen}
                 onClose={() => setDeleteDialogOpen(false)}
                 onRequestClose={() => setDeleteDialogOpen(false)}
-                title="Delete Account"
             >
                 <div className="px-6 pb-6">
-                    <h5 className="mb-4">Are you sure you want to delete your account?</h5>
+                    <h5 className="mb-4 text-lg font-semibold">Delete Account</h5>
+                    <h6 className="mb-4">Are you sure you want to delete your account?</h6>
                     <p className="mb-6 text-gray-500">
                         This action will permanently delete your account and all of your data. 
                         This action cannot be undone.
