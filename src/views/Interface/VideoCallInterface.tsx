@@ -285,11 +285,13 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
     // Update context with correct IDs when component mounts
     useEffect(() => {
-        if (doctorId && patientId) {
+        // Only set if context values are not already set
+        if ((!contextDoctorId || !contextPatientId) && doctorId && patientId) {
             setDoctorId(doctorId)
             setPatientId(patientId)
         }
-    }, [doctorId, patientId, setDoctorId, setPatientId])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [doctorId, patientId])
 
     // Call timer effect
     useEffect(() => {
@@ -394,20 +396,18 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
         }
     }, [socket, actualRoomName, consultationId, room, participantCount])
 
+    const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
+
     useEffect(() => {
-        if (!socket) return
+        if (!socket) return;
+        if (!doctorId || !patientId) return;
+        if (hasCheckedStatus) return;
 
-        // Ensure we have the required IDs before proceeding
-        if (!doctorId || !patientId) {
-            console.log('Waiting for required IDs to be available')
-            return
-        }
+        setHasCheckedStatus(true);
 
-        // Check if we should directly rejoin from URL parameters
         if (shouldRejoin && urlConsultationId) {
             handleDirectRejoin(urlConsultationId)
         } else {
-            // Check consultation status first
             checkConsultationStatusAndConnect()
         }
 
@@ -503,6 +503,7 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
         navigate,
         doctorId,
         patientId,
+        hasCheckedStatus,
     ])
 
     const handleDirectRejoin = async (consultationId: string) => {
