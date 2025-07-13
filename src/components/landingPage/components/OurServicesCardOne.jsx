@@ -12,7 +12,8 @@ function OurServicesCardOne() {
   const { translate } = useLanguage();
 
   const handleBookAppointment = () => {
-    navigate('/sign-in');
+    // Disabled for coming soon
+    // navigate('/sign-in');
   };
 
   const handleConsultDoctor = () => {
@@ -43,7 +44,14 @@ function OurServicesCardOne() {
          
     
           {/* Section: Book Your Appointment */}
-          <div className="ourServicesCardParent flex flex-col lg:flex-row justify-between items-center mt-12 mb-[120px]  w-full ">
+          <div className="ourServicesCardParent flex flex-col lg:flex-row justify-between items-center mt-12 mb-[120px]  w-full relative">
+            {/* Coming Soon Overlay for Book Appointment */}
+            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg">
+              <div className="bg-white px-6 py-4 rounded-lg shadow-lg">
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">Coming Soon</h3>
+                <p className="text-gray-600">This service will be available soon!</p>
+              </div>
+            </div>
            
             <div className=" lg:w-1/2 text-left bookAppointmentOne">
               <h3 className="text-[42px] font-semibold leading-1 text-[#011632]">
@@ -55,8 +63,9 @@ function OurServicesCardOne() {
               </p>
              
               <button 
-                className="mt-4 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]"
+                className="mt-4 bg-gray-400 text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px] cursor-not-allowed"
                 onClick={handleBookAppointment}
+                disabled
               >
                 {translate('bookAppointmentBtn')}
               </button>

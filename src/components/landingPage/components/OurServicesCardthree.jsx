@@ -11,16 +11,25 @@ const OurServicesCardthree = () => {
   const { translate } = useLanguage();
 
   const handleExploreInsurance = () => {
-    navigate('/sign-in');
+    // Disabled for coming soon
+    // navigate('/sign-in');
   };
 
   const handleJoinFitness = () => {
-    navigate('/sign-in');
+    // Disabled for coming soon
+    // navigate('/sign-in');
   };
 
   return (
      <section className=" flex justify-center flex-col items-center  mx-auto py-12 px-4 w-[97%]  ">
-              <div className="ourServicesCardParent flex flex-col lg:flex-row justify-between items-center mt-12 mb-[120px]  w-full  ">
+              <div className="ourServicesCardParent flex flex-col lg:flex-row justify-between items-center mt-12 mb-[120px]  w-full relative">
+                {/* Coming Soon Overlay */}
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg">
+                  <div className="bg-white px-6 py-4 rounded-lg shadow-lg">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-2">Coming Soon</h3>
+                    <p className="text-gray-600">This service will be available soon!</p>
+                  </div>
+                </div>
                
                 <div className=" lg:w-1/2 text-left bookAppointmenttwo">
                   <h3 className="text-[42px] font-semibold leading-1 text-[#011632]">
@@ -32,8 +41,9 @@ const OurServicesCardthree = () => {
                   </p>
                  
                   <button 
-                    className="mt-4 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]"
+                    className="mt-4 bg-gray-400 text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px] cursor-not-allowed"
                     onClick={handleExploreInsurance}
+                    disabled
                   >
                     {translate('exploreInsuranceBtn')}
                   </button>
@@ -53,7 +63,14 @@ const OurServicesCardthree = () => {
               </div>
         
               {/* Section: Virtual Doctor Consultation */}
-              <div className=" bg-blue-100 p-8 rounded-lg flex flex-col lg:flex-row items-center w-full xl:h-[554px]" >
+              <div className=" bg-blue-100 p-8 rounded-lg flex flex-col lg:flex-row items-center w-full xl:h-[554px] relative" >
+                {/* Coming Soon Overlay */}
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg">
+                  <div className="bg-white px-6 py-4 rounded-lg shadow-lg">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-2">Coming Soon</h3>
+                    <p className="text-gray-600">This service will be available soon!</p>
+                  </div>
+                </div>
              
                 <div className="lg:w-1/2 flex justify-center">
                   <img
@@ -74,8 +91,9 @@ const OurServicesCardthree = () => {
                   </p>
         
                   <button 
-                    className="mt-8 bg-[#1376F8] text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px]"
+                    className="mt-8 bg-gray-400 text-[#FFFFFF] font-semibold text-[16px] w-[227px] h-[55px] rounded-[10px] cursor-not-allowed"
                     onClick={handleJoinFitness}
+                    disabled
                   >
                     {translate('joinFitnessBtn')}
                   </button>
