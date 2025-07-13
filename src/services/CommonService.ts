@@ -44,3 +44,10 @@ export async function fetchUserTerms() {
         method: 'get',
     })
 }
+
+export async function fetchAboutUs() {
+    return ApiService.fetchDataWithAxios({
+        url: `${apiPrefix}/patients/settings/about`,
+        method: 'get',
+    })
+}

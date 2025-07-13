@@ -1,6 +1,18 @@
 import { Card, Avatar } from '@/components/ui'
 import Container from '@/components/shared/Container'
 import DoubleSidedImage from '@/components/shared/DoubleSidedImage'
+import { useEffect, useState } from 'react'
+import { fetchAboutUs } from '@/services/CommonService'
+import Loading from '@/components/shared/Loading'
+
+interface AboutResponse {
+    status: boolean
+    status_code: number
+    message: string
+    data: {
+        content: string
+    }
+}
 
 const teamMembers = [
     {
@@ -63,6 +75,51 @@ const keyFeatures = [
 ]
 
 const AboutUs = () => {
+    const [aboutContent, setAboutContent] = useState('')
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState('')
+
+    useEffect(() => {
+        const getAboutContent = async () => {
+            try {
+                setLoading(true)
+                const response = await fetchAboutUs() as AboutResponse
+                if (response?.status && response?.data?.content) {
+                    setAboutContent(response.data.content)
+                } else {
+                    setError('Failed to load about us content')
+                }
+            } catch (err) {
+                console.error('Error fetching about us content:', err)
+                setError('Failed to load about us content')
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        getAboutContent()
+    }, [])
+
+    if (loading) {
+        return (
+            <Container>
+                <div className="flex justify-center items-center h-64">
+                    <Loading loading={true} />
+                </div>
+            </Container>
+        )
+    }
+
+    if (error) {
+        return (
+            <Container>
+                <div className="flex justify-center items-center h-64">
+                    <p className="text-red-500">{error}</p>
+                </div>
+            </Container>
+        )
+    }
+
     return (
         <Container>
             <div className="mb-8 text-center">
@@ -74,32 +131,11 @@ const AboutUs = () => {
 
             {/* Hero Section */}
             <Card className="mb-8 overflow-hidden">
-                <div className="flex flex-col md:flex-row">
-                    <div className="w-full md:w-1/2 p-6 md:p-8 flex flex-col justify-center">
-                        <h3 className="mb-4 text-primary-600">Our Mission</h3>
-                        <p className="mb-4 text-lg">
-                            At eMediHub, we're on a mission to make quality
-                            healthcare accessible to everyone, regardless of
-                            location or circumstance. We believe that technology
-                            can bridge the gap between patients and healthcare
-                            providers, creating a world where medical expertise
-                            is just a video call away.
-                        </p>
-                        <p className="text-gray-600">
-                            Founded in 2020, we've been at the forefront of
-                            telehealth innovation, connecting thousands of
-                            patients with qualified doctors and specialists
-                            worldwide.
-                        </p>
-                    </div>
-                    <div className="w-full md:w-1/2">
-                        <DoubleSidedImage
-                            src="/img/logo/logo-light-full.svg"
-                            darkModeSrc="/img/logo/logo-light-full.svg"
-                            alt="eMediHub Mission"
-                            className="h-full w-full object-contain max-h-[300px]"
-                        />
-                    </div>
+                <div className="p-6">
+                    <div 
+                        className="terms-content" 
+                        dangerouslySetInnerHTML={{ __html: aboutContent }}
+                    />
                 </div>
             </Card>
 
