@@ -75,7 +75,7 @@ function OurServicesCardOne() {
             </div>
           </div>
     
-          {/* Section: Online Doctor Consultation */}
+          {/* Section: Virtual Doctor Consultation */}
           <div className=" bg-blue-100 p-8 rounded-lg flex flex-col lg:flex-row items-center w-full xl:h-[554px]" >
          
             <div className="lg:w-1/2 flex justify-center">

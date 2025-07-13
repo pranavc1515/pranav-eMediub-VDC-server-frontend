@@ -10,7 +10,7 @@ const translations = {
         // Navigation
         navHome: "Home",
         navServices: "Services",
-        navBlogs: "Blogs", 
+        navArticles: "Articles", 
         navAbout: "About",
         navContact: "Contact",
         navLogin: "Login / Signup",
@@ -47,7 +47,7 @@ const translations = {
         bookAppointmentBtn: "Book your appointment",
         
         // Online Consultation
-        onlineConsultation: "Online Doctor Consultation",
+        onlineConsultation: "Virtual Doctor Consultation",
         onlineConsultationDesc: "Connect with experienced doctors anytime, anywhere. Get expert medical advice, prescriptions, and follow-ups from the comfort of your home.",
         consultDoctorBtn: "Consult a doctor online",
         consultTopDoctors: "Consult Top Doctors Anytime, Anywhere!",
@@ -116,7 +116,7 @@ const translations = {
         // Navigation
         navHome: "होम",
         navServices: "सेवाएं",
-        navBlogs: "ब्लॉग",
+        navArticles: "ब्लॉग",
         navAbout: "के बारे में",
         navContact: "संपर्क",
         navLogin: "लॉगिन / साइनअप",
@@ -222,7 +222,7 @@ const translations = {
         // Navigation
         navHome: "ಮುಖ್ಯಪುಟ",
         navServices: "ಸೇವೆಗಳು",
-        navBlogs: "ಬ್ಲಾಗ್‌ಗಳು",
+        navArticles: "ಬ್ಲಾಗ್‌ಗಳು",
         navAbout: "ಬಗ್ಗೆ",
         navContact: "ಸಂಪರ್ಕ",
         navLogin: "ಲಾಗಿನ್ / ಸೈನ್‌ಅಪ್",

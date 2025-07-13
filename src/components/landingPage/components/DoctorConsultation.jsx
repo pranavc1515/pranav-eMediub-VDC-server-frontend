@@ -16,7 +16,7 @@ const DoctorConsultation = () => {
     return (
         <div className="ConsultationsSection py-16 px-6 md:px-12 lg:px-20">
             {/* Services Title Section */}
-            <div className="text-center mb-12">
+            {/* <div className="text-center mb-12">
                 <h2 className="text-[42px] font-semibold text-[#011632]">
                     {translate('ourServices')}
                 </h2>
@@ -24,7 +24,7 @@ const DoctorConsultation = () => {
                 <p className="text-[#3C4959] font-normal text-[18px] max-w-[550px] mx-auto">
                     {translate('servicesMainDesc')}
                 </p>
-            </div>
+            </div> */}
             
             {/* Consultation Section */}
             <div className="lg:flex justify-between items-center gap-8">

@@ -28,7 +28,7 @@ const FooterSection = () => {
                                 Abouts
                             </a>
                             <a href="#" className="hover:text-gray-400">
-                                Blogs
+                                Articles
                             </a>
                             <a href="#" className="hover:text-gray-400">
                                 Careers

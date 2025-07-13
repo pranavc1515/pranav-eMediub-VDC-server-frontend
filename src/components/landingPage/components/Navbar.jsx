@@ -70,7 +70,7 @@ const Navbar = () => {
                     <a href="#services" onClick={(e) => handleSmoothScroll(e, 'services')}>{translate('navServices')}</a>
                 </li>
                 <li>
-                    <a href="#blogs" onClick={(e) => handleSmoothScroll(e, 'blogs')}>{translate('navBlogs')}</a>
+                    <a href="#blogs" onClick={(e) => handleSmoothScroll(e, 'blogs')}>{translate('navArticles')}</a>
                 </li>
                 <li>
                     <a href="#about" onClick={(e) => handleSmoothScroll(e, 'about')}>{translate('navAbout')}</a>
@@ -153,7 +153,7 @@ const Navbar = () => {
                             <a href="#services" onClick={(e) => handleSmoothScroll(e, 'services')}>{translate('navServices')}</a>
                         </li>
                         <li>
-                            <a href="#blogs" onClick={(e) => handleSmoothScroll(e, 'blogs')}>{translate('navBlogs')}</a>
+                            <a href="#blogs" onClick={(e) => handleSmoothScroll(e, 'blogs')}>{translate('navArticles')}</a>
                         </li>
                         <li>
                             <a href="#about" onClick={(e) => handleSmoothScroll(e, 'about')}>{translate('navAbout')}</a>

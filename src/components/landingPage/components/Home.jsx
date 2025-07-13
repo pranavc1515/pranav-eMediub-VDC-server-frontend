@@ -33,7 +33,7 @@ const Home = () => {
                 </div>
             </section>
             
-            {/* Blogs/News Section */}
+            {/* Articles/News Section */}
             <section id="blogs" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="mb-12">
                     <NewsArticles />
