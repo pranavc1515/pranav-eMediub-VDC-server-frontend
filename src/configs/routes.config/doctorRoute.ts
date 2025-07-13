@@ -3,6 +3,12 @@ import type { Routes } from '@/@types/routes'
 
 const doctorRoute: Routes = [
     {
+        key: 'doctor.dashboard',
+        path: '/doctor/dashboard',
+        component: lazy(() => import('@/views/doctor/Dashboard')),
+        authority: ['doctor'],
+    },
+    {
         key: 'doctor.profile',
         path: '/doctor/profile',
         component: lazy(() => import('@/views/doctor/Profile')),

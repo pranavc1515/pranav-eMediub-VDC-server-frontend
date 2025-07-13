@@ -4,6 +4,16 @@ import type { NavigationTree } from '@/@types/navigation'
 
 const navigationConfig: NavigationTree[] = [
     {
+        key: 'doctorDashboard',
+        path: '/doctor/dashboard',
+        title: 'Dashboard',
+        translateKey: 'nav.doctorDashboard',
+        icon: 'home',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: ['doctor'],
+        subMenu: [],
+    },
+    {
         key: 'doctorProfile',
         path: '/doctor/profile',
         title: 'Profile',
