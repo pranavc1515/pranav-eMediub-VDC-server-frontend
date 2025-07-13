@@ -233,7 +233,11 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
             // Stop all Twilio tracks immediately
             twilioTracksRef.current.forEach((track, trackId) => {
                 try {
-                    if (track && 'stop' in track && typeof track.stop === 'function') {
+                    if (
+                        track &&
+                        'stop' in track &&
+                        typeof track.stop === 'function'
+                    ) {
                         track.stop()
                         console.log(`Stopped track ${trackId}`)
                     }
@@ -285,13 +289,11 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
     // Update context with correct IDs when component mounts
     useEffect(() => {
-        // Only set if context values are not already set
-        if ((!contextDoctorId || !contextPatientId) && doctorId && patientId) {
+        if (doctorId && patientId) {
             setDoctorId(doctorId)
             setPatientId(patientId)
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [doctorId, patientId])
+    }, [doctorId, patientId, setDoctorId, setPatientId])
 
     // Call timer effect
     useEffect(() => {
@@ -396,18 +398,20 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
         }
     }, [socket, actualRoomName, consultationId, room, participantCount])
 
-    const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
-
     useEffect(() => {
-        if (!socket) return;
-        if (!doctorId || !patientId) return;
-        if (hasCheckedStatus) return;
+        if (!socket) return
 
-        setHasCheckedStatus(true);
+        // Ensure we have the required IDs before proceeding
+        if (!doctorId || !patientId) {
+            console.log('Waiting for required IDs to be available')
+            return
+        }
 
+        // Check if we should directly rejoin from URL parameters
         if (shouldRejoin && urlConsultationId) {
             handleDirectRejoin(urlConsultationId)
         } else {
+            // Check consultation status first
             checkConsultationStatusAndConnect()
         }
 
@@ -444,15 +448,14 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
             socket.on('CONSULTATION_ENDED', () => {
                 try {
                     setConsultationStatus('ended')
-                    
+
                     // Show notification for consultation end
                     toast.push(
                         <Notification type="info" title="Consultation Ended">
-                            {isDoctor 
+                            {isDoctor
                                 ? 'You have successfully completed the consultation.'
-                                : 'Your consultation has been completed. Thank you!'
-                            }
-                        </Notification>
+                                : 'Your consultation has been completed. Thank you!'}
+                        </Notification>,
                     )
 
                     if (isDoctor) {
@@ -503,7 +506,6 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
         navigate,
         doctorId,
         patientId,
-        hasCheckedStatus,
     ])
 
     const handleDirectRejoin = async (consultationId: string) => {
@@ -536,8 +538,9 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
                 })
                 toast.push(
                     <Notification type="danger" title="Connection Error">
-                        Missing required user information. Please refresh and try again.
-                    </Notification>
+                        Missing required user information. Please refresh and
+                        try again.
+                    </Notification>,
                 )
                 return
             }
@@ -572,7 +575,7 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
                         toast.push(
                             <Notification type="info" title="Rejoining Call">
                                 Reconnecting to ongoing consultation...
-                            </Notification>
+                            </Notification>,
                         )
                         setIsWaiting(false)
                         setConsultationId(response.consultationId!)
@@ -591,12 +594,14 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
                         // Consultation has ended
                         console.log('Action: ended - consultation has ended')
                         toast.push(
-                            <Notification type="warning" title="Consultation Ended">
-                                {isDoctor 
+                            <Notification
+                                type="warning"
+                                title="Consultation Ended"
+                            >
+                                {isDoctor
                                     ? 'This consultation has already been completed.'
-                                    : 'Your consultation has been completed successfully.'
-                                }
-                            </Notification>
+                                    : 'Your consultation has been completed successfully.'}
+                            </Notification>,
                         )
                         if (isDoctor) {
                             setError('Consultation has ended')
@@ -838,7 +843,11 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
             // Stop all tracked Twilio tracks
             twilioTracksRef.current.forEach((track, trackId) => {
                 try {
-                    if (track && 'stop' in track && typeof track.stop === 'function') {
+                    if (
+                        track &&
+                        'stop' in track &&
+                        typeof track.stop === 'function'
+                    ) {
                         track.stop()
                         console.log(`Stopped tracked track ${trackId}`)
                     }
@@ -1090,7 +1099,10 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
                         videoElement.style.position = 'relative'
 
                         // Track this video track
-                        const trackId = 'sid' in videoTrack ? videoTrack.sid : `video-${Date.now()}`
+                        const trackId =
+                            'sid' in videoTrack
+                                ? videoTrack.sid
+                                : `video-${Date.now()}`
                         twilioTracksRef.current.set(
                             `local-video-${trackId}`,
                             videoTrack,
@@ -1123,7 +1135,8 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
             // Track audio track
             if (audioTrack) {
-                const audioTrackId = 'sid' in audioTrack ? audioTrack.sid : `audio-${Date.now()}`
+                const audioTrackId =
+                    'sid' in audioTrack ? audioTrack.sid : `audio-${Date.now()}`
                 twilioTracksRef.current.set(
                     `local-audio-${audioTrackId}`,
                     audioTrack,
@@ -1150,7 +1163,7 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
             toast.push(
                 <Notification type="success" title="Connected">
                     Successfully connected to video consultation
-                </Notification>
+                </Notification>,
             )
 
             // Notify backend about participant joining
@@ -1217,11 +1230,13 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
             setRemoteParticipantIdentity(participant.identity)
 
             // Show notification when participant joins
-            const participantType = participant.identity?.startsWith('D-') ? 'Doctor' : 'Patient'
+            const participantType = participant.identity?.startsWith('D-')
+                ? 'Doctor'
+                : 'Patient'
             toast.push(
                 <Notification type="success" title="Participant Joined">
                     {participantType} has joined the consultation
-                </Notification>
+                </Notification>,
             )
 
             // Update participant count when a participant connects
@@ -1450,11 +1465,13 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
         setRemoteParticipantIdentity(null)
 
         // Show notification when participant leaves
-        const participantType = participant.identity?.startsWith('D-') ? 'Doctor' : 'Patient'
+        const participantType = participant.identity?.startsWith('D-')
+            ? 'Doctor'
+            : 'Patient'
         toast.push(
             <Notification type="warning" title="Participant Left">
                 {participantType} has left the consultation
-            </Notification>
+            </Notification>,
         )
 
         // Update participant count when a participant disconnects
