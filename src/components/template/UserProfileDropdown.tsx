@@ -14,15 +14,6 @@ type DropdownList = {
     icon: JSX.Element
 }
 
-const dropdownItemList: DropdownList[] = [
-    
-    {
-        label: 'Settings',
-        path: '/user/settings',
-        icon: <PiGearDuotone />,
-    },
-]
-
 const _UserDropdown = () => {
     const user = useSessionUser((state) => state.user)
     const setUser = useSessionUser((state) => state.setUser)
@@ -51,6 +42,19 @@ const _UserDropdown = () => {
     const handleSignOut = () => {
         signOut()
     }
+
+    // Check if user is a doctor to conditionally show Settings
+    const isDoctor = user.authority?.includes('doctor') || false
+
+    // Define dropdown items conditionally based on user type
+    const dropdownItemList: DropdownList[] = [
+        // Only show Settings for non-doctor users
+        ...(isDoctor ? [] : [{
+            label: 'Settings',
+            path: '/user/settings',
+            icon: <PiGearDuotone />,
+        }]),
+    ]
 
     const avatarProps = {
         ...(userImage ? { src: userImage } : { icon: <PiUserDuotone /> }),
