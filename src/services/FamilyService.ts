@@ -1,5 +1,4 @@
 import ApiService from './ApiService'
-import type { AxiosRequestConfig } from 'axios'
 
 export interface FamilyMember {
     id: number
@@ -7,15 +6,15 @@ export interface FamilyMember {
     relation_type: string
     phone: string
     email: string
-    age: number | string
+    age: string
     dob: string
     gender: string
     marital_status: string
-    profession: string | null
-    height?: string
-    weight?: string
-    diet?: string
+    profession: string
     image: string | null
+    height: string
+    weight: string
+    diet: string
     relatives: FamilyMember[]
 }
 
@@ -83,16 +82,15 @@ export interface ApiResponse {
 }
 
 const FamilyService = {
-    async getFamilyTree(): Promise<FamilyTreeResponse> {
-        const requestConfig: AxiosRequestConfig = {
-            method: 'GET',
+    /**
+     * Get user's family tree
+     * GET /family/view-family-tree
+     */
+    getFamilyTree() {
+        return ApiService.fetchDataWithAxios<FamilyTreeResponse>({
             url: '/api/family/view-family-tree',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                'Content-Type': 'application/json',
-            },
-        }
-        return ApiService.fetchDataWithAxios<FamilyTreeResponse>(requestConfig)
+            method: 'GET',
+        })
     },
 
     async addFamilyMember(data: AddFamilyMemberRequest): Promise<AddFamilyMemberResponse> {

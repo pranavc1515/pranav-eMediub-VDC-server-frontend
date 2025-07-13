@@ -92,7 +92,7 @@ const ReportsService = {
 
     /**
      * View user and family medical reports
-     * GET /api/reports/view
+    //  * GET api/reports/view
      */
     getReports() {
         return ApiService.fetchDataWithAxios<ReportResponse>({

@@ -12,9 +12,11 @@ import {
     Spinner,
     DatePicker,
     Drawer,
+    Select,
 } from '@/components/ui'
 import toast from '@/components/ui/toast'
 import ReportsService, { ReportData, UploadReportRequest } from '@/services/ReportsService'
+import FamilyService, { FamilyMember } from '@/services/FamilyService'
 import { HiOutlineCloudUpload, HiOutlineEye, HiOutlineTrash, HiOutlineDocument, HiOutlinePlus } from 'react-icons/hi'
 import { format } from 'date-fns'
 import { useForm, Controller } from 'react-hook-form'
@@ -28,9 +30,16 @@ const uploadReportSchema = z.object({
     }),
     doctor_name: z.string().min(1, 'Doctor name is required'),
     files: z.array(z.instanceof(File)).min(1, 'At least one file is required'),
+    target_user_id: z.number().optional(),
 })
 
 type UploadReportFormData = z.infer<typeof uploadReportSchema>
+
+// Interface for family member select options
+interface FamilyMemberOption {
+    value: number
+    label: string
+}
 
 const UserReports = () => {
     const [reports, setReports] = useState<ReportData[]>([])
@@ -40,6 +49,8 @@ const UserReports = () => {
     const [selectedReport, setSelectedReport] = useState<ReportData | null>(null)
     const [uploadFiles, setUploadFiles] = useState<File[]>([])
     const [uploading, setUploading] = useState(false)
+    const [familyMembers, setFamilyMembers] = useState<FamilyMemberOption[]>([])
+    const [loadingFamily, setLoadingFamily] = useState(false)
 
     const {
         control,
@@ -53,12 +64,14 @@ const UserReports = () => {
             report_date: new Date(),
             doctor_name: '',
             files: [],
+            target_user_id: undefined,
         },
     })
 
     // Fetch reports on component mount
     useEffect(() => {
         fetchReports()
+        fetchFamilyMembers()
     }, [])
 
     const fetchReports = async () => {
@@ -85,6 +98,38 @@ const UserReports = () => {
         }
     }
 
+    const fetchFamilyMembers = async () => {
+        setLoadingFamily(true)
+        try {
+            const response = await FamilyService.getFamilyTree()
+            if (response.status && response.data) {
+                // Create self option
+                const selfOption = {
+                    value: response.data.user.id,
+                    label: 'Self',
+                }
+                
+                // Create family member options
+                const familyOptions = response.data.familyTree.map((member) => ({
+                    value: member.id,
+                    label: `${member.name} (${member.relation_type})`,
+                }))
+                
+                // Combine self and family options
+                setFamilyMembers([selfOption, ...familyOptions])
+            }
+        } catch (error) {
+            toast.push(
+                <Notification type="danger" title="Error">
+                    Failed to fetch family members
+                </Notification>,
+                { placement: 'top-center' }
+            )
+        } finally {
+            setLoadingFamily(false)
+        }
+    }
+
     const handleUploadFiles = (files: File[]) => {
         setUploadFiles(files)
         setValue('files', files)
@@ -93,28 +138,11 @@ const UserReports = () => {
     const onSubmitUpload = async (data: UploadReportFormData) => {
         setUploading(true)
         try {
-            // Get userId from localStorage
-            const userId = localStorage.getItem('userId') || localStorage.getItem('user')
-            let targetUserId: number | undefined
-
-            if (userId) {
-                // Try to parse as number first, then as JSON if it's a user object
-                try {
-                    targetUserId = parseInt(userId, 10)
-                    if (isNaN(targetUserId)) {
-                        const userObj = JSON.parse(userId)
-                        targetUserId = userObj.userId || userObj.id
-                    }
-                } catch {
-                    targetUserId = undefined
-                }
-            }
-
             const uploadData: UploadReportRequest = {
                 report_pdf: data.files,
                 report_date: format(data.report_date, 'yyyy-MM-dd'),
                 doctor_name: data.doctor_name,
-                target_user_id: targetUserId,
+                target_user_id: data.target_user_id,
             }
 
             const response = await ReportsService.uploadReports(uploadData)
@@ -137,10 +165,15 @@ const UserReports = () => {
             } else {
                 throw new Error(response.message)
             }
-        } catch (error: any) {
+        } catch (error) {
+            let errorMessage = 'Failed to upload report'
+            if (error instanceof Error) {
+                errorMessage = error.message
+            }
+            
             toast.push(
                 <Notification type="danger" title="Error">
-                    {error.message || 'Failed to upload report'}
+                    {errorMessage}
                 </Notification>,
                 { placement: 'top-center' }
             )
@@ -291,16 +324,46 @@ const UserReports = () => {
             {/* Upload Drawer */}
             <Drawer
                 isOpen={showUploadModal}
-                onClose={() => setShowUploadModal(false)}
-                width={600}
+                onClose={() => {
+                    if (!uploading) {
+                        setShowUploadModal(false)
+                        reset()
+                        setUploadFiles([])
+                    }
+                }}
+                width={520}
                 title="Upload Medical Report"
             >
                 <div className="p-4">
                     <Form onSubmit={handleSubmit(onSubmitUpload)}>
                         <FormContainer>
                             <FormItem
+                                label="For whom is this report?"
+                                invalid={Boolean(errors.target_user_id)}
+                                errorMessage={errors.target_user_id?.message}
+                            >
+                                <Controller
+                                    name="target_user_id"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Select
+                                            isLoading={loadingFamily}
+                                            placeholder="Select family member"
+                                            options={familyMembers}
+                                            value={familyMembers.find(
+                                                (option) => option.value === field.value
+                                            )}
+                                            onChange={(option) => {
+                                                field.onChange(option?.value)
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </FormItem>
+                            
+                            <FormItem
                                 label="Report Date"
-                                invalid={!!errors.report_date}
+                                invalid={Boolean(errors.report_date)}
                                 errorMessage={errors.report_date?.message}
                             >
                                 <Controller
@@ -308,73 +371,72 @@ const UserReports = () => {
                                     control={control}
                                     render={({ field }) => (
                                         <DatePicker
-                                            {...field}
-                                            placeholder="Select report date"
+                                            placeholder="Select date"
+                                            value={field.value}
+                                            onChange={(date) => {
+                                                field.onChange(date)
+                                            }}
                                         />
                                     )}
                                 />
                             </FormItem>
-
+                            
                             <FormItem
                                 label="Doctor Name"
-                                invalid={!!errors.doctor_name}
+                                invalid={Boolean(errors.doctor_name)}
                                 errorMessage={errors.doctor_name?.message}
                             >
                                 <Controller
                                     name="doctor_name"
                                     control={control}
                                     render={({ field }) => (
-                                        <Input
-                                            {...field}
-                                            placeholder="Enter doctor's name"
-                                        />
+                                        <Input {...field} placeholder="Enter doctor name" />
                                     )}
                                 />
                             </FormItem>
-
+                            
                             <FormItem
-                                label="Report Files"
-                                invalid={!!errors.files}
+                                label="Upload Report Files"
+                                invalid={Boolean(errors.files)}
                                 errorMessage={errors.files?.message}
                             >
                                 <Upload
-                                    accept="application/pdf"
-                                    multiple
                                     draggable
-                                    onChange={handleUploadFiles}
-                                    fileList={uploadFiles}
                                     uploadLimit={5}
+                                    onChange={(files) => handleUploadFiles(Array.from(files))}
+                                    fileList={uploadFiles}
+                                    multiple={true}
+                                    accept=".pdf,.jpg,.jpeg,.png"
                                 >
-                                    <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-lg">
-                                        <HiOutlineCloudUpload className="text-4xl text-gray-400 mb-2" />
-                                        <p className="text-gray-600 font-medium">
-                                            Click or drag files to upload
+                                    <div className="my-10 text-center">
+                                        <div className="text-6xl mb-4 flex justify-center">
+                                            <HiOutlineCloudUpload className="text-gray-400" />
+                                        </div>
+                                        <p className="font-semibold">
+                                            <span className="text-gray-800 dark:text-white">
+                                                Drop your files here, or{' '}
+                                            </span>
+                                            <span className="text-blue-500">browse</span>
                                         </p>
-                                        <p className="text-sm text-gray-500 mt-1">
-                                            Support PDF files only (max 5 files)
+                                        <p className="mt-1 opacity-60 dark:text-white">
+                                            Support: PDF, JPG, JPEG, PNG (Max 5 files)
                                         </p>
                                     </div>
                                 </Upload>
                             </FormItem>
+                            
+                            <FormItem className="mt-6">
+                                <Button
+                                    block
+                                    variant="solid"
+                                    type="submit"
+                                    loading={uploading}
+                                    disabled={uploading}
+                                >
+                                    Upload Report
+                                </Button>
+                            </FormItem>
                         </FormContainer>
-
-                        <div className="flex justify-end gap-3 mt-6">
-                            <Button
-                                type="button"
-                                variant="plain"
-                                onClick={() => setShowUploadModal(false)}
-                                disabled={uploading}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                type="submit"
-                                variant="solid"
-                                loading={uploading}
-                            >
-                                Upload Reports
-                            </Button>
-                        </div>
                     </Form>
                 </div>
             </Drawer>
