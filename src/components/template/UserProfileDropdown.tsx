@@ -15,11 +15,7 @@ type DropdownList = {
 }
 
 const dropdownItemList: DropdownList[] = [
-    {
-        label: 'My Profile',
-        path: '/user/profile',
-        icon: <PiUserCircleDuotone />,
-    },
+    
     {
         label: 'Settings',
         path: '/user/settings',
