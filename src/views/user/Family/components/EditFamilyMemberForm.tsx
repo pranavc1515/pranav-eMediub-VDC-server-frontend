@@ -7,6 +7,7 @@ import Form from '@/components/ui/Form'
 import FormItem from '@/components/ui/Form/FormItem'
 import FormContainer from '@/components/ui/Form/FormContainer'
 import Upload from '@/components/ui/Upload'
+import { getTodayDateString } from '@/utils/dateUtils'
 import type { FamilyMember, UpdateFamilyMemberRequest } from '@/services/FamilyService'
 import { formatPhoneNumber } from '@/utils/validationSchemas'
 
@@ -95,6 +96,16 @@ const EditFamilyMemberForm = ({ member, onSubmit, onCancel }: EditFamilyMemberFo
 
         if (!formData.name.trim()) {
             newErrors.name = 'Name is required'
+        } else if (!/^[a-zA-Z\s]+$/.test(formData.name.trim())) {
+            newErrors.name = 'Name can only contain letters and spaces'
+        }
+        if (formData.dob) {
+            const birthDate = new Date(formData.dob)
+            if (isNaN(birthDate.getTime())) {
+                newErrors.dob = 'Please enter a valid date'
+            } else if (birthDate > new Date()) {
+                newErrors.dob = 'Future dates are not allowed'
+            }
         }
 
         setErrors(newErrors)
@@ -220,6 +231,7 @@ const EditFamilyMemberForm = ({ member, onSubmit, onCancel }: EditFamilyMemberFo
                                     type="date"
                                     value={formData.dob}
                                     onChange={(e) => handleInputChange('dob', e.target.value)}
+                                    max={getTodayDateString()}
                                 />
                             </FormItem>
                         </div>

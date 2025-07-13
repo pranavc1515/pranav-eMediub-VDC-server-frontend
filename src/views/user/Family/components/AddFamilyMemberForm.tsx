@@ -8,6 +8,7 @@ import FormItem from '@/components/ui/Form/FormItem'
 import FormContainer from '@/components/ui/Form/FormContainer'
 import Upload from '@/components/ui/Upload'
 import { useSessionUser } from '@/store/authStore'
+import { getTodayDateString } from '@/utils/dateUtils'
 import type { AddFamilyMemberRequest } from '@/services/FamilyService'
 import { formatPhoneNumber } from '@/utils/validationSchemas'
 
@@ -101,6 +102,8 @@ const AddFamilyMemberForm = ({
 
         if (!formData.name.trim()) {
             newErrors.name = 'Name is required'
+        } else if (!/^[a-zA-Z\s]+$/.test(formData.name.trim())) {
+            newErrors.name = 'Name can only contain letters and spaces'
         }
         if (!formData.relationName) {
             newErrors.relationName = 'Relation is required'
@@ -120,6 +123,14 @@ const AddFamilyMemberForm = ({
         }
         if (!formData.marital_status) {
             newErrors.marital_status = 'Marital status is required'
+        }
+        if (formData.dob) {
+            const birthDate = new Date(formData.dob)
+            if (isNaN(birthDate.getTime())) {
+                newErrors.dob = 'Please enter a valid date'
+            } else if (birthDate > new Date()) {
+                newErrors.dob = 'Future dates are not allowed'
+            }
         }
 
         setErrors(newErrors)
@@ -282,13 +293,18 @@ const AddFamilyMemberForm = ({
                                 />
                             </FormItem>
 
-                            <FormItem label="Date of Birth">
+                            <FormItem 
+                                label="Date of Birth"
+                                invalid={!!errors.dob}
+                                errorMessage={errors.dob}
+                            >
                                 <Input
                                     type="date"
                                     value={formData.dob}
                                     onChange={(e) =>
                                         handleInputChange('dob', e.target.value)
                                     }
+                                    max={getTodayDateString()}
                                 />
                             </FormItem>
 

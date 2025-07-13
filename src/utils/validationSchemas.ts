@@ -122,7 +122,7 @@ export const BaseValidations = {
     .min(1, ValidationMessages.required)
     .min(2, ValidationMessages.minimumLength(2))
     .max(50, ValidationMessages.maximumLength(50))
-    .regex(/^[a-zA-Z\s.'-]+$/, 'Name can only contain letters, spaces, periods, apostrophes, and hyphens'),
+    .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces'),
   
   dateOfBirth: z.string()
     .min(1, ValidationMessages.required)
