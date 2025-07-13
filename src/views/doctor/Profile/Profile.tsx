@@ -15,6 +15,7 @@ import dayjs from 'dayjs'
 import Badge from '@/components/ui/Badge'
 import { getTodayDateString } from '@/utils/dateUtils'
 import SPECIALIZATIONS from '@/constants/specializations.constant'
+import { INDIAN_STATES } from '@/constants/indianStates.constant'
 
 // Common languages in India
 const languageOptions = [
@@ -536,13 +537,17 @@ const Profile = () => {
                             />
                         </FormItem>
                         <FormItem label="Registration State" asterisk={true}>
-                            <Input
+                            <Select
                                 name="registrationState"
                                 id="registrationState"
-                                defaultValue={
-                                    profile?.DoctorProfessional
-                                        .registrationState || ''
-                                }
+                                placeholder="Select registration state"
+                                options={INDIAN_STATES}
+                                value={INDIAN_STATES.find(option => 
+                                    option.value === profile?.DoctorProfessional?.registrationState
+                                )}
+                                onChange={(selectedOption) => {
+                                    // Handle state change if needed
+                                }}
                             />
                         </FormItem>
                         <FormItem label="Expiry Date">

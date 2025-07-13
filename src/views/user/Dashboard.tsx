@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, Input, Button, Avatar } from '@/components/ui'
 import Container from '@/components/shared/Container'
 import { useNavigate } from 'react-router-dom'
@@ -14,6 +14,7 @@ import {
     HiOutlineCog,
     HiOutlineUserGroup,
 } from 'react-icons/hi'
+import UserService from '@/services/UserService'
 
 interface ServiceCard {
     id: string
@@ -29,7 +30,13 @@ interface ServiceCard {
 const UserDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('')
     const navigate = useNavigate()
-    const user = useSessionUser((state) => state.user)
+    const [name, setName] = useState('')
+
+    useEffect(() => {
+        UserService.getProfileDetails().then(res => {
+            setName(res?.data?.name || '')
+        })
+    }, [])
 
     const services: ServiceCard[] = [
         {
@@ -138,15 +145,13 @@ const UserDashboard = () => {
                 <div className="flex items-center gap-3 mb-4">
                     <Avatar
                         size={50}
-                        src={user.image || user.avatar || '/img/avatars/default-avatar.jpg'}
+                        src={''} // You can fetch and use image if needed
                         className="ring-2 ring-blue-100"
                     />
                     <div>
-                        <p className="text-gray-600 text-sm">
-                            {getGreeting()}!
-                        </p>
+                        <p className="text-gray-600 text-sm">Hi there!</p>
                         <h2 className="text-xl font-semibold text-gray-900">
-                            {user.userName || 'User'}
+                            {name || 'User'}
                         </h2>
                     </div>
                 </div>

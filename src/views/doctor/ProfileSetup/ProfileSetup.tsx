@@ -22,6 +22,7 @@ import {
 } from '@/utils/validationSchemas'
 import { getTodayDateString } from '@/utils/dateUtils'
 import SPECIALIZATIONS from '@/constants/specializations.constant'
+import { INDIAN_STATES } from '@/constants/indianStates.constant'
 
 // Common languages in India
 const languageOptions = [
@@ -397,9 +398,16 @@ const ProfileSetup = () => {
                                         name="registrationState"
                                         control={professionalForm.control}
                                         render={({ field }) => (
-                                            <Input
+                                            <Select
                                                 {...field}
-                                                placeholder="State of Medical Council Registration"
+                                                placeholder="Select registration state"
+                                                options={INDIAN_STATES}
+                                                value={INDIAN_STATES.find(option => 
+                                                    option.value === field.value
+                                                )}
+                                                onChange={(selectedOption) => {
+                                                    field.onChange(selectedOption?.value || '')
+                                                }}
                                             />
                                         )}
                                     />
