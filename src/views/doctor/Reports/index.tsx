@@ -172,7 +172,13 @@ const DoctorReports = () => {
         try {
             const response = await ReportsService.getReports()
             if (response.status && response.data) {
-                setReports(response.data)
+                // Combine self and family reports
+                const allReports = [
+                    ...(response.data.selfReports || []),
+                    ...(response.data.familyReports || [])
+                ]
+                setReports(allReports)
+                setFilteredReports(allReports)
             }
         } catch {
             toast.push(
@@ -382,6 +388,7 @@ const DoctorReports = () => {
                                         {format(new Date(report.report_date), 'MMM dd, yyyy')}
                                     </p>
                                 </div>
+                                
                                 <div className="flex gap-2">
                                     <Button
                                         size="sm"
@@ -403,6 +410,13 @@ const DoctorReports = () => {
                             </div>
                             
                             <div className="space-y-3">
+                                {report.type && (
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-700">Report Type</p>
+                                        <p className="text-sm text-gray-600 capitalize">{report.type}</p>
+                                    </div>
+                                )}
+                                
                                 {report.report_reason && (
                                     <div>
                                         <p className="text-sm font-medium text-gray-700">Reason</p>
@@ -589,6 +603,13 @@ const DoctorReports = () => {
                                     </p>
                                 </div>
                             </div>
+
+                            {selectedReport.type && (
+                                <div>
+                                    <p className="text-sm font-medium text-gray-700">Report Type</p>
+                                    <p className="text-sm text-gray-900 capitalize">{selectedReport.type}</p>
+                                </div>
+                            )}
 
                             {selectedReport.report_reason && (
                                 <div>

@@ -6,7 +6,7 @@ import path from 'path'
 export default defineConfig(({ mode }) => {
     // Load environment variables
     const proxyTarget =
-        process.env.VITE_DEV_PROXY_TARGET || 'https://api.emedihub.com/'
+        process.env.VITE_DEV_PROXY_TARGET || 'https://api.emedihub.com'
         // process.env.VITE_DEV_PROXY_TARGET || 'http://localhost:3000'
 
     return {

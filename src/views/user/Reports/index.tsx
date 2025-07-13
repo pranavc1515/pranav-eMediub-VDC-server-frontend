@@ -66,7 +66,12 @@ const UserReports = () => {
         try {
             const response = await ReportsService.getReports()
             if (response.status && response.data) {
-                setReports(response.data)
+                // Combine self and family reports
+                const allReports = [
+                    ...(response.data.selfReports || []),
+                    ...(response.data.familyReports || [])
+                ]
+                setReports(allReports)
             }
         } catch (error) {
             toast.push(
@@ -251,6 +256,13 @@ const UserReports = () => {
                                     <p className="text-sm text-gray-600">{report.patient_name}</p>
                                 </div>
                                 
+                                {report.type && (
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-700">Report Type</p>
+                                        <p className="text-sm text-gray-600 capitalize">{report.type}</p>
+                                    </div>
+                                )}
+                                
                                 {report.report_reason && (
                                     <div>
                                         <p className="text-sm font-medium text-gray-700">Reason</p>
@@ -394,6 +406,13 @@ const UserReports = () => {
                                 <p className="text-sm font-medium text-gray-700">Patient Name</p>
                                 <p className="text-sm text-gray-900">{selectedReport.patient_name}</p>
                             </div>
+
+                            {selectedReport.type && (
+                                <div>
+                                    <p className="text-sm font-medium text-gray-700">Report Type</p>
+                                    <p className="text-sm text-gray-900 capitalize">{selectedReport.type}</p>
+                                </div>
+                            )}
 
                             {selectedReport.report_reason && (
                                 <div>

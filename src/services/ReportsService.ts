@@ -8,14 +8,17 @@ export interface ReportResponse {
     total_usage?: string
     show_warning?: boolean
     show_upgrade_popup?: boolean
-    data?: ReportData[]
+    data?: {
+        selfReports: ReportData[]
+        familyReports: ReportData[]
+    }
 }
 
 export interface ReportData {
     id: number
     user_id: number
     doctor_id: number
-    uploaded_by: number | null
+    uploaded_by: string | null
     related_user: number | null
     doctor_name: string
     report_date: string
@@ -31,6 +34,7 @@ export interface ReportData {
     created_at: string
     updated_at: string
     patient_name: string
+    type?: string
 }
 
 export interface UploadReportRequest {
