@@ -47,12 +47,6 @@ const FooterSection = () => {
                             <a href="#" className="hover:text-gray-400">
                                 Developers
                             </a>
-                            <a href="#" className="hover:text-gray-400">
-                                Privacy Policy
-                            </a>
-                            <a href="#" className="hover:text-gray-400">
-                                Terms And Conditions
-                            </a>
                         </div>
                     </div>
                     <div className="flex  space-x-6 mt-[50px] ">
