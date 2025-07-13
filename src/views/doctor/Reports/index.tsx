@@ -9,6 +9,7 @@ import {
     Upload,
     Notification,
     Dialog,
+    Drawer,
     Spinner,
     DatePicker,
     Select,
@@ -32,7 +33,10 @@ interface SelectOption {
 
 // Validation schema
 const uploadReportSchema = z.object({
-    target_user_id: z.number().min(1, 'Patient ID is required'),
+    target_user_id: z.number({
+        required_error: 'Patient ID is required',
+        invalid_type_error: 'Patient ID is required',
+    }).min(1, 'Patient ID is required'),
     report_date: z.date({
         required_error: 'Report date is required',
     }),
@@ -89,7 +93,7 @@ const DoctorReports = () => {
     } = useForm<UploadReportFormData>({
         resolver: zodResolver(uploadReportSchema),
         defaultValues: {
-            target_user_id: 0,
+            target_user_id: undefined as unknown as number,
             report_date: new Date(),
             doctor_name: '',
             files: [],
@@ -103,10 +107,7 @@ const DoctorReports = () => {
         }
     }, [user.userName, setValue])
 
-    // Fetch reports on component mount
-    useEffect(() => {
-        fetchReports()
-    }, [])
+  
 
     // Check for patientId URL parameter and auto-open upload modal
     useEffect(() => {
@@ -227,7 +228,7 @@ const DoctorReports = () => {
                 setValue('doctor_name', user.userName)
                 
                 // Refresh reports list
-                fetchReports()
+               
             } else {
                 throw new Error(response.message)
             }
@@ -260,7 +261,6 @@ const DoctorReports = () => {
                         </Notification>,
                         { placement: 'top-center' }
                     )
-                    fetchReports()
                 }
             } catch {
                 toast.push(
@@ -449,15 +449,16 @@ const DoctorReports = () => {
                 </div>
             )}
 
-            {/* Upload Modal */}
-            <Dialog
+            {/* Upload Drawer */}
+            <Drawer
                 isOpen={showUploadModal}
                 onClose={() => setShowUploadModal(false)}
-                className="max-w-2xl"
+                closable
+                placement="right"
+                width={550}
+                title="Upload Patient Report"
             >
-                <div className="p-6">
-                    <h3 className="text-lg font-semibold mb-4">Upload Patient Report</h3>
-                    
+                <div className="p-4">
                     <Form onSubmit={handleSubmit(onSubmitUpload)}>
                         <FormContainer>
                             <FormItem
@@ -473,7 +474,11 @@ const DoctorReports = () => {
                                             {...field}
                                             type="number"
                                             placeholder="Enter patient's user ID"
-                                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                            value={field.value || ''}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                field.onChange(value === '' ? undefined : parseInt(value));
+                                            }}
                                         />
                                     )}
                                 />
@@ -567,18 +572,19 @@ const DoctorReports = () => {
                         </div>
                     </Form>
                 </div>
-            </Dialog>
+            </Drawer>
 
-            {/* View Report Modal */}
-            <Dialog
+            {/* View Report Drawer */}
+            <Drawer
                 isOpen={showViewModal}
                 onClose={() => setShowViewModal(false)}
-                className="max-w-2xl"
+                closable
+                placement="right"
+                width={550}
+                title="Report Details"
             >
                 {selectedReport && (
-                    <div className="p-6">
-                        <h3 className="text-lg font-semibold mb-4">Report Details</h3>
-                        
+                    <div className="p-4">
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -663,7 +669,7 @@ const DoctorReports = () => {
                         </div>
                     </div>
                 )}
-            </Dialog>
+            </Drawer>
         </div>
     )
 }
