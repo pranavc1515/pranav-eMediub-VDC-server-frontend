@@ -203,14 +203,14 @@ const UserReports = () => {
                     <HiOutlineDocument className="text-6xl text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No reports yet</h3>
                     <p className="text-gray-600 mb-4">Upload your first medical report to get started</p>
-                    <Button
+                    {/* <Button
                         variant="solid"
                         onClick={() => setShowUploadModal(true)}
                         className="flex items-center gap-2"
                     >
                         <HiOutlinePlus />
                         Upload Report
-                    </Button>
+                    </Button> */}
                 </Card>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

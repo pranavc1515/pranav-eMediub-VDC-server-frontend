@@ -23,6 +23,7 @@ interface ServiceCard {
     route: string
     color: string
     bgColor: string
+    disabled?: boolean
 }
 
 const UserDashboard = () => {
@@ -39,51 +40,57 @@ const UserDashboard = () => {
             route: '/vdc',
             color: 'text-blue-600',
             bgColor: 'bg-blue-50',
+            disabled: false,
         },
         {
             id: 'appointment',
             title: 'Book Appointment',
-            description: 'Schedule in-person visit',
+            description: 'Coming Soon',
             icon: HiOutlineCalendar,
             route: '/user/appointments',
             color: 'text-purple-600',
             bgColor: 'bg-purple-50',
+            disabled: true,
         },
         {
             id: 'wellness',
             title: 'Wellness Programs',
-            description: 'Health & wellness plans',
+            description: 'Coming Soon',
             icon: HiOutlineHeart,
             route: '/user/wellness',
             color: 'text-green-600',
             bgColor: 'bg-green-50',
+            disabled: true,
         },
         {
             id: 'medicines',
             title: 'Order Medicines',
-            description: 'Get medicines delivered',
+            description: 'Coming Soon',
             icon: HiOutlineCube,
             route: '/user/medicines',
             color: 'text-orange-600',
             bgColor: 'bg-orange-50',
+            disabled: true,
         },
         {
             id: 'lab-test',
             title: 'Book Lab Test',
-            description: 'Schedule diagnostic tests',
+            description: 'Coming Soon',
             icon: HiOutlineBeaker,
             route: '/user/lab-tests',
             color: 'text-pink-600',
             bgColor: 'bg-pink-50',
+            disabled: true,
         },
         {
             id: 'insurance',
             title: 'Health Insurance',
-            description: 'Manage your coverage',
+            description: 'Coming Soon',
             icon: HiOutlineShieldCheck,
             route: '/user/insurance',
             color: 'text-indigo-600',
             bgColor: 'bg-indigo-50',
+            disabled: true,
         },
     ]
 
@@ -104,8 +111,10 @@ const UserDashboard = () => {
         },
     ]
 
-    const handleServiceClick = (route: string) => {
-        navigate(route)
+    const handleServiceClick = (route: string, disabled: boolean = false) => {
+        if (!disabled) {
+            navigate(route)
+        }
     }
 
     const handleSearch = () => {
@@ -117,9 +126,9 @@ const UserDashboard = () => {
 
     const getGreeting = () => {
         const hour = new Date().getHours()
-        if (hour < 12) return 'Good Morning'
-        if (hour < 17) return 'Good Afternoon'
-        return 'Good Evening'
+        if (hour < 12) return 'Hi there!'
+        if (hour < 17) return 'Hi there!'
+        return 'Hi there!'
     }
 
     return (
@@ -161,31 +170,7 @@ const UserDashboard = () => {
                 </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                    Quick Access
-                </h3>
-                <div className="grid grid-cols-3 gap-3">
-                    {quickActions.map((action) => (
-                        <Card
-                            key={action.id}
-                            className="p-4 cursor-pointer hover:shadow-md transition-shadow"
-                            clickable
-                            onClick={() => handleServiceClick(action.route)}
-                        >
-                            <div className="text-center">
-                                <action.icon
-                                    className={`h-6 w-6 mx-auto mb-2 ${action.color}`}
-                                />
-                                <p className="text-xs font-medium text-gray-700">
-                                    {action.title}
-                                </p>
-                            </div>
-                        </Card>
-                    ))}
-                </div>
-            </div>
+           
 
             {/* Main Services */}
             <div>
@@ -196,9 +181,13 @@ const UserDashboard = () => {
                     {services.map((service) => (
                         <Card
                             key={service.id}
-                            className="p-4 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
-                            clickable
-                            onClick={() => handleServiceClick(service.route)}
+                            className={`p-4 transition-all duration-200 ${
+                                service.disabled 
+                                    ? 'opacity-70 cursor-not-allowed' 
+                                    : 'cursor-pointer hover:shadow-lg hover:scale-105'
+                            }`}
+                            clickable={!service.disabled}
+                            onClick={() => handleServiceClick(service.route, service.disabled)}
                         >
                             <div className="text-center">
                                 <div
@@ -214,6 +203,11 @@ const UserDashboard = () => {
                                 <p className="text-gray-500 text-xs">
                                     {service.description}
                                 </p>
+                                {service.disabled && (
+                                    <span className="inline-block mt-2 px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded-full">
+                                        Coming Soon
+                                    </span>
+                                )}
                             </div>
                         </Card>
                     ))}
