@@ -35,54 +35,47 @@ const getPersistStorage = () => {
 // Function to load user data from localStorage with key 'user_data'
 const loadUserDataFromStorage = (): User => {
     try {
+        // Try to load from user_data first (new storage format)
         const userData = localStorage.getItem('user_data')
-        if (userData) {
-            const parsedUser = JSON.parse(userData)
+        // If not found, try doctor_data
+        const doctorData = localStorage.getItem('doctor_data')
+        // Determine which data to use
+        const storageData = userData || doctorData
+        
+        if (storageData) {
+            const parsedUser = JSON.parse(storageData)
             console.log('Loading user data from localStorage:', parsedUser)
             
-            // Only return user data if it's a user/patient (not doctor)
-            if (parsedUser) {
-                // Check if user is a doctor - if so, don't load from localStorage
-                if (parsedUser.authority && parsedUser.authority.includes('doctor')) {
-                    console.log('Doctor user detected, not loading from localStorage')
-                    return {
-                        avatar: '',
-                        userName: '',
-                        email: '',
-                        authority: [],
-                    }
+            // Ensure we have a valid user ID
+            const userId = parsedUser.userId || parsedUser.patientId || parsedUser.id || ''
+            if (!userId) {
+                console.log('No valid user ID found in localStorage data')
+                return {
+                    avatar: '',
+                    userName: '',
+                    email: '',
+                    authority: [],
                 }
-                
-                // Ensure we have a valid user ID
-                const userId = parsedUser.userId || parsedUser.patientId || parsedUser.id || ''
-                if (!userId) {
-                    console.log('No valid user ID found in localStorage data')
-                    return {
-                        avatar: '',
-                        userName: '',
-                        email: '',
-                        authority: [],
-                    }
-                }
-                
-                // Build the user object
-                const userName = parsedUser.userName || 
-                               `${parsedUser.firstName || ''} ${parsedUser.lastName || ''}`.trim() ||
-                               parsedUser.name || ''
-                
-                const userObj = {
-                    userId,
-                    userName,
-                    email: parsedUser.email || '',
-                    authority: parsedUser.authority || ['user'],
-                    avatar: parsedUser.avatar || parsedUser.image || '',
-                    phoneNumber: parsedUser.phoneNumber || '',
-                    ...parsedUser // Include all other properties
-                }
-                
-                console.log('Successfully loaded user from localStorage:', userObj)
-                return userObj
             }
+            
+            // Build the user object
+            const userName = parsedUser.userName || 
+                           `${parsedUser.firstName || ''} ${parsedUser.lastName || ''}`.trim() ||
+                           parsedUser.name || ''
+            
+            const userObj = {
+                userId,
+                userName,
+                email: parsedUser.email || '',
+                authority: parsedUser.authority || ['user'],
+                avatar: parsedUser.avatar || '',
+                image: parsedUser.image || parsedUser.avatar || '',
+                phoneNumber: parsedUser.phoneNumber || '',
+                ...parsedUser // Include all other properties
+            }
+            
+            console.log('Successfully loaded user from localStorage:', userObj)
+            return userObj
         }
     } catch (error) {
         console.error('Error loading user data from localStorage:', error)

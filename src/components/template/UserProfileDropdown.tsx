@@ -3,8 +3,10 @@ import Dropdown from '@/components/ui/Dropdown'
 import withHeaderItem from '@/utils/hoc/withHeaderItem'
 import { useSessionUser } from '@/store/authStore'
 import { Link } from 'react-router-dom'
-import { PiUserDuotone, PiSignOutDuotone, PiGearDuotone, PiUserCircleDuotone } from 'react-icons/pi'
+import { PiUserDuotone, PiSignOutDuotone, PiUserCircleDuotone } from 'react-icons/pi'
 import { useAuth } from '@/auth'
+import { useStoredUser } from '@/hooks/useStoredUser'
+import { useEffect } from 'react'
 
 type DropdownList = {
     label: string
@@ -22,7 +24,27 @@ const dropdownItemList: DropdownList[] = [
 ]
 
 const _UserDropdown = () => {
-    const { avatar, image, userName, email } = useSessionUser((state) => state.user)
+    const user = useSessionUser((state) => state.user)
+    const setUser = useSessionUser((state) => state.setUser)
+    const loadUserFromStorage = useSessionUser((state) => state.loadUserFromStorage)
+    
+    // Use the useStoredUser hook to get data directly from localStorage
+    const { 
+        userName: storedUserName, 
+        userEmail: storedEmail,
+        profileImage: storedProfileImage,
+        userAvatar: storedAvatar
+    } = useStoredUser()
+    
+    // Ensure Zustand store is updated with localStorage data on component mount
+    useEffect(() => {
+        loadUserFromStorage()
+    }, [loadUserFromStorage])
+    
+    // Combine data from both sources, preferring Zustand store if available
+    const userName = user.userName || storedUserName || 'User'
+    const email = user.email || storedEmail || ''
+    const userImage = user.image || user.avatar || storedProfileImage || storedAvatar
 
     const { signOut } = useAuth()
 
@@ -30,7 +52,6 @@ const _UserDropdown = () => {
         signOut()
     }
 
-    const userImage = image || avatar
     const avatarProps = {
         ...(userImage ? { src: userImage } : { icon: <PiUserDuotone /> }),
     }

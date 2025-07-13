@@ -1,4 +1,4 @@
-import { memo, Suspense, lazy } from 'react'
+import { memo, Suspense, lazy, useEffect } from 'react'
 import { useSessionUser } from '@/store/authStore'
 import { useStoredUser } from '@/hooks/useStoredUser'
 import type { Meta } from '@/@types/routes'
@@ -8,6 +8,7 @@ const UserVDC = lazy(() => import('./components/userVDC'))
 
 const Home = <T extends Meta>(props: T): JSX.Element => {
     const user = useSessionUser((state) => state.user)
+    const loadUserFromStorage = useSessionUser((state) => state.loadUserFromStorage)
     const { 
         isDoctor, 
         userData, 
@@ -23,6 +24,11 @@ const Home = <T extends Meta>(props: T): JSX.Element => {
         consultationFees,
         profileImage
     } = useStoredUser()
+    
+    // Ensure Zustand store is updated with localStorage data on component mount
+    useEffect(() => {
+        loadUserFromStorage()
+    }, [loadUserFromStorage])
     
     // Log enhanced stored user data for demonstration (remove in production)
     console.log('Enhanced stored user data:', {

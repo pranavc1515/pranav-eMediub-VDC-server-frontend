@@ -11,6 +11,7 @@ import {
     Dialog,
     Spinner,
     DatePicker,
+    Drawer,
 } from '@/components/ui'
 import toast from '@/components/ui/toast'
 import ReportsService, { ReportData, UploadReportRequest } from '@/services/ReportsService'
@@ -275,15 +276,14 @@ const UserReports = () => {
                 </div>
             )}
 
-            {/* Upload Modal */}
-            <Dialog
+            {/* Upload Drawer */}
+            <Drawer
                 isOpen={showUploadModal}
                 onClose={() => setShowUploadModal(false)}
-                className="max-w-2xl"
+                width={600}
+                title="Upload Medical Report"
             >
-                <div className="p-6">
-                    <h3 className="text-lg font-semibold mb-4">Upload Medical Report</h3>
-                    
+                <div className="p-4">
                     <Form onSubmit={handleSubmit(onSubmitUpload)}>
                         <FormContainer>
                             <FormItem
@@ -365,18 +365,17 @@ const UserReports = () => {
                         </div>
                     </Form>
                 </div>
-            </Dialog>
+            </Drawer>
 
             {/* View Report Modal */}
-            <Dialog
+            <Drawer
                 isOpen={showViewModal}
                 onClose={() => setShowViewModal(false)}
-                className="max-w-2xl"
+                width={600}
+                title="Report Details"
             >
                 {selectedReport && (
-                    <div className="p-6">
-                        <h3 className="text-lg font-semibold mb-4">Report Details</h3>
-                        
+                    <div className="p-4">
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -433,7 +432,7 @@ const UserReports = () => {
                         </div>
                     </div>
                 )}
-            </Dialog>
+            </Drawer>
         </div>
     )
 }

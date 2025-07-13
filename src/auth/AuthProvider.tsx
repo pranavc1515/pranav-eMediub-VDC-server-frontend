@@ -4,7 +4,7 @@ import appConfig from '@/configs/app.config'
 import { useSessionUser, useToken } from '@/store/authStore'
 import { apiSignOut, apiSignUp } from '@/services/AuthService'
 import { REDIRECT_URL_KEY } from '@/constants/app.constant'
-import { clearAllUserData } from '@/utils/userStorage'
+import { clearAllUserData, getCurrentUser } from '@/utils/userStorage'
 import { useNavigate } from 'react-router-dom'
 import type {
     SignInCredential,
@@ -77,8 +77,28 @@ function AuthProvider({ children }: AuthProviderProps) {
 
     // Load user data from localStorage on initialization
     useEffect(() => {
+        // Force load from localStorage
         loadUserFromStorage()
-    }, [loadUserFromStorage])
+        
+        // Check if we have a token but no user data
+        if (token && (!user?.userId || !user?.userName)) {
+            const storedUser = getCurrentUser()
+            if (storedUser) {
+                // Convert UserStorageData to User type
+                const userData = {
+                    ...storedUser,
+                    userId: storedUser.userId?.toString() || '',
+                    userName: storedUser.userName || '',
+                    email: storedUser.email || '',
+                    avatar: storedUser.avatar || '',
+                    image: storedUser.image || '',
+                    authority: storedUser.authority || ['user'],
+                }
+                setUser(userData as User)
+                setSessionSignedIn(true)
+            }
+        }
+    }, [token, user?.userId, user?.userName, loadUserFromStorage, setUser, setSessionSignedIn])
 
     const redirect = () => {
         const search = window.location.search

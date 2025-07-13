@@ -7,6 +7,7 @@ import {
     getUserFromStorage,
     type UserStorageData,
 } from '@/utils/userStorage'
+import { useSessionUser } from '@/store/authStore'
 
 /**
  * Custom hook to manage stored user data
@@ -18,6 +19,9 @@ export const useStoredUser = () => {
     const [userId, setUserId] = useState<string | number | null>(null)
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
     const [loading, setLoading] = useState<boolean>(true)
+    
+    // Get the loadUserFromStorage function from Zustand store
+    const loadUserFromStorage = useSessionUser((state) => state.loadUserFromStorage)
 
     const refreshUserData = () => {
         try {
@@ -30,6 +34,11 @@ export const useStoredUser = () => {
             setUserType(currentType)
             setUserId(currentId)
             setIsLoggedIn(loggedIn)
+            
+            // Also update the Zustand store
+            if (currentUser) {
+                loadUserFromStorage()
+            }
         } catch (error) {
             console.error('Error refreshing user data:', error)
             setUserData(null)
@@ -62,7 +71,7 @@ export const useStoredUser = () => {
         return () => {
             window.removeEventListener('storage', handleStorageChange)
         }
-    }, [])
+    }, [loadUserFromStorage])
 
     return {
         userData,
@@ -95,7 +104,7 @@ export const useStoredUser = () => {
         smokingRoutine: userData?.smoking_routine,
         drinkingRoutine: userData?.drinking_routine,
         activityRoutine: userData?.activity_routine,
-        profileImage: userData?.image,
+        profileImage: userData?.image || userData?.avatar,
         // Doctor-specific convenience getters
         specialization: userData?.specialization,
         consultationFees: userData?.consultationFees,
