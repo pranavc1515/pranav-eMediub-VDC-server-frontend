@@ -21,6 +21,7 @@ import {
     type DoctorProfessionalDetailsFormData
 } from '@/utils/validationSchemas'
 import { getTodayDateString } from '@/utils/dateUtils'
+import SPECIALIZATIONS from '@/constants/specializations.constant'
 
 // Common languages in India
 const languageOptions = [
@@ -355,9 +356,14 @@ const ProfileSetup = () => {
                                         name="specialization"
                                         control={professionalForm.control}
                                         render={({ field }) => (
-                                            <Input
+                                            <Select
                                                 {...field}
-                                                placeholder="Cardiology, Pediatrics, etc."
+                                                placeholder="Select your specialization"
+                                                options={SPECIALIZATIONS}
+                                                value={SPECIALIZATIONS.find(option => option.value === field.value)}
+                                                onChange={(selectedOption) => {
+                                                    field.onChange(selectedOption?.value || '')
+                                                }}
                                             />
                                         )}
                                     />

@@ -14,6 +14,7 @@ import Select from '@/components/ui/Select'
 import dayjs from 'dayjs'
 import Badge from '@/components/ui/Badge'
 import { getTodayDateString } from '@/utils/dateUtils'
+import SPECIALIZATIONS from '@/constants/specializations.constant'
 
 // Common languages in India
 const languageOptions = [
@@ -52,6 +53,9 @@ const Profile = () => {
 
     const [selectedFiles, setSelectedFiles] = useState<File[]>([])
     const [certificatesToRemove, setCertificatesToRemove] = useState<string[]>([])
+    const [selectedSpecialization, setSelectedSpecialization] = useState<string>(
+        profile?.DoctorProfessional?.specialization || ''
+    )
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -81,6 +85,10 @@ const Profile = () => {
                     }),
                 ),
             )
+        }
+        // Initialize selected specialization from profile data
+        if (profile?.DoctorProfessional?.specialization) {
+            setSelectedSpecialization(profile.DoctorProfessional.specialization)
         }
     }, [profile])
 
@@ -504,13 +512,17 @@ const Profile = () => {
                             />
                         </FormItem>
                         <FormItem label="Specialization" asterisk={true}>
-                            <Input
+                            <Select
                                 name="specialization"
                                 id="specialization"
-                                defaultValue={
-                                    profile?.DoctorProfessional
-                                        .specialization || ''
-                                }
+                                placeholder="Select your specialization"
+                                options={SPECIALIZATIONS}
+                                value={SPECIALIZATIONS.find(option => 
+                                    option.value === selectedSpecialization
+                                )}
+                                onChange={(selectedOption) => {
+                                    setSelectedSpecialization(selectedOption?.value || '')
+                                }}
                             />
                         </FormItem>
                         <FormItem label="Registration Number" asterisk={true}>
@@ -823,11 +835,7 @@ const Profile = () => {
                                                 'qualification',
                                             ) as HTMLInputElement
                                         ).value,
-                                        specialization: (
-                                            document.getElementById(
-                                                'specialization',
-                                            ) as HTMLInputElement
-                                        ).value,
+                                        specialization: selectedSpecialization,
                                         registrationNumber: (
                                             document.getElementById(
                                                 'registrationNumber',
