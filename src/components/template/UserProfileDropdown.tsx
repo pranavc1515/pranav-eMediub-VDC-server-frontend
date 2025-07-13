@@ -6,7 +6,9 @@ import { Link } from 'react-router-dom'
 import { PiUserDuotone, PiSignOutDuotone, PiUserCircleDuotone, PiGearDuotone } from 'react-icons/pi'
 import { useAuth } from '@/auth'
 import { useStoredUser } from '@/hooks/useStoredUser'
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
+import UserService from '@/services/UserService'
+import DoctorService from '@/services/DoctorService'
 
 type DropdownList = {
     label: string
@@ -33,8 +35,8 @@ const _UserDropdown = () => {
     }, [loadUserFromStorage])
     
     // Combine data from both sources, preferring Zustand store if available
-    const userName = user.userName || storedUserName || 'User'
-    const email = user.email || storedEmail || ''
+    // const userName = user.userName || storedUserName || 'User'
+    // const email = user.email || storedEmail || ''
     const userImage = user.image || user.avatar || storedProfileImage || storedAvatar
 
     const { signOut } = useAuth()
@@ -60,6 +62,25 @@ const _UserDropdown = () => {
         ...(userImage ? { src: userImage } : { icon: <PiUserDuotone /> }),
     }
 
+    const [name, setName] = useState('')
+    const [email, setEmail] = useState('')
+
+    useEffect(() => {
+        // Determine if user is doctor or not
+        const isDoctor = user.authority?.includes('doctor') || false
+        if (isDoctor) {
+            DoctorService.getProfile().then(res => {
+                setName(res?.data?.fullName || '')
+                setEmail(res?.data?.email || '')
+            })
+        } else {
+            UserService.getProfileDetails().then(res => {
+                setName(res?.data?.name || '')
+                setEmail(res?.data?.email || '')
+            })
+        }
+    }, [])
+
     return (
         <Dropdown
             className="flex"
@@ -76,7 +97,7 @@ const _UserDropdown = () => {
                     <Avatar {...avatarProps} />
                     <div>
                         <div className="font-bold text-gray-900 dark:text-gray-100">
-                            {userName || 'Anonymous'}
+                            {name || 'Anonymous'}
                         </div>
                         <div className="text-xs">
                             {email || 'No email available'}
