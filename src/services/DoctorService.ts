@@ -112,9 +112,9 @@ const DoctorService = {
             registrationState: string
             expiryDate: string
             clinicName: string
-            yearsOfExperience: number
+            yearsOfExperience: number | undefined
             communicationLanguages: string[]
-            consultationFees: number
+            consultationFees: number | undefined
             availableDays: string[]
             certificates?: File[]
             certificatesToRemove?: string[]
@@ -129,8 +129,19 @@ const DoctorService = {
         formData.append('registrationState', data.registrationState)
         formData.append('expiryDate', data.expiryDate)
         formData.append('clinicName', data.clinicName)
-        formData.append('yearsOfExperience', data.yearsOfExperience.toString())
-        formData.append('consultationFees', data.consultationFees.toString())
+        
+        // Handle potentially undefined values
+        if (data.yearsOfExperience !== undefined) {
+            formData.append('yearsOfExperience', data.yearsOfExperience.toString())
+        } else {
+            formData.append('yearsOfExperience', '0')
+        }
+        
+        if (data.consultationFees !== undefined) {
+            formData.append('consultationFees', data.consultationFees.toString())
+        } else {
+            formData.append('consultationFees', '0')
+        }
         
         // Convert arrays to JSON strings as required by the API
         formData.append('communicationLanguages', JSON.stringify(data.communicationLanguages))

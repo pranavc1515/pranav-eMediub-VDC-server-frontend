@@ -72,9 +72,9 @@ const ProfileSetup = () => {
             registrationState: '',
             expiryDate: '',
             clinicName: '',
-            yearsOfExperience: 0,
+            yearsOfExperience: undefined, // Changed from 0 to undefined
             communicationLanguages: ['English'],
-            consultationFees: 0,
+            consultationFees: undefined, // Changed from 0 to undefined
             availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
         }
     })
@@ -450,7 +450,8 @@ const ProfileSetup = () => {
                                                 min="0"
                                                 max="60"
                                                 placeholder="Years of experience"
-                                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                                value={field.value === undefined ? '' : field.value}
+                                                onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                                             />
                                         )}
                                     />
@@ -472,7 +473,8 @@ const ProfileSetup = () => {
                                                 min="0"
                                                 max="10000"
                                                 placeholder="Consultation fees"
-                                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                                value={field.value === undefined ? '' : field.value}
+                                                onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                                             />
                                         )}
                                     />

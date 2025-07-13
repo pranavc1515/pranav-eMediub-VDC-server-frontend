@@ -207,14 +207,18 @@ export const DoctorProfessionalDetailsSchema = z.object({
   
   yearsOfExperience: z.number()
     .min(0, ValidationMessages.minimumValue(0))
-    .max(60, ValidationMessages.maximumValue(60)),
+    .max(60, ValidationMessages.maximumValue(60))
+    .optional()
+    .nullable(),
   
   communicationLanguages: z.array(z.string())
     .min(1, 'At least one language must be selected'),
   
   consultationFees: z.number()
     .min(0, ValidationMessages.minimumValue(0))
-    .max(10000, ValidationMessages.maximumValue(10000)),
+    .max(10000, ValidationMessages.maximumValue(10000))
+    .optional()
+    .nullable(),
   
   availableDays: z.array(z.string())
     .min(1, 'At least one day must be selected'),
