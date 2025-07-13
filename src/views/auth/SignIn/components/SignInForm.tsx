@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { FormItem, Form } from '@/components/ui/Form'
@@ -55,6 +55,8 @@ const SignInForm = ({
     const [isProfileComplete, setIsProfileComplete] = useState(false)
     const [isTermsAccepted, setIsTermsAccepted] = useState(false)
     const [showTermsModal, setShowTermsModal] = useState(false)
+    const [resendTimer, setResendTimer] = useState(0)
+    const [isResending, setIsResending] = useState(false)
 
     const navigate = useNavigate()
     const { signIn } = useAuth()
@@ -88,6 +90,19 @@ const SignInForm = ({
         setShowTermsModal(false)
     }
 
+    // Timer effect for resend countdown
+    useEffect(() => {
+        let interval: NodeJS.Timeout
+        if (resendTimer > 0) {
+            interval = setInterval(() => {
+                setResendTimer((prev) => prev - 1)
+            }, 1000)
+        }
+        return () => {
+            if (interval) clearInterval(interval)
+        }
+    }, [resendTimer])
+
     const handleSendOtp = async ({ phone }: { phone: string }) => {
         if (disableSubmit || !isTermsAccepted) return
 
@@ -105,6 +120,7 @@ const SignInForm = ({
                 setShowOtpVerification(true)
                 setOtpValue('')
                 otpForm.reset()
+                setResendTimer(30) // Start 30 second countdown
                 setMessage?.(endpoint.message)
             } else {
                 setMessage?.(endpoint.message)
@@ -129,7 +145,7 @@ const SignInForm = ({
             url: `/${endpoint}`,
             method: 'post',
             data: { phoneNumber: phone },
-        })
+        }) as any
 
         return {
             success: response?.status || response?.success,
@@ -142,7 +158,7 @@ const SignInForm = ({
             url: '/api/patients/checkUserExists',
             method: 'post',
             data: { phone },
-        })
+        }) as any
 
         const endpoint = check.isUserExist
             ? 'api/patients/do-login'
@@ -153,7 +169,7 @@ const SignInForm = ({
             url: `/${endpoint}`,
             method: 'post',
             data: payload,
-        })
+        }) as any
 
         return {
             success: response?.status || response?.success,
@@ -179,7 +195,7 @@ const SignInForm = ({
                         : { phone: phoneNumber, otp },
             })
 
-            if (response?.status || response?.success) {
+            if ((response as any)?.status || (response as any)?.success) {
                 await processOtpSuccess(response)
             } else {
                 setMessage?.('Invalid OTP')
@@ -189,6 +205,34 @@ const SignInForm = ({
             setMessage?.('An error occurred during OTP verification.')
         } finally {
             setSubmitting(false)
+        }
+    }
+
+    const handleResendOtp = async () => {
+        if (resendTimer > 0 || isResending) return
+
+        setIsResending(true)
+        setMessage?.('Resending OTP...')
+
+        try {
+            const endpoint =
+                userType === 'doctor'
+                    ? await handleDoctorOtpRequest(phoneNumber)
+                    : await handleUserOtpRequest(phoneNumber)
+
+            if (endpoint.success) {
+                setOtpValue('')
+                otpForm.reset()
+                setResendTimer(30) // Reset timer to 30 seconds
+                setMessage?.('OTP resent successfully!')
+            } else {
+                setMessage?.(endpoint.message)
+            }
+        } catch (error) {
+            console.error('Resend OTP error:', error)
+            setMessage?.('An error occurred while resending OTP.')
+        } finally {
+            setIsResending(false)
         }
     }
 
@@ -260,7 +304,7 @@ const SignInForm = ({
                     dob: profileData.dob,
                     gender: profileData.gender,
                     marital_status: profileData.marital_status,
-                    language: profileData.language,
+                    language: (profileData as any).language,
                     height: profileData.height,
                     weight: profileData.weight,
                     diet: profileData.diet,
@@ -401,14 +445,39 @@ const SignInForm = ({
                             )}
                         />
                     </FormItem>
-                    <Button
-                        block
-                        loading={isSubmitting}
-                        variant="solid"
-                        type="submit"
-                    >
-                        {isSubmitting ? 'Verifying...' : 'Verify OTP'}
-                    </Button>
+                    
+                    <div className="mb-4">
+                        <Button
+                            block
+                            loading={isSubmitting}
+                            variant="solid"
+                            type="submit"
+                        >
+                            {isSubmitting ? 'Verifying...' : 'Verify OTP'}
+                        </Button>
+                    </div>
+                    
+                    <div className="text-center">
+                        <div className="text-sm text-gray-600 mb-2">
+                            Didn't receive the OTP?
+                        </div>
+                        <Button
+                            type="button"
+                            variant="plain"
+                            size="sm"
+                            loading={isResending}
+                            disabled={resendTimer > 0 || isResending}
+                            onClick={handleResendOtp}
+                            className="text-blue-600 hover:text-blue-800 disabled:text-gray-400"
+                        >
+                            {isResending 
+                                ? 'Resending...' 
+                                : resendTimer > 0 
+                                    ? `Resend OTP in ${resendTimer}s` 
+                                    : 'Resend OTP'
+                            }
+                        </Button>
+                    </div>
                 </Form>
             )}
 
