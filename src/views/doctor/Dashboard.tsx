@@ -14,6 +14,7 @@ import {
     HiOutlineCog,
     HiOutlineUserGroup,
 } from 'react-icons/hi'
+import DoctorService from '@/services/DoctorService'
 
 interface ServiceCard {
     id: string
@@ -32,13 +33,19 @@ const DoctorDashboard = () => {
     const [isAvailable, setIsAvailable] = useState(false)
     const [isToggling, setIsToggling] = useState(false)
     const navigate = useNavigate()
-    const user = useSessionUser((state) => state.user)
+    const [name, setName] = useState('')
 
     // Initialize with default availability status
     useEffect(() => {
         // In a real implementation, we would fetch the doctor's availability status from the API
         const savedStatus = localStorage.getItem('doctor-availability')
         setIsAvailable(savedStatus === 'true')
+    }, [])
+
+    useEffect(() => {
+        DoctorService.getProfile().then(res => {
+            setName(res?.data?.fullName || '')
+        })
     }, [])
 
     const handleToggleAvailability = async () => {
@@ -128,15 +135,13 @@ const DoctorDashboard = () => {
                     <div className="flex items-center gap-3">
                         <Avatar
                             size={50}
-                            src={user.image || user.avatar || '/img/avatars/default-avatar.jpg'}
+                            src={''} // You can fetch and use image if needed
                             className="ring-2 ring-blue-100"
                         />
                         <div>
-                            <p className="text-gray-600 text-sm">
-                                {getGreeting()}, Dr.
-                            </p>
+                            <p className="text-gray-600 text-sm">Good morning, Dr.</p>
                             <h2 className="text-xl font-semibold text-gray-900">
-                                {user.userName || 'Doctor'}
+                                {name || 'Doctor'}
                             </h2>
                         </div>
                     </div>
