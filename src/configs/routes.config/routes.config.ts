@@ -42,12 +42,7 @@ export const protectedRoutes: Routes = [
             layout: 'blank',
         },
     },
-    {
-        key: 'user.family',
-        path: '/user/family',
-        component: lazy(() => import('@/views/user/Family')),
-        authority: ['user'],
-    },
+
 
     {
         key: 'doctorVideoCall',

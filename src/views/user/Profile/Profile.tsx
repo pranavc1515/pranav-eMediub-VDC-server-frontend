@@ -7,15 +7,19 @@ import {
     Input, 
     FormItem, 
     FormContainer, 
-    Select, 
     Spinner, 
     Notification,
-    Alert
+    Alert,
+    Badge
 } from '@/components/ui'
 import toast from '@/components/ui/toast'
 import UserService from '@/services/UserService'
+import MedicalDetailsService from '@/services/MedicalDetailsService'
+import FamilyService from '@/services/FamilyService'
 import type { UserPersonalDetails } from '@/services/UserService'
-import { HiOutlinePencilAlt, HiOutlineCamera } from 'react-icons/hi'
+import type { MedicalDetails, UpdateMedicalDetailsRequest } from '@/services/MedicalDetailsService'
+import type { FamilyMember, FamilyTreeResponse, AddFamilyMemberRequest, UpdateFamilyMemberRequest, RemoveFamilyMemberRequest } from '@/services/FamilyService'
+import { HiOutlinePencilAlt, HiOutlineCamera, HiOutlineClipboardList, HiPlus, HiEye, HiPencil, HiTrash, HiUsers } from 'react-icons/hi'
 import type { UserProfileDetailsResponse } from '@/services/UserService'
 import Container from '@/components/shared/Container'
 import { useAuth } from '@/auth'
@@ -27,6 +31,9 @@ import {
     UserPersonalDetailsSchema,
     type UserPersonalDetailsFormData
 } from '@/utils/validationSchemas'
+import AddFamilyMemberForm from '@/views/user/Family/components/AddFamilyMemberForm'
+import EditFamilyMemberForm from '@/views/user/Family/components/EditFamilyMemberForm'
+import FamilyTreeCard from '@/views/user/Family/components/FamilyTreeCard'
 
 // Helper function to calculate age from date of birth
 const calculateAge = (dob: string): string => {
@@ -75,6 +82,22 @@ const Profile = () => {
     const [userPhone, setUserPhone] = useState<string>('')
     const [imagePreview, setImagePreview] = useState<string | null>(null)
 
+    // Medical Information States
+    const [medicalData, setMedicalData] = useState<MedicalDetails | null>(null)
+    const [medicalFormVisible, setMedicalFormVisible] = useState(false)
+    const [medicalSubmitting, setMedicalSubmitting] = useState(false)
+    const [medicalError, setMedicalError] = useState('')
+    const [medicalSuccess, setMedicalSuccess] = useState('')
+
+    // Family Information States
+    const [familyData, setFamilyData] = useState<FamilyTreeResponse | null>(null)
+    const [familyLoading, setFamilyLoading] = useState(false)
+    const [addFamilyDrawerOpen, setAddFamilyDrawerOpen] = useState(false)
+    const [editFamilyDrawerOpen, setEditFamilyDrawerOpen] = useState(false)
+    const [viewFamilyDrawerOpen, setViewFamilyDrawerOpen] = useState(false)
+    const [selectedFamilyMember, setSelectedFamilyMember] = useState<FamilyMember | null>(null)
+    const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null)
+
     // Form setup
     const form = useForm<UserPersonalDetailsFormData>({
         resolver: zodResolver(UserPersonalDetailsSchema),
@@ -104,8 +127,60 @@ const Profile = () => {
         }
     }, [watchedDob, form])
 
+    // Medical form setup
+    const medicalForm = useForm<UpdateMedicalDetailsRequest>({
+        mode: 'onChange',
+        defaultValues: {
+            blood_group: '',
+            food_allergies: '',
+            drug_allergies: '',
+            implants: '',
+            surgeries: '',
+            family_medical_history: '',
+            smoking_habits: '',
+            alcohol_consumption: '',
+            physical_activity: '',
+        }
+    })
+
+    // Blood group options
+    const bloodGroupOptions: SelectOption[] = [
+        { value: 'A+', label: 'A+' },
+        { value: 'A-', label: 'A-' },
+        { value: 'B+', label: 'B+' },
+        { value: 'B-', label: 'B-' },
+        { value: 'AB+', label: 'AB+' },
+        { value: 'AB-', label: 'AB-' },
+        { value: 'O+', label: 'O+' },
+        { value: 'O-', label: 'O-' },
+    ]
+
+    const smokingHabitsOptions: SelectOption[] = [
+        { value: 'Never', label: 'Never' },
+        { value: 'Occasionally', label: 'Occasionally' },
+        { value: 'Regularly', label: 'Regularly' },
+        { value: 'Quit', label: 'Quit' },
+    ]
+
+    const alcoholConsumptionOptions: SelectOption[] = [
+        { value: 'Never', label: 'Never' },
+        { value: 'Occasionally', label: 'Occasionally' },
+        { value: 'Regularly', label: 'Regularly' },
+        { value: 'Socially', label: 'Socially' },
+    ]
+
+    const physicalActivityOptions: SelectOption[] = [
+        { value: 'Sedentary', label: 'Sedentary' },
+        { value: 'Light exercise', label: 'Light exercise' },
+        { value: 'Moderate exercise', label: 'Moderate exercise' },
+        { value: 'Regular exercise', label: 'Regular exercise' },
+        { value: 'Intense exercise', label: 'Intense exercise' },
+    ]
+
     useEffect(() => {
         fetchProfileData()
+        fetchMedicalData()
+        fetchFamilyData()
     }, [])
 
     const fetchProfileData = async () => {
@@ -177,6 +252,50 @@ const Profile = () => {
             setError('Failed to load profile data')
         } finally {
             setLoading(false)
+        }
+    }
+
+    const fetchMedicalData = async () => {
+        try {
+            const response = await MedicalDetailsService.getMedicalDetails()
+            if (response.status && response.data) {
+                setMedicalData(response.data)
+                
+                // Populate medical form with existing data
+                medicalForm.reset({
+                    blood_group: response.data.blood_group || '',
+                    food_allergies: response.data.food_allergies || '',
+                    drug_allergies: response.data.drug_allergies || '',
+                    implants: response.data.implants || '',
+                    surgeries: response.data.surgeries || '',
+                    family_medical_history: response.data.family_medical_history || '',
+                    smoking_habits: response.data.smoking_habits || '',
+                    alcohol_consumption: response.data.alcohol_consumption || '',
+                    physical_activity: response.data.physical_activity || '',
+                })
+            }
+        } catch (error) {
+            console.error('Error fetching medical data:', error)
+            // Don't show error if medical data doesn't exist yet (404)
+            if (error && typeof error === 'object' && 'response' in error) {
+                const axiosError = error as { response?: { status?: number } }
+                if (axiosError.response?.status !== 404) {
+                    setMedicalError('Failed to load medical information')
+                }
+            }
+        }
+    }
+
+    const fetchFamilyData = async () => {
+        try {
+            setFamilyLoading(true)
+            const response = await FamilyService.getFamilyTree()
+            setFamilyData(response)
+        } catch (error) {
+            console.error('Error fetching family data:', error)
+            // Don't show error for family data as it's optional
+        } finally {
+            setFamilyLoading(false)
         }
     }
 
@@ -294,6 +413,141 @@ const Profile = () => {
         }
     }
 
+    // Medical form handlers
+    const handleMedicalSubmit = async (data: UpdateMedicalDetailsRequest) => {
+        try {
+            setMedicalSubmitting(true)
+            setMedicalError('')
+            setMedicalSuccess('')
+
+            const response = await MedicalDetailsService.updateMedicalDetails(data)
+            
+            if (response.status) {
+                setMedicalSuccess(response.message || 'Medical information updated successfully!')
+                
+                // Refresh medical data
+                await fetchMedicalData()
+                
+                // Close the drawer after a short delay to show the success message
+                setTimeout(() => {
+                    toggleMedicalDrawer(false)
+                }, 1500)
+            } else {
+                setMedicalError(response.message || 'Failed to update medical information. Please try again.')
+            }
+        } catch (error) {
+            console.error('Error updating medical information:', error)
+            setMedicalError('An error occurred while updating your medical information. Please try again.')
+        } finally {
+            setMedicalSubmitting(false)
+        }
+    }
+
+    const toggleMedicalDrawer = (visible: boolean) => {
+        setMedicalFormVisible(visible)
+        if (!visible) {
+            setMedicalError('')
+            setMedicalSuccess('')
+        }
+    }
+
+    // Family form handlers
+    const handleAddFamilyMember = async (memberData: AddFamilyMemberRequest) => {
+        try {
+            await FamilyService.addFamilyMember(memberData)
+            toast.push(
+                <Notification type="success" title="Success">
+                    Family member added successfully
+                </Notification>,
+            )
+            setAddFamilyDrawerOpen(false)
+            await fetchFamilyData()
+        } catch (error) {
+            console.error('Error adding family member:', error)
+            toast.push(
+                <Notification type="danger" title="Error">
+                    Failed to add family member
+                </Notification>,
+            )
+        }
+    }
+
+    const handleUpdateFamilyMember = async (memberData: UpdateFamilyMemberRequest) => {
+        if (!selectedFamilyMember) return
+
+        try {
+            await FamilyService.updateFamilyMember(selectedFamilyMember.id, memberData)
+            toast.push(
+                <Notification type="success" title="Success">
+                    Family member updated successfully
+                </Notification>,
+            )
+            setEditFamilyDrawerOpen(false)
+            setSelectedFamilyMember(null)
+            await fetchFamilyData()
+        } catch (error) {
+            console.error('Error updating family member:', error)
+            toast.push(
+                <Notification type="danger" title="Error">
+                    Failed to update family member
+                </Notification>,
+            )
+        }
+    }
+
+    const handleRemoveFamilyMember = async (relatedUserId: number) => {
+        try {
+            const requestData: RemoveFamilyMemberRequest = {
+                userId: relatedUserId,
+            }
+            await FamilyService.removeFamilyMember(relatedUserId, requestData)
+            toast.push(
+                <Notification type="success" title="Success">
+                    Family member removed successfully
+                </Notification>,
+            )
+            await fetchFamilyData()
+        } catch (error) {
+            console.error('Error removing family member:', error)
+            toast.push(
+                <Notification type="danger" title="Error">
+                    Failed to remove family member
+                </Notification>,
+            )
+        }
+    }
+
+    const openEditFamilyDrawer = (member: FamilyMember) => {
+        setSelectedFamilyMember(member)
+        setEditFamilyDrawerOpen(true)
+    }
+
+    const openViewFamilyDrawer = (member: FamilyMember) => {
+        setSelectedFamilyMember(member)
+        setViewFamilyDrawerOpen(true)
+    }
+
+    const openAddFamilyDrawer = (nodeUserId?: number) => {
+        // Get user ID from auth store or localStorage as fallback
+        const authUserId = user.userId ? parseInt(user.userId, 10) : null
+        const storedUserId = localStorage.getItem('userId')
+        const userIdFromStorage = storedUserId ? parseInt(storedUserId, 10) : null
+
+        const finalNodeUserId = nodeUserId || authUserId || userIdFromStorage
+
+        if (!finalNodeUserId) {
+            toast.push(
+                <Notification type="danger" title="Authentication Required">
+                    Please log in to add family members.
+                </Notification>,
+            )
+            return
+        }
+
+        setSelectedNodeId(finalNodeUserId)
+        setAddFamilyDrawerOpen(true)
+    }
+
     if (loading) {
         return (
             <Container className="h-full flex items-center justify-center">
@@ -398,6 +652,183 @@ const Profile = () => {
                             </div>
                         </div>
                     </div>
+                </div>
+            </Card>
+
+            {/* Medical Information Card */}
+            <Card className="max-w-4xl mx-auto mb-6">
+                <div className="p-6">
+                    <div className="flex justify-between items-center mb-6">
+                        <h1 className="text-2xl font-bold">Medical Information</h1>
+                        <Button 
+                            variant="solid"
+                            icon={<HiOutlineClipboardList />} 
+                            onClick={() => toggleMedicalDrawer(true)}
+                        >
+                            {medicalData ? 'Edit Medical Info' : 'Add Medical Info'}
+                        </Button>
+                    </div>
+                    
+                    {medicalData ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <p className="text-gray-500 text-sm">Blood Group</p>
+                                <p className="font-medium">{medicalData.blood_group || 'Not provided'}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-500 text-sm">Food Allergies</p>
+                                <p className="font-medium">{medicalData.food_allergies || 'None reported'}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-500 text-sm">Drug Allergies</p>
+                                <p className="font-medium">{medicalData.drug_allergies || 'None reported'}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-500 text-sm">Implants</p>
+                                <p className="font-medium">{medicalData.implants || 'None reported'}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-500 text-sm">Surgeries</p>
+                                <p className="font-medium">{medicalData.surgeries || 'None reported'}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-500 text-sm">Family Medical History</p>
+                                <p className="font-medium">{medicalData.family_medical_history || 'None reported'}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-500 text-sm">Smoking Habits</p>
+                                <p className="font-medium">{medicalData.smoking_habits || 'Not specified'}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-500 text-sm">Alcohol Consumption</p>
+                                <p className="font-medium">{medicalData.alcohol_consumption || 'Not specified'}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-500 text-sm">Physical Activity</p>
+                                <p className="font-medium">{medicalData.physical_activity || 'Not specified'}</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center py-8">
+                            <HiOutlineClipboardList className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                            <p className="text-gray-500 mb-4">No medical information available</p>
+                            <p className="text-sm text-gray-400">Add your medical information to help doctors provide better care</p>
+                        </div>
+                    )}
+                </div>
+            </Card>
+
+            {/* Family Information Card */}
+            <Card className="max-w-4xl mx-auto mb-6">
+                <div className="p-6">
+                    <div className="flex justify-between items-center mb-6">
+                        <h1 className="text-2xl font-bold">Family Information</h1>
+                        <Button 
+                            variant="solid"
+                            icon={<HiPlus />} 
+                            onClick={() => openAddFamilyDrawer()}
+                        >
+                            Add Family Member
+                        </Button>
+                    </div>
+                    
+                    {familyData?.data?.familyTree && familyData.data.familyTree.length > 0 ? (
+                        <div className="space-y-4">
+                            {/* Family Statistics */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                                    <div className="flex items-center">
+                                        <HiUsers className="text-2xl text-blue-600 mr-3" />
+                                        <div>
+                                            <h3 className="text-lg font-semibold">Total Members</h3>
+                                            <p className="text-2xl font-bold text-blue-600">
+                                                {familyData.data.familyTree.length}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Family Members List */}
+                            <div className="space-y-4">
+                                {familyData.data.familyTree.map((member) => (
+                                    <Card key={member.id} className="p-4 hover:shadow-lg transition-shadow duration-200">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-4">
+                                                <Avatar
+                                                    size={60}
+                                                    src={member.image || undefined}
+                                                    alt={member.name}
+                                                    className="ring-2 ring-blue-100"
+                                                >
+                                                    {!member.image && member.name?.charAt(0).toUpperCase()}
+                                                </Avatar>
+                                                <div className="flex-1">
+                                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                        {member.name}
+                                                    </h3>
+                                                    <div className="flex flex-wrap gap-2 mt-2">
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                            {member.relation_type}
+                                                        </span>
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                            {member.gender}
+                                                        </span>
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                            {member.age} years
+                                                        </span>
+                                                    </div>
+                                                    <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                                        <p>📧 {member.email}</p>
+                                                        <p>📞 {member.phone}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="plain"
+                                                    icon={<HiEye />}
+                                                    onClick={() => openViewFamilyDrawer(member)}
+                                                    className="text-blue-600 hover:bg-blue-50"
+                                                >
+                                                    View
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="plain"
+                                                    icon={<HiPencil />}
+                                                    onClick={() => openEditFamilyDrawer(member)}
+                                                    className="text-amber-600 hover:bg-amber-50"
+                                                >
+                                                    Edit
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="plain"
+                                                    icon={<HiTrash />}
+                                                    onClick={() => {
+                                                        if (confirm('Are you sure you want to remove this family member?')) {
+                                                            handleRemoveFamilyMember(member.id)
+                                                        }
+                                                    }}
+                                                    className="text-red-600 hover:bg-red-50"
+                                                >
+                                                    Remove
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center py-8">
+                            <HiUsers className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                            <p className="text-gray-500 mb-4">No family members added yet</p>
+                            <p className="text-sm text-gray-400">Add your family members to keep track of their medical information</p>
+                        </div>
+                    )}
                 </div>
             </Card>
 
@@ -739,6 +1170,247 @@ const Profile = () => {
                         </div>
                     </FormContainer>
                 </div>
+            </Drawer>
+
+            {/* Medical Information Drawer */}
+            <Drawer
+                title="Medical Information"
+                isOpen={medicalFormVisible}
+                onClose={() => toggleMedicalDrawer(false)}
+                onRequestClose={() => toggleMedicalDrawer(false)}
+                width={700}
+            >
+                <div className="p-6">
+                    {medicalError && (
+                        <Alert type="danger" showIcon className="mb-4">
+                            {medicalError}
+                        </Alert>
+                    )}
+                    
+                    {medicalSuccess && (
+                        <Alert type="success" showIcon className="mb-4">
+                            {medicalSuccess}
+                        </Alert>
+                    )}
+                    
+                    <FormContainer>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormItem label="Blood Group">
+                                <Controller
+                                    name="blood_group"
+                                    control={medicalForm.control}
+                                    render={({ field }) => (
+                                        <select
+                                            {...field}
+                                            className="input input-md h-11 focus:ring-primary focus:border-primary"
+                                        >
+                                            <option value="">Select blood group</option>
+                                            {bloodGroupOptions.map((option) => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                />
+                            </FormItem>
+
+                            <FormItem label="Food Allergies">
+                                <Controller
+                                    name="food_allergies"
+                                    control={medicalForm.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            placeholder="e.g., Peanuts, Shellfish, Dairy"
+                                        />
+                                    )}
+                                />
+                            </FormItem>
+
+                            <FormItem label="Drug Allergies">
+                                <Controller
+                                    name="drug_allergies"
+                                    control={medicalForm.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            placeholder="e.g., Penicillin, Aspirin"
+                                        />
+                                    )}
+                                />
+                            </FormItem>
+
+                            <FormItem label="Implants">
+                                <Controller
+                                    name="implants"
+                                    control={medicalForm.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            placeholder="e.g., Pacemaker, Joint replacement"
+                                        />
+                                    )}
+                                />
+                            </FormItem>
+
+                            <FormItem label="Surgeries">
+                                <Controller
+                                    name="surgeries"
+                                    control={medicalForm.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            placeholder="e.g., Appendectomy, Heart surgery"
+                                        />
+                                    )}
+                                />
+                            </FormItem>
+
+                            <FormItem label="Family Medical History">
+                                <Controller
+                                    name="family_medical_history"
+                                    control={medicalForm.control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            placeholder="e.g., Diabetes, Heart disease"
+                                        />
+                                    )}
+                                />
+                            </FormItem>
+
+                            <FormItem label="Smoking Habits">
+                                <Controller
+                                    name="smoking_habits"
+                                    control={medicalForm.control}
+                                    render={({ field }) => (
+                                        <select
+                                            {...field}
+                                            className="input input-md h-11 focus:ring-primary focus:border-primary"
+                                        >
+                                            <option value="">Select smoking habits</option>
+                                            {smokingHabitsOptions.map((option) => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                />
+                            </FormItem>
+
+                            <FormItem label="Alcohol Consumption">
+                                <Controller
+                                    name="alcohol_consumption"
+                                    control={medicalForm.control}
+                                    render={({ field }) => (
+                                        <select
+                                            {...field}
+                                            className="input input-md h-11 focus:ring-primary focus:border-primary"
+                                        >
+                                            <option value="">Select alcohol consumption</option>
+                                            {alcoholConsumptionOptions.map((option) => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                />
+                            </FormItem>
+
+                            <FormItem label="Physical Activity" className="md:col-span-2">
+                                <Controller
+                                    name="physical_activity"
+                                    control={medicalForm.control}
+                                    render={({ field }) => (
+                                        <select
+                                            {...field}
+                                            className="input input-md h-11 focus:ring-primary focus:border-primary"
+                                        >
+                                            <option value="">Select physical activity level</option>
+                                            {physicalActivityOptions.map((option) => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                />
+                            </FormItem>
+                        </div>
+
+                        <div className="flex justify-end gap-2 mt-8">
+                            <Button
+                                variant="plain"
+                                onClick={() => toggleMedicalDrawer(false)}
+                                disabled={medicalSubmitting}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="solid"
+                                onClick={medicalForm.handleSubmit(handleMedicalSubmit)}
+                                loading={medicalSubmitting}
+                                disabled={medicalSubmitting}
+                            >
+                                Save Medical Information
+                            </Button>
+                        </div>
+                    </FormContainer>
+                </div>
+            </Drawer>
+
+            {/* Add Family Member Drawer */}
+            <Drawer
+                isOpen={addFamilyDrawerOpen}
+                onClose={() => setAddFamilyDrawerOpen(false)}
+                title="Add Family Member"
+                width={600}
+                placement="right"
+                closable
+            >
+                <AddFamilyMemberForm
+                    onSubmit={handleAddFamilyMember}
+                    onCancel={() => setAddFamilyDrawerOpen(false)}
+                    nodeUserId={selectedNodeId}
+                />
+            </Drawer>
+
+            {/* Edit Family Member Drawer */}
+            <Drawer
+                isOpen={editFamilyDrawerOpen}
+                onClose={() => setEditFamilyDrawerOpen(false)}
+                title="Edit Family Member"
+                width={600}
+                placement="right"
+                closable
+            >
+                {selectedFamilyMember && (
+                    <EditFamilyMemberForm
+                        member={selectedFamilyMember}
+                        onSubmit={handleUpdateFamilyMember}
+                        onCancel={() => setEditFamilyDrawerOpen(false)}
+                    />
+                )}
+            </Drawer>
+
+            {/* View Family Member Drawer */}
+            <Drawer
+                isOpen={viewFamilyDrawerOpen}
+                onClose={() => setViewFamilyDrawerOpen(false)}
+                title="Family Member Details"
+                width={600}
+                placement="right"
+                closable
+            >
+                {selectedFamilyMember && (
+                    <FamilyTreeCard
+                        member={selectedFamilyMember}
+                        onClose={() => setViewFamilyDrawerOpen(false)}
+                    />
+                )}
             </Drawer>
         </Container>
     )

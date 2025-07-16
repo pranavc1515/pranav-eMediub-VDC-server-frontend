@@ -43,16 +43,7 @@ const navigationConfig: NavigationTree[] = [
         authority: ['user'],
         subMenu: [],
     },
-    {
-        key: 'family',
-        path: '/user/family',
-        title: 'Family',
-        translateKey: 'nav.family',
-        icon: 'family',
-        type: NAV_ITEM_TYPE_ITEM,
-        authority: ['user'],
-        subMenu: [],
-    },
+
     {
         key: 'videoDoctorConsultation',
         path: '/vdc',

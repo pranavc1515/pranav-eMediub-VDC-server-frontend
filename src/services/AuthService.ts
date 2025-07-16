@@ -24,6 +24,22 @@ export async function apiSignOut() {
     })
 }
 
+export async function apiForgotPassword<T>(data: { email: string }) {
+    return ApiService.fetchDataWithAxios<T>({
+        url: endpointConfig.forgotPassword,
+        method: 'post',
+        data,
+    })
+}
+
+export async function apiResetPassword<T>(data: { password: string }) {
+    return ApiService.fetchDataWithAxios<T>({
+        url: endpointConfig.resetPassword,
+        method: 'post',
+        data,
+    })
+}
+
 export async function apiDeleteAccount() {
     return ApiService.fetchDataWithAxios({
         url: `${apiPrefix}/patients/do-delete-account`,
