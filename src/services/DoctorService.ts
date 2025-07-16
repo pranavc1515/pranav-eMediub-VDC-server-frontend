@@ -32,9 +32,6 @@ type DoctorProfile = {
         status: string
         yearsOfExperience: number | null
         communicationLanguages: string[]
-        consultationFees: string | number | null
-        availableDays: string[]
-        availableTimeSlots: Record<string, unknown>
         timeCreated: string
         timeUpdated: string
     }
@@ -114,8 +111,6 @@ const DoctorService = {
             clinicName: string
             yearsOfExperience: number | undefined
             communicationLanguages: string[]
-            consultationFees: number | undefined
-            availableDays: string[]
             certificates?: File[]
             certificatesToRemove?: string[]
         },
@@ -137,15 +132,8 @@ const DoctorService = {
             formData.append('yearsOfExperience', '0')
         }
         
-        if (data.consultationFees !== undefined) {
-            formData.append('consultationFees', data.consultationFees.toString())
-        } else {
-            formData.append('consultationFees', '0')
-        }
-        
         // Convert arrays to JSON strings as required by the API
         formData.append('communicationLanguages', JSON.stringify(data.communicationLanguages))
-        formData.append('availableDays', JSON.stringify(data.availableDays))
         
         // Add certificate files if provided
         if (data.certificates && data.certificates.length > 0) {

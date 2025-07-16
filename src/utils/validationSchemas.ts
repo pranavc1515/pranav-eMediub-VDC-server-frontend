@@ -256,15 +256,6 @@ export const DoctorProfessionalDetailsSchema = z.object({
   communicationLanguages: z.array(z.string())
     .min(1, 'At least one language must be selected'),
   
-  consultationFees: z.number()
-    .min(0, ValidationMessages.minimumValue(0))
-    .max(10000, ValidationMessages.maximumValue(10000))
-    .optional()
-    .nullable(),
-  
-  availableDays: z.array(z.string())
-    .min(1, 'At least one day must be selected'),
-  
   certificates: z.array(z.instanceof(File))
     .optional()
     .refine((files) => {

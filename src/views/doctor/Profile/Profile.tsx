@@ -310,17 +310,6 @@ const Profile = () => {
                                             .clinicName || 'Not provided'}
                                     </p>
                                 </div>
-                                <div>
-                                    <p className="text-gray-600">
-                                        Consultation Fees
-                                    </p>
-                                    <p>
-                                        {profile.DoctorProfessional
-                                            .consultationFees
-                                            ? `₹${profile.DoctorProfessional.consultationFees}`
-                                            : 'Not set'}
-                                    </p>
-                                </div>
                                 <div className="md:col-span-2">
                                     <p className="text-gray-600">
                                         Communication Languages
@@ -329,19 +318,6 @@ const Profile = () => {
                                         {profile.DoctorProfessional
                                             .communicationLanguages.length > 0
                                             ? profile.DoctorProfessional.communicationLanguages.join(
-                                                  ', ',
-                                              )
-                                            : 'Not specified'}
-                                    </p>
-                                </div>
-                                <div className="md:col-span-2">
-                                    <p className="text-gray-600">
-                                        Available Days
-                                    </p>
-                                    <p>
-                                        {profile.DoctorProfessional
-                                            .availableDays.length > 0
-                                            ? profile.DoctorProfessional.availableDays.join(
                                                   ', ',
                                               )
                                             : 'Not specified'}
@@ -599,46 +575,7 @@ const Profile = () => {
                                 placeholder="Select languages"
                             />
                         </FormItem>
-                        <FormItem label="Consultation Fees">
-                            <Input
-                                name="consultationFees"
-                                id="consultationFees"
-                                type="number"
-                                defaultValue={
-                                    profile?.DoctorProfessional.consultationFees?.toString() ||
-                                    '0'
-                                }
-                            />
-                        </FormItem>
-                        <FormItem label="Available Days">
-                            <div className="grid grid-cols-2 gap-2">
-                                {[
-                                    'Monday',
-                                    'Tuesday',
-                                    'Wednesday',
-                                    'Thursday',
-                                    'Friday',
-                                    'Saturday',
-                                    'Sunday',
-                                ].map((day) => (
-                                    <label
-                                        key={day}
-                                        className="flex items-center space-x-2"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            name={`day-${day}`}
-                                            id={`day-${day}`}
-                                            defaultChecked={profile?.DoctorProfessional.availableDays.includes(
-                                                day,
-                                            )}
-                                            className="rounded border-gray-300"
-                                        />
-                                        <span>{day}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </FormItem>
+
                         <FormItem label="Certificates Management">
                             {/* Show existing certificates */}
                             {profile?.DoctorProfessional?.certificates && profile.DoctorProfessional.certificates.length > 0 && (
@@ -813,26 +750,7 @@ const Profile = () => {
                                             (option) => option.value,
                                         )
 
-                                    // Get selected available days
-                                    const availableDays: string[] = []
-                                    const days = [
-                                        'Monday',
-                                        'Tuesday',
-                                        'Wednesday',
-                                        'Thursday',
-                                        'Friday',
-                                        'Saturday',
-                                        'Sunday',
-                                    ]
-                                    days.forEach((day) => {
-                                        const checkbox =
-                                            document.getElementById(
-                                                `day-${day}`,
-                                            ) as HTMLInputElement
-                                        if (checkbox && checkbox.checked) {
-                                            availableDays.push(day)
-                                        }
-                                    })
+
 
                                     const formData = {
                                         qualification: (
@@ -869,14 +787,6 @@ const Profile = () => {
                                             ).value,
                                         ),
                                         communicationLanguages,
-                                        consultationFees: Number(
-                                            (
-                                                document.getElementById(
-                                                    'consultationFees',
-                                                ) as HTMLInputElement
-                                            ).value,
-                                        ),
-                                        availableDays,
                                         certificates: selectedFiles.length > 0 ? selectedFiles : undefined,
                                         certificatesToRemove: certificatesToRemove.length > 0 ? certificatesToRemove : undefined,
                                     }

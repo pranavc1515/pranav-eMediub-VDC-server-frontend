@@ -75,9 +75,7 @@ const ProfileSetup = () => {
             expiryDate: '',
             clinicName: '',
             yearsOfExperience: undefined, // Changed from 0 to undefined
-            communicationLanguages: ['English'],
-            consultationFees: undefined, // Changed from 0 to undefined
-            availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+            communicationLanguages: ['English']
         }
     })
     
@@ -472,29 +470,6 @@ const ProfileSetup = () => {
                                 </FormItem>
                                 
                                 <FormItem
-                                    label="Consultation Fees (₹)"
-                                    asterisk={true}
-                                    invalid={!!professionalForm.formState.errors.consultationFees}
-                                    errorMessage={professionalForm.formState.errors.consultationFees?.message}
-                                >
-                                    <Controller
-                                        name="consultationFees"
-                                        control={professionalForm.control}
-                                        render={({ field }) => (
-                                            <Input
-                                                {...field}
-                                                type="number"
-                                                min="0"
-                                                max="10000"
-                                                placeholder="Consultation fees"
-                                                value={field.value === undefined ? '' : field.value}
-                                                onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                                            />
-                                        )}
-                                    />
-                                </FormItem>
-                                
-                                <FormItem
                                     label="Communication Languages"
                                     asterisk={true}
                                     invalid={!!professionalForm.formState.errors.communicationLanguages}
@@ -518,44 +493,6 @@ const ProfileSetup = () => {
                                                 }}
                                             />
                                         )}
-                                    />
-                                </FormItem>
-                                
-                                <FormItem
-                                    label="Available Days"
-                                    asterisk={true}
-                                    invalid={!!professionalForm.formState.errors.availableDays}
-                                    errorMessage={professionalForm.formState.errors.availableDays?.message}
-                                >
-                                    <Controller
-                                        name="availableDays"
-                                        control={professionalForm.control}
-                                        render={({ field }) => {
-                                            const daysOptions = [
-                                                { value: 'Monday', label: 'Monday' },
-                                                { value: 'Tuesday', label: 'Tuesday' },
-                                                { value: 'Wednesday', label: 'Wednesday' },
-                                                { value: 'Thursday', label: 'Thursday' },
-                                                { value: 'Friday', label: 'Friday' },
-                                                { value: 'Saturday', label: 'Saturday' },
-                                                { value: 'Sunday', label: 'Sunday' },
-                                            ]
-                                            return (
-                                                <Select
-                                                    {...field}
-                                                    isMulti
-                                                    placeholder="Select available days"
-                                                    options={daysOptions}
-                                                    value={daysOptions.filter(option => 
-                                                        field.value?.includes(option.value)
-                                                    )}
-                                                    onChange={(selectedOptions) => {
-                                                        const values = selectedOptions?.map(opt => opt.value) || []
-                                                        field.onChange(values)
-                                                    }}
-                                                />
-                                            )
-                                        }}
                                     />
                                 </FormItem>
                                 
