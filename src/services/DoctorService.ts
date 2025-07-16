@@ -64,6 +64,57 @@ type GetDoctorsParams = {
     onlyAvailable?: boolean
 }
 
+type VDCStatusResponse = {
+    success: boolean
+    data: {
+        vdcEnabled: boolean
+        hasOptedVDC: boolean
+    }
+}
+
+type VDCSettingsResponse = {
+    success: boolean
+    data: {
+        vdcEnabled: boolean
+        consultationFees: string
+        availableDays: string[]
+        availableTimeSlots: {
+            [day: string]: {
+                start: string
+                end: string
+            }
+        }
+    }
+}
+
+type UpdateVDCSettingsRequest = {
+    vdcEnabled: boolean
+    consultationFees: number
+    availableDays: string[]
+    availableTimeSlots: {
+        [day: string]: {
+            start: string
+            end: string
+        }
+    }
+}
+
+type UpdateVDCSettingsResponse = {
+    success: boolean
+    message: string
+    data: {
+        vdcEnabled: boolean
+        consultationFees: number
+        availableDays: string[]
+        availableTimeSlots: {
+            [day: string]: {
+                start: string
+                end: string
+            }
+        }
+    }
+}
+
 const DoctorService = {
     getProfile(doctorId?: number) {
         return ApiService.fetchDataWithAxios<{
@@ -207,6 +258,41 @@ const DoctorService = {
             },
         })
     },
+
+    /**
+     * Get VDC status for the authenticated doctor
+     * @returns Promise with VDC status data
+     */
+    getVDCStatus() {
+        return ApiService.fetchDataWithAxios<VDCStatusResponse>({
+            url: '/api/doctors/vdc-status',
+            method: 'GET',
+        })
+    },
+
+    /**
+     * Get VDC settings for the authenticated doctor
+     * @returns Promise with VDC settings data
+     */
+    getVDCSettings() {
+        return ApiService.fetchDataWithAxios<VDCSettingsResponse>({
+            url: '/api/doctors/vdc-settings',
+            method: 'GET',
+        })
+    },
+
+    /**
+     * Update VDC settings for the authenticated doctor
+     * @param data VDC settings to update
+     * @returns Promise with updated VDC settings
+     */
+    updateVDCSettings(data: UpdateVDCSettingsRequest) {
+        return ApiService.fetchDataWithAxios<UpdateVDCSettingsResponse>({
+            url: '/api/doctors/vdc-settings',
+            method: 'PUT',
+            data,
+        })
+    },
 }
 
 export type {
@@ -214,5 +300,9 @@ export type {
     AvailableDoctorsResponse,
     CheckDoctorExistsResponse,
     GetDoctorsParams,
+    VDCStatusResponse,
+    VDCSettingsResponse,
+    UpdateVDCSettingsRequest,
+    UpdateVDCSettingsResponse,
 }
 export default DoctorService
