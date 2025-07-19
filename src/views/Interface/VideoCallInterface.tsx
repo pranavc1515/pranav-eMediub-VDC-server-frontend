@@ -34,7 +34,10 @@ import PrescriptionDrawer from '@/components/Interface/PrescriptionDrawer'
 import EndConsultationModal from '@/components/Interface/EndConsultationModal'
 import ConsultationComplete from '@/components/Interface/ConsultationComplete'
 import ChoosePatient from '@/components/Interface/ChoosePatient'
-import { usePatientOnCallStore, type PatientOnCall } from '@/store/patientOnCallStore'
+import {
+    usePatientOnCallStore,
+    type PatientOnCall,
+} from '@/store/patientOnCallStore'
 import { FaUsers, FaClock, FaSignal } from 'react-icons/fa'
 
 // Error Boundary Component
@@ -181,7 +184,8 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
     // Patient selection states
     const [showChoosePatient, setShowChoosePatient] = useState(false)
-    const [selectedPatientForCall, setSelectedPatientForCall] = useState<PatientOnCall | null>(null)
+    const [selectedPatientForCall, setSelectedPatientForCall] =
+        useState<PatientOnCall | null>(null)
 
     // Enhanced cleanup state management to prevent race conditions
     const [isCleaningUp, setIsCleaningUp] = useState(false)
@@ -210,11 +214,8 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
     })
 
     // Patient selection store
-    const { 
-        selectedPatient, 
-        isPatientSelected, 
-        clearSelectedPatient 
-    } = usePatientOnCallStore()
+    const { selectedPatient, isPatientSelected, clearSelectedPatient } =
+        usePatientOnCallStore()
 
     const localVideoRef = useRef<HTMLDivElement>(null)
     const remoteVideoRef = useRef<HTMLDivElement>(null)
@@ -311,21 +312,40 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
     // Determine if patient selection should be shown
     useEffect(() => {
         // Only show patient selection for patients (not doctors) who are starting fresh (not reconnecting)
-        if (!isDoctor && !shouldRejoin && !urlConsultationId && !isPatientSelected && doctorId && patientId) {
+        if (
+            !isDoctor &&
+            !shouldRejoin &&
+            !urlConsultationId &&
+            !isPatientSelected &&
+            doctorId &&
+            patientId
+        ) {
             setShowChoosePatient(true)
         }
-    }, [isDoctor, shouldRejoin, urlConsultationId, isPatientSelected, doctorId, patientId])
+    }, [
+        isDoctor,
+        shouldRejoin,
+        urlConsultationId,
+        isPatientSelected,
+        doctorId,
+        patientId,
+    ])
 
     // Additional safeguard: Watch for patient selection completion
     useEffect(() => {
         // Only proceed if patient has been selected and we're not already in a consultation flow
         if (!isDoctor && selectedPatient && !room && !shouldRejoin) {
-            console.log('🎯 Patient selection detected, triggering consultation check with selected patient:', selectedPatient.name, 'ID:', selectedPatient.id)
+            console.log(
+                '🎯 Patient selection detected, triggering consultation check with selected patient:',
+                selectedPatient.name,
+                'ID:',
+                selectedPatient.id,
+            )
             // Small delay to ensure all state is settled
             const timeoutId = setTimeout(() => {
                 checkConsultationStatusAndConnect()
             }, 150)
-            
+
             return () => clearTimeout(timeoutId)
         }
     }, [selectedPatient, isDoctor, room, shouldRejoin])
@@ -572,25 +592,31 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
             selectedPatientId: selectedPatient?.id || 'None',
             shouldRejoin,
             patientId,
-            doctorId
+            doctorId,
         })
-        
+
         try {
             // For patients (non-doctors), ensure a patient has been selected before proceeding
             if (!isDoctor && !selectedPatient && !shouldRejoin) {
-                console.log('❌ Skipping consultation status check - patient not selected yet')
+                console.log(
+                    '❌ Skipping consultation status check - patient not selected yet',
+                )
                 return
             }
 
             // Determine the effective patient ID to use
             // If a patient is selected from ChoosePatient, use that ID, otherwise use default patientId
-            const effectivePatientId = selectedPatient?.id ? 
-                (typeof selectedPatient.id === 'string' ? parseInt(selectedPatient.id) : selectedPatient.id) : 
-                patientId
+            const effectivePatientId = selectedPatient?.id
+                ? typeof selectedPatient.id === 'string'
+                    ? parseInt(selectedPatient.id)
+                    : selectedPatient.id
+                : patientId
 
             // For patients: userId = logged-in user, patientId = selected patient (could be family member)
             // For doctors: userId = doctor's ID, patientId = patient they're consulting
-            const userId = isDoctor ? doctorId : parseInt((user.userId || user.patientId || 0).toString())
+            const userId = isDoctor
+                ? doctorId
+                : parseInt((user.userId || user.patientId || 0).toString())
 
             if (!doctorId || !effectivePatientId || !userId) {
                 console.log('Missing required IDs:', {
@@ -612,26 +638,46 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
             console.log(
                 '🔍 API Call: checkConsultationStatus',
-                '\n📋 Doctor ID:', doctorId,
-                '\n👤 Effective Patient ID:', effectivePatientId,
-                '\n👤 User ID:', userId,
-                '\n✅ Selected Patient:', selectedPatient?.name || 'None',
-                '\n🆔 Selected Patient ID:', selectedPatient?.id || 'None',
-                '\n👥 User Type:', isDoctor ? 'doctor' : 'patient',
-                '\n🔄 shouldRejoin:', shouldRejoin,
+                '\n📋 Doctor ID:',
+                doctorId,
+                '\n👤 Effective Patient ID:',
+                effectivePatientId,
+                '\n👤 User ID:',
+                userId,
+                '\n✅ Selected Patient:',
+                selectedPatient?.name || 'None',
+                '\n🆔 Selected Patient ID:',
+                selectedPatient?.id || 'None',
+                '\n👥 User Type:',
+                isDoctor ? 'doctor' : 'patient',
+                '\n🔄 shouldRejoin:',
+                shouldRejoin,
             )
-            
+
             console.log('📡 Making API call to checkConsultationStatus with:', {
                 doctorId,
                 effectivePatientId,
                 userId,
-                autoJoin: !isDoctor
+                autoJoin: !isDoctor,
             })
+
+            // For doctors: don't send userId (send false) since they don't need family validation
+            // For patients: send userId to validate family member relationship
+            const effectiveUserId = isDoctor ? false : Number(userId);
             
+            console.log('Making API call with:', {
+                doctorId,
+                effectivePatientId,
+                userId: effectiveUserId,
+                isDoctor,
+                autoJoin: !isDoctor,
+                userIdType: effectiveUserId === false ? 'doctor-no-validation' : 'patient-with-validation'
+            });
+
             const response = await ConsultationService.checkConsultationStatus(
                 doctorId,
                 effectivePatientId,
-                userId,
+                effectiveUserId, // false for doctors, userId number for patients
                 !isDoctor, // autoJoin only for patients, not doctors
             )
 
@@ -763,18 +809,20 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
                 }
             } else {
                 console.error('Status check failed:', response)
-                
+
                 // Handle specific error cases
                 if (response.action === 'patient_not_found') {
                     // Clear patient selection and show error
                     clearSelectedPatient()
                     setSelectedPatientForCall(null)
                     setShowChoosePatient(true)
-                    
+
                     toast.push(
                         <Notification type="danger" title="Patient Not Found">
-                            The selected family member is not registered in the system. Please choose a different patient or try again later.
-                        </Notification>
+                            The selected family member is not registered in the
+                            system. Please choose a different patient or try
+                            again later.
+                        </Notification>,
                     )
                     return
                 } else if (response.action === 'invalid_family_member') {
@@ -782,16 +830,22 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
                     clearSelectedPatient()
                     setSelectedPatientForCall(null)
                     setShowChoosePatient(true)
-                    
+
                     toast.push(
-                        <Notification type="danger" title="Invalid Family Member">
-                            The selected patient is not a valid family member. Please choose a different patient.
-                        </Notification>
+                        <Notification
+                            type="danger"
+                            title="Invalid Family Member"
+                        >
+                            The selected patient is not a valid family member.
+                            Please choose a different patient.
+                        </Notification>,
                     )
                     return
                 }
-                
-                setError(response.message || 'Failed to check consultation status')
+
+                setError(
+                    response.message || 'Failed to check consultation status',
+                )
             }
         } catch (error) {
             console.error('Error checking consultation status:', error)
@@ -1693,8 +1747,37 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
     const handleExitQueue = async () => {
         try {
             if (!doctorId || !user.userId) return
+
+            // Get patientId from Zustand store or localStorage
+            let patientId = selectedPatient?.id
+            if (!patientId) {
+                // Try to get from localStorage as fallback
+                const storedPatient = localStorage.getItem('patientOnCall')
+                if (storedPatient) {
+                    try {
+                        const parsedPatient = JSON.parse(storedPatient)
+                        patientId = parsedPatient.id
+                    } catch (e) {
+                        console.warn('Failed to parse stored patient:', e)
+                    }
+                }
+            }
+
+            // If still no patientId, use userId as fallback
+            if (!patientId) {
+                patientId = Number(user.userId)
+            }
+
+            console.log('Leaving queue with:', {
+                userId: Number(user.userId),
+                patientId: Number(patientId),
+                doctorId,
+            })
+
             await leaveQueue({
-                patientId: Number(user.userId),
+                userId: Number(user.userId),
+                patientId: Number(patientId),
+                doctorId,
             })
             onCallEnd?.()
         } catch (err) {
@@ -1705,16 +1788,24 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
     // Patient selection handlers
     const handlePatientSelected = (patient: PatientOnCall) => {
-        console.log('✅ Patient selected in VideoCallInterface:', patient.name, 'ID:', patient.id)
-        console.log('📊 Current Zustand selectedPatient before update:', selectedPatient?.name || 'None')
-        
+        console.log(
+            '✅ Patient selected in VideoCallInterface:',
+            patient.name,
+            'ID:',
+            patient.id,
+        )
+        console.log(
+            '📊 Current Zustand selectedPatient before update:',
+            selectedPatient?.name || 'None',
+        )
+
         setSelectedPatientForCall(patient)
         setShowChoosePatient(false)
-        
+
         toast.push(
             <Notification type="success" title="Patient Selected">
                 Consultation will be for {patient.name}
-            </Notification>
+            </Notification>,
         )
 
         // Handle rejoin scenario directly, otherwise let the useEffect handle the API call
@@ -1722,12 +1813,12 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
             console.log('🔄 Handling rejoin scenario')
             handleDirectRejoin(urlConsultationId)
         } else {
-            console.log('🎯 Normal consultation flow - useEffect will trigger API call')
+            console.log(
+                '🎯 Normal consultation flow - useEffect will trigger API call',
+            )
         }
         // Note: For normal consultation flow, the useEffect watching selectedPatient will trigger the API call
     }
-
-
 
     // Show consultation complete screen for patients
     if (showConsultationComplete && !isDoctor) {
@@ -1759,11 +1850,7 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
     // Show patient selection modal for patients starting fresh consultation
     if (showChoosePatient && !isDoctor) {
-        return (
-            <ChoosePatient
-                onPatientSelected={handlePatientSelected}
-            />
-        )
+        return <ChoosePatient onPatientSelected={handlePatientSelected} />
     }
 
     const handleBackToPatientSelection = () => {
@@ -1779,7 +1866,9 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
             <WaitingRoom
                 queueStatus={queueStatus}
                 onExitQueue={handleExitQueue}
-                onBackToPatientSelection={selectedPatient ? handleBackToPatientSelection : undefined}
+                onBackToPatientSelection={
+                    selectedPatient ? handleBackToPatientSelection : undefined
+                }
             />
         )
     }

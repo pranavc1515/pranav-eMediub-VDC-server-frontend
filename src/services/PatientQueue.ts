@@ -69,12 +69,15 @@ const PatientQueueService = {
 
     /**
      * Remove a patient from the queue
+     * @param userId - The ID of the user who owns the account (platform user)
+     * @param patientId - The ID of the patient for whom the consultation is (could be user or family member)
+     * @param doctorId - The ID of the doctor
      */
-    leaveQueue(patientId: number, doctorId: number) {
+    leaveQueue(userId: number, patientId: number, doctorId: number) {
         return ApiService.fetchDataWithAxios<LeaveQueueResponse>({
             url: '/api/patientQueue/leave',
             method: 'POST',
-            data: { patientId, doctorId },
+            data: { userId, patientId, doctorId },
         })
     },
 }

@@ -6,7 +6,9 @@ interface UsePatientQueueProps {
 }
 
 interface LeaveQueueParams {
+    userId: number
     patientId: number
+    doctorId: number
 }
 
 interface JoinQueueParams {
@@ -73,12 +75,13 @@ const usePatientQueue = ({ doctorId }: UsePatientQueueProps) => {
         }
     }
 
-    const leaveQueue = async ({ patientId }: LeaveQueueParams) => {
+    const leaveQueue = async ({ userId, patientId, doctorId: queueDoctorId }: LeaveQueueParams) => {
         try {
             setLoading(true)
             const response = await PatientQueueService.leaveQueue(
+                userId,
                 patientId,
-                doctorId,
+                queueDoctorId || doctorId,
             )
             if (response.success) {
                 setQueue(response.data)

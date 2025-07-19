@@ -19,7 +19,16 @@ export type ConsultationStatusResponse = {
     success: boolean
     message?: string
     status?: string
-    action?: 'rejoin' | 'ended' | 'none' | 'wait' | 'joined' | 'in_consultation' | 'conflict'
+    action?:
+        | 'rejoin'
+        | 'ended'
+        | 'none'
+        | 'wait'
+        | 'joined'
+        | 'in_consultation'
+        | 'conflict'
+        | 'patient_not_found'
+        | 'invalid_family_member'
     consultationId?: string
     roomName?: string
     position?: number
@@ -74,11 +83,11 @@ const ConsultationService = {
     /**
      * Start a new consultation session
      */
-    startConsultation(doctorId: number, patientId: number) {
+    startConsultation(doctorId: number, patientId: number, userId: number) {
         const config: AxiosRequestConfig = {
             method: 'POST',
             url: '/api/consultation/startConsultation',
-            data: { doctorId, patientId },
+            data: { doctorId, patientId, userId },
         }
         return ApiService.fetchDataWithAxios<ConsultationResponse>(config)
     },
@@ -86,7 +95,12 @@ const ConsultationService = {
     /**
      * Check consultation status for reconnection handling
      */
-    checkConsultationStatus(doctorId: number, patientId: number, userId: number, autoJoin: boolean = true) {
+    checkConsultationStatus(
+        doctorId: number,
+        patientId: number,
+        userId: number | false,
+        autoJoin: boolean = true,
+    ) {
         const config: AxiosRequestConfig = {
             method: 'POST',
             url: '/api/consultation/checkStatus',
@@ -98,7 +112,11 @@ const ConsultationService = {
     /**
      * Rejoin an existing consultation
      */
-    rejoinConsultation(consultationId: string, userId: string, userType: 'doctor' | 'patient') {
+    rejoinConsultation(
+        consultationId: string,
+        userId: string,
+        userType: 'doctor' | 'patient',
+    ) {
         const config: AxiosRequestConfig = {
             method: 'POST',
             url: '/api/consultation/rejoin',
@@ -148,14 +166,18 @@ const ConsultationService = {
     /**
      * End consultation by doctor
      */
-    endConsultationByDoctor(consultationId: string | number, doctorId: number, notes?: string) {
+    endConsultationByDoctor(
+        consultationId: string | number,
+        doctorId: number,
+        notes?: string,
+    ) {
         const config: AxiosRequestConfig = {
             method: 'POST',
             url: '/api/consultation/endConsultation',
-            data: { 
-                consultationId: parseInt(consultationId.toString()), 
-                doctorId: parseInt(doctorId.toString()), 
-                notes 
+            data: {
+                consultationId: parseInt(consultationId.toString()),
+                doctorId: parseInt(doctorId.toString()),
+                notes,
             },
         }
         return ApiService.fetchDataWithAxios<ConsultationResponse>(config)
@@ -164,25 +186,37 @@ const ConsultationService = {
     /**
      * Get consultation history for a doctor
      */
-    getDoctorConsultationHistory(doctorId: number, page: number = 1, limit: number = 15) {
+    getDoctorConsultationHistory(
+        doctorId: number,
+        page: number = 1,
+        limit: number = 15,
+    ) {
         const config: AxiosRequestConfig = {
             method: 'GET',
             url: `/api/consultation/doctor/${doctorId}/history`,
             params: { page, limit },
         }
-        return ApiService.fetchDataWithAxios<ConsultationHistoryResponse>(config)
+        return ApiService.fetchDataWithAxios<ConsultationHistoryResponse>(
+            config,
+        )
     },
 
     /**
      * Get consultation history for a patient
      */
-    getPatientConsultationHistory(patientId: number, page: number = 1, limit: number = 15) {
+    getPatientConsultationHistory(
+        patientId: number,
+        page: number = 1,
+        limit: number = 15,
+    ) {
         const config: AxiosRequestConfig = {
             method: 'GET',
             url: `/api/consultation/patient/${patientId}/history`,
             params: { page, limit },
         }
-        return ApiService.fetchDataWithAxios<ConsultationHistoryResponse>(config)
+        return ApiService.fetchDataWithAxios<ConsultationHistoryResponse>(
+            config,
+        )
     },
 
     /**

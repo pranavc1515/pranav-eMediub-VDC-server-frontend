@@ -21,10 +21,10 @@ import type { PatientQueueEntry } from '@/services/PatientQueue'
 interface QueueData extends PatientQueueEntry {
     roomName: string
     joinedAt: string
+    userId: number // Add userId field for family member validation
     patient: PatientQueueEntry['patient'] & {
         name: string
         phone?: string
-        email?: string
         details?: {
             height?: number
             weight?: number
@@ -69,7 +69,9 @@ const DoctorVDC = () => {
     const [isAvailable, setIsAvailable] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [checkingStatus, setCheckingStatus] = useState(false)
-    const [previousQueueData, setPreviousQueueData] = useState<PatientQueueEntry[]>([])
+    const [previousQueueData, setPreviousQueueData] = useState<
+        PatientQueueEntry[]
+    >([])
 
     const navigate = useNavigate()
     const { socket } = useSocketContext()
@@ -162,7 +164,7 @@ const DoctorVDC = () => {
     useEffect(() => {
         if (socket) {
             console.log('Setting up socket listeners for queue changes')
-            
+
             // Listen for queue updates
             socket.on('QUEUE_CHANGED', () => {
                 console.log('QUEUE_CHANGED event received')
@@ -248,6 +250,7 @@ const DoctorVDC = () => {
     const handleStartConsultation = async (
         patientId: number,
         roomName: string,
+        userId: number, // Add userId parameter for family member validation
     ) => {
         try {
             console.log(
@@ -257,9 +260,11 @@ const DoctorVDC = () => {
             const doctorId = parseInt(user.userId)
 
             // Call the REST API to start consultation
+            // Include userId for family member validation
             const response = await ConsultationService.startConsultation(
                 doctorId,
                 patientId,
+                userId, // Pass userId for family member validation
             )
 
             console.log('Start consultation response:', response)
@@ -382,6 +387,7 @@ const DoctorVDC = () => {
                             handleStartConsultation(
                                 patientId,
                                 `room-${queueEntry.id}`,
+                                queueEntry.userId || queueEntry.patientId // Use userId if available, fallback to patientId
                             )
                         } else {
                             console.error(
@@ -534,9 +540,6 @@ const DoctorVDC = () => {
                             <div className="text-sm text-gray-500">
                                 {patient?.phone}
                             </div>
-                            <div className="text-xs text-gray-400">
-                                {patient?.email}
-                            </div>
                         </div>
                     )
                 },
@@ -600,6 +603,7 @@ const DoctorVDC = () => {
                                         handleStartConsultation(
                                             original.patientId,
                                             original.roomName || '',
+                                            original.userId // Pass userId for family member validation
                                         )
                                     }
                                 >
@@ -744,9 +748,6 @@ const DoctorVDC = () => {
                             <div className="text-sm text-gray-500">
                                 {patient.patient?.phone}
                             </div>
-                            <div className="text-xs text-gray-400">
-                                {patient.patient?.email}
-                            </div>
                         </div>
                         <Badge
                             className={
@@ -786,6 +787,7 @@ const DoctorVDC = () => {
                                     handleStartConsultation(
                                         patient.patientId,
                                         patient.roomName,
+                                        patient.userId // Pass userId for family member validation
                                     )
                                 }
                             >
@@ -991,6 +993,7 @@ const DoctorVDC = () => {
                                 ...queue,
                                 roomName: `${queue.roomName}`,
                                 joinedAt: new Date().toISOString(),
+                                userId: queue.userId, // Use patientId as userId for family member validation
                                 patient: {
                                     ...queue.patient,
                                     name: queue.patient.name,
