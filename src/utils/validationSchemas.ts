@@ -198,13 +198,31 @@ export const ResetPasswordSchema = z.object({
   path: ['confirmPassword'],
 })
 
+// File validation helper
+const ProfilePhotoValidation = z.union([
+  z.instanceof(File).refine(
+    (file) => {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) return false
+      // Check file type (JPG, JPEG, PNG only)
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
+      return allowedTypes.includes(file.type)
+    },
+    {
+      message: 'Profile photo must be JPG, JPEG, or PNG format and less than 5MB',
+    }
+  ),
+  z.string(),
+  z.undefined()
+])
+
 // Doctor schemas
 export const DoctorPersonalDetailsSchema = z.object({
   fullName: BaseValidations.name,
   email: BaseValidations.email.optional().or(z.literal('')),
   gender: BaseValidations.gender,
   dob: BaseValidations.dateOfBirth,
-  profilePhoto: z.string().optional(),
+  profilePhoto: ProfilePhotoValidation.optional(),
 })
 
 export const DoctorProfessionalDetailsSchema = z.object({

@@ -37,6 +37,7 @@ const DoctorDashboard = () => {
     const [isToggling, setIsToggling] = useState(false)
     const navigate = useNavigate()
     const [name, setName] = useState('')
+    const [profilePhoto, setProfilePhoto] = useState('')
     
     // VDC related state
     const [vdcStatus, setVdcStatus] = useState<{
@@ -57,6 +58,7 @@ const DoctorDashboard = () => {
     useEffect(() => {
         DoctorService.getProfile().then(res => {
             setName(res?.data?.fullName || '')
+            setProfilePhoto(res?.data?.profilePhoto || '')
         })
         
         // Fetch VDC status
@@ -192,8 +194,9 @@ const DoctorDashboard = () => {
                     <div className="flex items-center gap-3">
                         <Avatar
                             size={50}
-                            src={''} // You can fetch and use image if needed
+                            src={profilePhoto}
                             className="ring-2 ring-blue-100"
+                            icon={!profilePhoto ? <span>👨‍⚕️</span> : undefined}
                         />
                         <div>
                             <p className="text-gray-600 text-sm">Good morning, Dr.</p>

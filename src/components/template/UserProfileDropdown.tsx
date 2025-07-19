@@ -72,6 +72,14 @@ const _UserDropdown = () => {
             DoctorService.getProfile().then(res => {
                 setName(res?.data?.fullName || '')
                 setEmail(res?.data?.email || '')
+                // Update user profile image in auth store if it has changed
+                if (res?.data?.profilePhoto && res.data.profilePhoto !== user.avatar) {
+                    setUser({
+                        ...user,
+                        avatar: res.data.profilePhoto,
+                        image: res.data.profilePhoto
+                    })
+                }
             })
         } else {
             UserService.getProfileDetails().then(res => {
@@ -79,7 +87,7 @@ const _UserDropdown = () => {
                 setEmail(res?.data?.email || '')
             })
         }
-    }, [])
+    }, [user, setUser])
 
     return (
         <Dropdown

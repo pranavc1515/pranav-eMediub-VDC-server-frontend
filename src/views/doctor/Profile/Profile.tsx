@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Container from '@/components/shared/Container'
 import DoctorService from '@/services/DoctorService'
 import type { DoctorProfile } from '@/services/DoctorService'
@@ -16,6 +16,7 @@ import Badge from '@/components/ui/Badge'
 import { getTodayDateString } from '@/utils/dateUtils'
 import SPECIALIZATIONS from '@/constants/specializations.constant'
 import { INDIAN_STATES } from '@/constants/indianStates.constant'
+import { HiOutlineCamera } from 'react-icons/hi'
 
 // Common languages in India
 const languageOptions = [
@@ -58,6 +59,11 @@ const Profile = () => {
         profile?.DoctorProfessional?.specialization || ''
     )
 
+    // Profile photo upload state
+    const [selectedProfilePhoto, setSelectedProfilePhoto] = useState<File | null>(null)
+    const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null)
+    const profilePhotoInputRef = useRef<HTMLInputElement>(null)
+
     useEffect(() => {
         const fetchProfile = async () => {
             try {
@@ -92,6 +98,47 @@ const Profile = () => {
             setSelectedSpecialization(profile.DoctorProfessional.specialization)
         }
     }, [profile])
+
+    // Profile photo handling functions
+    const handleProfilePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0]
+        if (file) {
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
+            if (!allowedTypes.includes(file.type)) {
+                setPersonalFormError('Profile photo must be JPG, JPEG, or PNG format')
+                return
+            }
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                setPersonalFormError('Profile photo must be less than 5MB')
+                return
+            }
+
+            setSelectedProfilePhoto(file)
+            setPersonalFormError('')
+
+            // Create preview URL
+            const reader = new FileReader()
+            reader.onload = (e) => {
+                setProfilePhotoPreview(e.target?.result as string)
+            }
+            reader.readAsDataURL(file)
+        }
+    }
+
+    const triggerProfilePhotoUpload = () => {
+        profilePhotoInputRef.current?.click()
+    }
+
+    const removeProfilePhoto = () => {
+        setSelectedProfilePhoto(null)
+        setProfilePhotoPreview(null)
+        if (profilePhotoInputRef.current) {
+            profilePhotoInputRef.current.value = ''
+        }
+    }
 
     if (loading) {
         return (
@@ -348,6 +395,50 @@ const Profile = () => {
                                 defaultValue={profile?.fullName}
                             />
                         </FormItem>
+                        
+                        {/* Profile Photo Upload */}
+                        <FormItem label="Profile Photo">
+                            <div className="flex flex-col items-center space-y-4">
+                                <div className="relative">
+                                    <Avatar
+                                        size={100}
+                                        shape="circle"
+                                        src={profilePhotoPreview || profile?.profilePhoto || ''}
+                                        icon={<span>👨‍⚕️</span>}
+                                    />
+                                    <Button
+                                        className="absolute -bottom-2 -right-2"
+                                        size="sm"
+                                        variant="solid"
+                                        shape="circle"
+                                        icon={<HiOutlineCamera />}
+                                        onClick={triggerProfilePhotoUpload}
+                                    />
+                                </div>
+                                <div className="flex gap-2">
+                                    {selectedProfilePhoto && (
+                                        <Button
+                                            size="sm"
+                                            variant="default"
+                                            onClick={removeProfilePhoto}
+                                        >
+                                            Remove
+                                        </Button>
+                                    )}
+                                </div>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    ref={profilePhotoInputRef}
+                                    className="hidden"
+                                    onChange={handleProfilePhotoUpload}
+                                />
+                                <p className="text-sm text-gray-500 text-center">
+                                    JPG, JPEG, or PNG. Max size: 5MB
+                                </p>
+                            </div>
+                        </FormItem>
+                        
                         <FormItem label="Email">
                             <Input
                                 name="email"
@@ -389,6 +480,8 @@ const Profile = () => {
                                 onClick={() => {
                                     setPersonalDrawerOpen(false)
                                     setSelectedFiles([])
+                                    // Clear profile photo state
+                                    removeProfilePhoto()
                                 }}
                             >
                                 Cancel
@@ -418,7 +511,7 @@ const Profile = () => {
                                                 'dob',
                                             ) as HTMLInputElement
                                         ).value,
-                                        certificates: selectedFiles,
+                                        profilePhoto: selectedProfilePhoto,
                                     }
 
                                     setPersonalFormLoading(true)
@@ -442,6 +535,9 @@ const Profile = () => {
                                             )
                                             setPersonalDrawerOpen(false)
                                             setSelectedFiles([])
+                                            // Clear profile photo state
+                                            setSelectedProfilePhoto(null)
+                                            setProfilePhotoPreview(null)
                                         } else {
                                             setPersonalFormError(
                                                 'Failed to update profile. Please try again.',

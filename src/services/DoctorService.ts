@@ -134,8 +134,32 @@ const DoctorService = {
             email: string
             gender: string
             dob: string
+            profilePhoto?: File
         },
     ) {
+        // Check if we need to send as multipart/form-data (when profilePhoto is included)
+        if (data.profilePhoto) {
+            const formData = new FormData()
+            formData.append('fullName', data.fullName)
+            formData.append('email', data.email)
+            formData.append('gender', data.gender)
+            formData.append('dob', data.dob)
+            formData.append('profilePhoto', data.profilePhoto)
+
+            return ApiService.fetchDataWithAxios<{
+                success: boolean
+                data: DoctorProfile
+            }>({
+                url: `/api/doctors/personal-details/${doctorId}`,
+                method: 'PUT',
+                data: formData as unknown as Record<string, unknown>,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            })
+        }
+
+        // Send as regular JSON if no profilePhoto
         return ApiService.fetchDataWithAxios<{
             success: boolean
             data: DoctorProfile
