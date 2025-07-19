@@ -23,6 +23,12 @@ const doctorRoute: Routes = [
             layout: 'blank',
         },
     },
+    {
+        key: 'doctor.settings',
+        path: '/doctor/settings',
+        component: lazy(() => import('@/views/doctor/Settings')),
+        authority: ['doctor'],
+    },
 ]
 
 export default doctorRoute

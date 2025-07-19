@@ -104,6 +104,23 @@ const UserService = {
             url: '/api/patients/profile-details',
             method: 'GET',
         })
+    },
+
+    /**
+     * Update user's preferred language
+     * @param language The language preference (en_US, hi_IN, kn_IN)
+     * @returns Promise with update result
+     */
+    updateLanguage(language: string) {
+        return ApiService.fetchDataWithAxios<{
+            status: boolean
+            status_code: number
+            message: string
+        }>({
+            url: '/api/patients/language',
+            method: 'POST',
+            data: { language },
+        })
     }
 }
 

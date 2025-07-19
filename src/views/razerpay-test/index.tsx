@@ -6,26 +6,25 @@ import {
     FormItem,
     FormContainer,
     Alert,
-    Notification,
 } from '@/components/ui'
+import { toast } from '@/components/ui/toast'
 import PaymentService from '@/services/PaymentService'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth'
 import appConfig from '@/configs/app.config'
 import { ENV } from '@/configs/environment'
 
-interface OrderResponse {
+interface PaymentResponse {
     success: boolean
-    order: {
-        id: string
-        amount: number
-        currency: string
-        receipt: string
-        status: string
-    }
+    order_id: string
+    amount: number
+    currency: string
+    receipt: string
+    payment_id?: string
+    upi_link?: string
 }
 
-interface VerifyPaymentRequest {
+interface VerifyPaymentRequest extends Record<string, unknown> {
     razorpay_order_id: string
     razorpay_payment_id: string
     razorpay_signature: string
@@ -68,15 +67,16 @@ const RazerpayTest = () => {
             setLoading(true)
             setError('')
 
-            const response = await PaymentService.createOrder({
+            const response = await PaymentService.initiatePayment({
+                doctor_id: 1, // Test doctor ID
+                transaction_type: 'VDC',
                 amount: amount,
-                currency: 'INR',
             })
 
-            if (response.success && response.order) {
-                initializeRazorpay(response.order)
+            if (response.success) {
+                initializeRazorpay(response)
             } else {
-                setError('Failed to create payment order')
+                setError('Failed to initiate payment')
             }
         } catch (err) {
             console.error('Payment order creation error:', err)
@@ -86,7 +86,7 @@ const RazerpayTest = () => {
         }
     }
 
-    const initializeRazorpay = (order: OrderResponse['order']) => {
+    const initializeRazorpay = (paymentData: PaymentResponse) => {
         // Check if Razorpay is available in the window object
         if (!(window as any).Razorpay) {
             setError(
@@ -97,11 +97,11 @@ const RazerpayTest = () => {
 
         const options = {
             key: ENV.RAZORPAY_KEY, // Razorpay test key
-            amount: order.amount,
-            currency: order.currency,
-            name: 'eMediub',
+            amount: paymentData.amount,
+            currency: paymentData.currency,
+            name: 'eMediHub',
             description: 'Test Payment',
-            order_id: order.id,
+            order_id: paymentData.order_id,
             handler: function (response: any) {
                 verifyPayment({
                     razorpay_order_id: response.razorpay_order_id,
@@ -129,10 +129,12 @@ const RazerpayTest = () => {
             const response = await PaymentService.verifyPayment(paymentData)
 
             if (response.success) {
-                Notification.success({
-                    title: 'Payment Successful',
-                    message: 'Your payment has been verified successfully!',
-                })
+                toast.push(
+                    <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                        <strong>Payment Successful!</strong>
+                        <span className="block sm:inline"> Your payment has been verified successfully!</span>
+                    </div>
+                )
             } else {
                 setError('Payment verification failed')
             }

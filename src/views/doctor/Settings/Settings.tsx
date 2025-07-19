@@ -1,37 +1,29 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
     Card, 
     Button, 
     Tabs,
-    Input, 
-    FormItem, 
-    FormContainer, 
     Alert,
     Dialog,
-    Select
+    Select,
+    FormItem
 } from '@/components/ui'
 import Container from '@/components/shared/Container'
-import { HiOutlineKey, HiOutlineBell, HiOutlineShieldCheck, HiOutlineTrash, HiOutlineGlobeAlt } from 'react-icons/hi'
+import { HiOutlineGlobeAlt, HiOutlineTrash } from 'react-icons/hi'
 import { useAuth } from '@/auth'
-import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { 
-    PasswordChangeSchema,
-    type PasswordChangeFormData
-} from '@/utils/validationSchemas'
 import { useLocaleStore } from '@/store/localeStore'
 import { useTranslation } from '@/utils/hooks/useTranslation'
-import UserService from '@/services/UserService'
+import DoctorService from '@/services/DoctorService'
 
-// Language options for the user interface
+// Language options for the doctor interface
 const languageOptions = [
-    { value: 'en_US', label: 'English', nativeLabel: 'English' },
-    { value: 'hi_IN', label: 'Hindi', nativeLabel: 'हिन्दी' },
-    { value: 'kn_IN', label: 'Kannada', nativeLabel: 'ಕನ್ನಡ' },
+    { value: 'en', label: 'English', nativeLabel: 'English' },
+    { value: 'hi', label: 'Hindi', nativeLabel: 'हिन्दी' },
+    { value: 'kn', label: 'Kannada', nativeLabel: 'ಕನ್ನಡ' },
 ]
 
-const Settings = () => {
-    const { user, deleteAccount } = useAuth()
+const DoctorSettings = () => {
+    const { user } = useAuth()
     const { t } = useTranslation()
     const { currentLang, setLang } = useLocaleStore()
     const [activeTab, setActiveTab] = useState('account')
@@ -40,63 +32,27 @@ const Settings = () => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
     const [deleteLoading, setDeleteLoading] = useState(false)
     const [languageLoading, setLanguageLoading] = useState(false)
-    
-    // Password change form
-    const passwordForm = useForm<PasswordChangeFormData>({
-        resolver: zodResolver(PasswordChangeSchema),
-        defaultValues: {
-            currentPassword: '',
-            newPassword: '',
-            confirmPassword: ''
+    const [currentDoctorLanguage, setCurrentDoctorLanguage] = useState('en')
+
+    // Load current language preference from server
+    useEffect(() => {
+        const loadDoctorLanguage = async () => {
+            try {
+                const response = await DoctorService.getLanguage()
+                if (response.success) {
+                    setCurrentDoctorLanguage(response.data.uiLanguage)
+                    // Sync with local store if different
+                    if (response.data.uiLanguage !== currentLang) {
+                        setLang(response.data.uiLanguage)
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading doctor language preference:', err)
+            }
         }
-    })
-    
-    // Notification settings
-    const [notifications, setNotifications] = useState({
-        emailNotifications: true,
-        smsNotifications: true,
-        appNotifications: true
-    })
-    
-    const handleNotificationChange = (name: string, checked: boolean) => {
-        setNotifications(prev => ({
-            ...prev,
-            [name]: checked
-        }))
-    }
-    
-    const handlePasswordSubmit = async (data: PasswordChangeFormData) => {
-        try {
-            setError('')
-            setSuccess('')
-            
-            // TODO: Implement actual password change API call
-            // const response = await UserService.changePassword(data)
-            
-            // Mock success for now
-            setSuccess('Password updated successfully!')
-            
-            // Reset form
-            passwordForm.reset()
-        } catch (err) {
-            setError('Failed to update password. Please try again.')
-        }
-    }
-    
-    const handleSaveNotifications = async () => {
-        try {
-            setError('')
-            setSuccess('')
-            
-            // TODO: Implement notification settings API call
-            // const response = await UserService.updateNotificationSettings(notifications)
-            
-            // Mock success
-            setSuccess('Notification preferences saved successfully!')
-        } catch (err) {
-            setError('Failed to save notification preferences. Please try again.')
-        }
-    }
+
+        loadDoctorLanguage()
+    }, [currentLang, setLang])
 
     const handleLanguageChange = async (selectedOption: any) => {
         if (!selectedOption) return
@@ -107,19 +63,11 @@ const Settings = () => {
         
         try {
             // Update language on server
-            await UserService.updateLanguage(selectedOption.value)
-            
-            // Map API language codes to locale store format
-            const localeMap: { [key: string]: string } = {
-                'en_US': 'en',
-                'hi_IN': 'hi',
-                'kn_IN': 'kn'
-            }
-            
-            const newLocale = localeMap[selectedOption.value] || 'en'
+            await DoctorService.updateLanguage(selectedOption.value)
             
             // Update local language state
-            setLang(newLocale)
+            setLang(selectedOption.value)
+            setCurrentDoctorLanguage(selectedOption.value)
             
             setSuccess(t('settings.updateSuccess'))
         } catch (err) {
@@ -133,12 +81,19 @@ const Settings = () => {
     const handleDeleteAccount = async () => {
         setDeleteLoading(true)
         try {
-            const success = await deleteAccount()
-            if (!success) {
-                setError('Failed to delete account. Please try again later.')
+            const response = await DoctorService.deleteAccount()
+            if (response.success) {
+                // Clear auth state and redirect
+                localStorage.removeItem('token')
+                localStorage.removeItem('user')
+                // Force redirect to sign-in page
+                window.location.href = '/auth/sign-in'
+            } else {
+                setError(response.message || 'Failed to delete account. Please try again later.')
                 setDeleteDialogOpen(false)
             }
-        } catch (err) {
+        } catch (err: any) {
+            console.error('Delete account error:', err)
             setError('An error occurred while deleting your account.')
             setDeleteDialogOpen(false)
         } finally {
@@ -162,7 +117,7 @@ const Settings = () => {
             
             <Card className="max-w-4xl mx-auto">
                 <div className="p-6">
-                    <h1 className="text-2xl font-bold mb-6">{t('settings.accountSettings')}</h1>
+                    <h1 className="text-2xl font-bold mb-6">{t('settings.title')}</h1>
                     
                     <Tabs value={activeTab} onChange={(val) => setActiveTab(val as string)}>
                         <Tabs.TabList>
@@ -177,7 +132,20 @@ const Settings = () => {
                         
                         <Tabs.TabContent value="account">
                             <div className="mt-6">
-                                
+                                {/* Account Information */}
+                                <div className="mb-8">
+                                    <h4 className="mb-4 text-lg font-medium">Doctor Information</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <p className="text-gray-600 text-sm">Name</p>
+                                            <p className="font-medium">{user?.userName || 'Not provided'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-600 text-sm">Email</p>
+                                            <p className="font-medium">{user?.email || 'Not provided'}</p>
+                                        </div>
+                                    </div>
+                                </div>
 
                                 {/* Delete Account Section */}
                                 <div className="mt-8 pt-4 border-t">
@@ -212,12 +180,7 @@ const Settings = () => {
                                 
                                 <FormItem label={t('settings.language')} className="max-w-md">
                                     <Select
-                                        value={languageOptions.find(option => {
-                                            const currentApiLang = currentLang === 'en' ? 'en_US' : 
-                                                                   currentLang === 'hi' ? 'hi_IN' : 
-                                                                   currentLang === 'kn' ? 'kn_IN' : 'en_US'
-                                            return option.value === currentApiLang
-                                        })}
+                                        value={languageOptions.find(option => option.value === currentDoctorLanguage)}
                                         options={languageOptions}
                                         onChange={handleLanguageChange}
                                         isLoading={languageLoading}
@@ -275,4 +238,4 @@ const Settings = () => {
     )
 }
 
-export default Settings 
+export default DoctorSettings 

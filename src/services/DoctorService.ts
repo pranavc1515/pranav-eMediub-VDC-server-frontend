@@ -84,6 +84,20 @@ type VDCSettingsResponse = {
                 end: string
             }
         }
+        paymentOptions: {
+            upi: {
+                enabled: boolean
+                upiId: string
+                qrCode?: string
+            }
+            bank: {
+                enabled: boolean
+                accountNumber: string
+                accountHolderName: string
+                ifscCode: string
+                bankName: string
+            }
+        }
     }
 }
 
@@ -95,6 +109,20 @@ type UpdateVDCSettingsRequest = {
         [day: string]: {
             start: string
             end: string
+        }
+    }
+    paymentOptions: {
+        upi: {
+            enabled: boolean
+            upiId: string
+            qrCode: string
+        }
+        bank: {
+            enabled: boolean
+            accountNumber: string
+            accountHolderName: string
+            ifscCode: string
+            bankName: string
         }
     }
 }
@@ -110,6 +138,20 @@ type UpdateVDCSettingsResponse = {
             [day: string]: {
                 start: string
                 end: string
+            }
+        }
+        paymentOptions: {
+            upi: {
+                enabled: boolean
+                upiId: string
+                qrCode: string
+            }
+            bank: {
+                enabled: boolean
+                accountNumber: string
+                accountHolderName: string
+                ifscCode: string
+                bankName: string
             }
         }
     }
@@ -315,6 +357,52 @@ const DoctorService = {
             url: '/api/doctors/vdc-settings',
             method: 'PUT',
             data,
+        })
+    },
+
+    /**
+     * Get doctor's UI language preference
+     * @returns Promise with language preference data
+     */
+    getLanguage() {
+        return ApiService.fetchDataWithAxios<{
+            success: boolean
+            data: {
+                uiLanguage: string
+            }
+        }>({
+            url: '/api/doctors/language',
+            method: 'GET',
+        })
+    },
+
+    /**
+     * Update doctor's UI language preference
+     * @param language The language preference (en, hi, kn)
+     * @returns Promise with update result
+     */
+    updateLanguage(language: string) {
+        return ApiService.fetchDataWithAxios<{
+            success: boolean
+            message: string
+        }>({
+            url: '/api/doctors/language',
+            method: 'POST',
+            data: { language },
+        })
+    },
+
+    /**
+     * Delete doctor account
+     * @returns Promise with deletion result
+     */
+    deleteAccount() {
+        return ApiService.fetchDataWithAxios<{
+            success: boolean
+            message: string
+        }>({
+            url: '/api/doctors/delete-account',
+            method: 'DELETE',
         })
     },
 }
