@@ -1,4 +1,5 @@
 import ApiService from './ApiService'
+import type { AxiosRequestConfig } from 'axios'
 
 export interface FamilyMember {
     id: number

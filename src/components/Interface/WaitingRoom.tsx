@@ -1,6 +1,8 @@
 import { Button, Notification } from '@/components/ui'
 import { toast } from '@/components/ui/toast'
 import { useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { usePatientOnCallStore } from '@/store/patientOnCallStore'
 
 interface WaitingRoomProps {
     queueStatus: {
@@ -11,11 +13,14 @@ interface WaitingRoomProps {
         totalInQueue?: number
     } | null
     onExitQueue: () => void
+    onBackToPatientSelection?: () => void
 }
 
-const WaitingRoom = ({ queueStatus, onExitQueue }: WaitingRoomProps) => {
+const WaitingRoom = ({ queueStatus, onExitQueue, onBackToPatientSelection }: WaitingRoomProps) => {
     const previousPositionRef = useRef<number | null>(null)
     const hasShownNearTurnNotification = useRef(false)
+    const navigate = useNavigate()
+    const { clearSelectedPatient } = usePatientOnCallStore()
 
     // Monitor queue position changes and show relevant notifications
     useEffect(() => {
@@ -96,6 +101,9 @@ const WaitingRoom = ({ queueStatus, onExitQueue }: WaitingRoomProps) => {
     }
 
     const handleExitQueue = () => {
+        // Clear patient selection when leaving queue
+        clearSelectedPatient()
+        
         // Show confirmation before leaving
         toast.push(
             <Notification type="warning" title="Leaving Queue">
@@ -103,6 +111,25 @@ const WaitingRoom = ({ queueStatus, onExitQueue }: WaitingRoomProps) => {
             </Notification>,
         )
         onExitQueue()
+        
+        // Navigate to /vdc after leaving queue
+        navigate('/vdc')
+    }
+
+    const handleBackToPatientSelection = () => {
+        // Clear patient selection and go back to selection
+        clearSelectedPatient()
+        
+        // Show info message
+        toast.push(
+            <Notification type="info" title="Patient Selection">
+                Please choose a patient for consultation
+            </Notification>,
+        )
+        
+        if (onBackToPatientSelection) {
+            onBackToPatientSelection()
+        }
     }
 
     return (
@@ -183,13 +210,24 @@ const WaitingRoom = ({ queueStatus, onExitQueue }: WaitingRoomProps) => {
                     turn.
                 </p>
 
-                <Button
-                    variant="solid"
-                    className="mt-4 bg-red-500 hover:bg-red-600"
-                    onClick={handleExitQueue}
-                >
-                    Leave Queue
-                </Button>
+                <div className="flex space-x-3 mt-4">
+                    {onBackToPatientSelection && (
+                        <Button
+                            variant="default"
+                            className="bg-gray-500 hover:bg-gray-600"
+                            onClick={handleBackToPatientSelection}
+                        >
+                            ← Back to Patient Selection
+                        </Button>
+                    )}
+                    <Button
+                        variant="solid"
+                        className="bg-red-500 hover:bg-red-600"
+                        onClick={handleExitQueue}
+                    >
+                        Leave Queue
+                    </Button>
+                </div>
             </div>
         </div>
     )

@@ -86,11 +86,11 @@ const ConsultationService = {
     /**
      * Check consultation status for reconnection handling
      */
-    checkConsultationStatus(doctorId: number, patientId: number, autoJoin: boolean = true) {
+    checkConsultationStatus(doctorId: number, patientId: number, userId: number, autoJoin: boolean = true) {
         const config: AxiosRequestConfig = {
             method: 'POST',
             url: '/api/consultation/checkStatus',
-            data: { doctorId, patientId, autoJoin },
+            data: { doctorId, patientId, userId, autoJoin },
         }
         return ApiService.fetchDataWithAxios<ConsultationStatusResponse>(config)
     },
