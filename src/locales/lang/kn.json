@@ -1,0 +1,55 @@
+{
+    "nav": {
+        "home": "ಮುಖ್ಯಪುಟ",
+        "aboutUs": "ನಮ್ಮ ಬಗ್ಗೆ",
+        "termsConditions": "ನಿಯಮಗಳು ಮತ್ತು ಷರತ್ತುಗಳು",
+        "razerpayTest": "ರೇಜರ್‌ಪೇ ಪರೀಕ್ಷೆ",
+        "videoDoctorConsultation": "ವೀಡಿಯೊ ವೈದ್ಯ ಸಲಹೆ",
+        "doctorProfile": "ಪ್ರೊಫೈಲ್",
+        "doctorSettings": "ಸೆಟ್ಟಿಂಗ್ಸ್",
+        "userProfile": "ಪ್ರೊಫೈಲ್",
+        "userSettings": "ಸೆಟ್ಟಿಂಗ್ಸ್",
+        "userReports": "ವೈದ್ಯಕೀಯ ವರದಿಗಳು",
+        "doctorReports": "ರೋಗಿ ವರದಿಗಳು",
+
+        "singleMenuItem": "ಏಕ ಮೆನು ಐಟಂ",
+        "collapseMenu": {
+            "collapseMenu": "ಸಂಕುಚಿತ ಮೆನು",
+            "item1": "ಸಂಕುಚಿತ ಮೆನು ಐಟಂ 1",
+            "item2": "ಸಂಕುಚಿತ ಮೆನು ಐಟಂ 2"
+        },
+        "groupMenu": {
+            "groupMenu": "ಗುಂಪು ಮೆನು",
+            "single": "ಗುಂಪು ಏಕ ಮೆನು ಐಟಂ",
+            "collapse": {
+                "collapse": "ಗುಂಪು ಸಂಕುಚಿತ ಮೆನು",
+                "item1": "ಗುಂಪು ಸಂಕುಚಿತ ಮೆನು ಐಟಂ 1",
+                "item2": "ಗುಂಪು ಸಂಕುಚಿತ ಮೆನು ಐಟಂ 2"
+            }
+        }
+    },
+    "settings": {
+        "title": "ಸೆಟ್ಟಿಂಗ್ಸ್",
+        "language": "ಭಾಷೆ",
+        "languageSelection": "ಭಾಷೆ ಆಯ್ಕೆ ಮಾಡಿ",
+        "changePassword": "ಪಾಸ್‌ವರ್ಡ್ ಬದಲಿಸಿ",
+        "deleteAccount": "ಖಾತೆಯನ್ನು ಅಳಿಸಿ",
+        "deleteAccountWarning": "ನಿಮ್ಮ ಖಾತೆ ಮತ್ತು ಎಲ್ಲಾ ಸಂಬಂಧಿತ ಡೇಟಾವನ್ನು ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಿ. ಈ ಕ್ರಿಯೆಯನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗುವುದಿಲ್ಲ.",
+        "deleteAccountConfirm": "ನೀವು ನಿಜವಾಗಿಯೂ ನಿಮ್ಮ ಖಾತೆಯನ್ನು ಅಳಿಸಲು ಬಯಸುವಿರಾ?",
+        "deleteAccountPermanent": "ಈ ಕ್ರಿಯೆಯು ನಿಮ್ಮ ಖಾತೆ ಮತ್ತು ನಿಮ್ಮ ಎಲ್ಲಾ ಡೇಟಾವನ್ನು ಶಾಶ್ವತವಾಗಿ ಅಳಿಸುತ್ತದೆ. ಈ ಕ್ರಿಯೆಯನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗುವುದಿಲ್ಲ.",
+        "cancel": "ರದ್ದುಗೊಳಿಸಿ",
+        "confirm": "ದೃಢೀಕರಿಸಿ",
+        "save": "ಉಳಿಸಿ",
+        "updateSuccess": "ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ!",
+        "updateError": "ನವೀಕರಣ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+        "accountSettings": "ಖಾತೆ ಸೆಟ್ಟಿಂಗ್ಸ್"
+    },
+    "common": {
+        "english": "ಇಂಗ್ಲಿಷ್",
+        "hindi": "ಹಿಂದಿ",
+        "kannada": "ಕನ್ನಡ",
+        "loading": "ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
+        "error": "ದೋಷ",
+        "success": "ಯಶಸ್ಸು"
+    }
+} 

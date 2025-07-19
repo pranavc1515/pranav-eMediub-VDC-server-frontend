@@ -1,0 +1,55 @@
+{
+    "nav": {
+        "home": "होम",
+        "aboutUs": "हमारे बारे में",
+        "termsConditions": "नियम और शर्तें",
+        "razerpayTest": "रेज़रपे टेस्ट",
+        "videoDoctorConsultation": "वीडियो डॉक्टर परामर्श",
+        "doctorProfile": "प्रोफाइल",
+        "doctorSettings": "सेटिंग्स",
+        "userProfile": "प्रोफाइल",
+        "userSettings": "सेटिंग्स",
+        "userReports": "चिकित्सा रिपोर्ट",
+        "doctorReports": "मरीज़ रिपोर्ट",
+
+        "singleMenuItem": "एकल मेनू आइटम",
+        "collapseMenu": {
+            "collapseMenu": "संक्षिप्त मेनू",
+            "item1": "संक्षिप्त मेनू आइटम 1",
+            "item2": "संक्षिप्त मेनू आइटम 2"
+        },
+        "groupMenu": {
+            "groupMenu": "समूह मेनू",
+            "single": "समूह एकल मेनू आइटम",
+            "collapse": {
+                "collapse": "समूह संक्षिप्त मेनू",
+                "item1": "समूह संक्षिप्त मेनू आइटम 1",
+                "item2": "समूह संक्षिप्त मेनू आइटम 2"
+            }
+        }
+    },
+    "settings": {
+        "title": "सेटिंग्स",
+        "language": "भाषा",
+        "languageSelection": "भाषा चुनें",
+        "changePassword": "पासवर्ड बदलें",
+        "deleteAccount": "खाता हटाएं",
+        "deleteAccountWarning": "स्थायी रूप से अपना खाता और सभी संबंधित डेटा हटाएं। यह क्रिया पूर्ववत नहीं की जा सकती।",
+        "deleteAccountConfirm": "क्या आप वाकई अपना खाता हटाना चाहते हैं?",
+        "deleteAccountPermanent": "यह क्रिया आपके खाते और आपके सभी डेटा को स्थायी रूप से हटा देगी। यह क्रिया पूर्ववत नहीं की जा सकती।",
+        "cancel": "रद्द करें",
+        "confirm": "पुष्टि करें",
+        "save": "सेव करें",
+        "updateSuccess": "सफलतापूर्वक अपडेट हुआ!",
+        "updateError": "अपडेट में विफल। कृपया पुनः प्रयास करें।",
+        "accountSettings": "खाता सेटिंग्स"
+    },
+    "common": {
+        "english": "अंग्रेजी",
+        "hindi": "हिन्दी",
+        "kannada": "कन्नड़",
+        "loading": "लोड हो रहा है...",
+        "error": "त्रुटि",
+        "success": "सफल"
+    }
+} 

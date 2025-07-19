@@ -5,6 +5,12 @@
         "termsConditions": "Terms & Conditions",
         "razerpayTest": "Razerpay Test",
         "videoDoctorConsultation": "Video Doctor Consultation",
+        "doctorProfile": "Profile",
+        "doctorSettings": "Settings",
+        "userProfile": "Profile",
+        "userSettings": "Settings",
+        "userReports": "Medical Reports",
+        "doctorReports": "Patient Reports",
 
         "singleMenuItem": "Single Menu Item",
         "collapseMenu": {
@@ -21,5 +27,29 @@
                 "item2": "Group collapse menu item 2"
             }
         }
+    },
+    "settings": {
+        "title": "Settings",
+        "language": "Language",
+        "languageSelection": "Select Language",
+        "changePassword": "Change Password",
+        "deleteAccount": "Delete Account",
+        "deleteAccountWarning": "Permanently delete your account and all associated data. This action cannot be undone.",
+        "deleteAccountConfirm": "Are you sure you want to delete your account?",
+        "deleteAccountPermanent": "This action will permanently delete your account and all of your data. This action cannot be undone.",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "save": "Save",
+        "updateSuccess": "Successfully updated!",
+        "updateError": "Update failed. Please try again.",
+        "accountSettings": "Account Settings"
+    },
+    "common": {
+        "english": "English",
+        "hindi": "Hindi",
+        "kannada": "Kannada",
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success"
     }
 }
