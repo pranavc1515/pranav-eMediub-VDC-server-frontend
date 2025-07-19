@@ -141,15 +141,31 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
     const { user } = useAuth()
     const isDoctor = user.authority?.includes('doctor') || false
 
+    const {
+        selectedPatient,
+        isPatientSelected,
+        clearSelectedPatient,
+        setSelectedPatient,
+    } = usePatientOnCallStore()
+
     // Extract correct IDs based on user type
     // For doctors: URL param 'id' is patientId, doctorId comes from user context
-    // For patients: URL param 'id' is doctorId, patientId comes from user context
+    // For patients: URL param 'id' is doctorId, patientId comes from selected patient or user context
     const doctorId = isDoctor
         ? contextDoctorId || parseInt(user.userId?.toString() || '0')
         : contextDoctorId || parseInt(id || '0')
+
+    // For patients, we need to handle both direct user and family member cases
+    const userId = parseInt(user.userId?.toString() || '0') // Always the logged-in user's ID
+
+    // For patients, patientId could be different from userId if it's a family member
     const patientId = isDoctor
         ? contextPatientId || parseInt(id || '0')
-        : contextPatientId || parseInt(user.userId?.toString() || '0')
+        : selectedPatient
+          ? typeof selectedPatient.id === 'string'
+              ? parseInt(selectedPatient.id)
+              : selectedPatient.id
+          : contextPatientId || userId
 
     const [isMicOn, setIsMicOn] = useState(true)
     const [isVideoOn, setIsVideoOn] = useState(true)
@@ -214,8 +230,8 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
     })
 
     // Patient selection store
-    const { selectedPatient, isPatientSelected, clearSelectedPatient } =
-        usePatientOnCallStore()
+    // const { selectedPatient, isPatientSelected, clearSelectedPatient } =
+    //     usePatientOnCallStore()
 
     const localVideoRef = useRef<HTMLDivElement>(null)
     const remoteVideoRef = useRef<HTMLDivElement>(null)
@@ -663,16 +679,19 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
 
             // For doctors: don't send userId (send false) since they don't need family validation
             // For patients: send userId to validate family member relationship
-            const effectiveUserId = isDoctor ? false : Number(userId);
-            
+            const effectiveUserId = isDoctor ? false : Number(userId)
+
             console.log('Making API call with:', {
                 doctorId,
                 effectivePatientId,
                 userId: effectiveUserId,
                 isDoctor,
                 autoJoin: !isDoctor,
-                userIdType: effectiveUserId === false ? 'doctor-no-validation' : 'patient-with-validation'
-            });
+                userIdType:
+                    effectiveUserId === false
+                        ? 'doctor-no-validation'
+                        : 'patient-with-validation',
+            })
 
             const response = await ConsultationService.checkConsultationStatus(
                 doctorId,

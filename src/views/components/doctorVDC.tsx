@@ -654,7 +654,7 @@ const DoctorVDC = () => {
                         <div>
                             <div>{data.patient?.name ?? 'Unknown'}</div>
                             <div className="text-sm text-gray-500">
-                                {data.patient?.email ?? 'No email'}
+                                {data.patient?.phone ?? 'No phone'}
                             </div>
                         </div>
                     )

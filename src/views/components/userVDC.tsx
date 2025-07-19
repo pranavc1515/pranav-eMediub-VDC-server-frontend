@@ -53,6 +53,11 @@ type ConsultationWithDoctor = ConsultationRecord & {
             yearsOfExperience: number
         }
     }
+    patient: {
+        name: string
+        phone: string
+        relationship: string
+    }
 }
 
 const problemCategories = [
@@ -229,14 +234,17 @@ const UserVDC = () => {
         }
     }
 
-    const handleJoinCall = async (doctorId: number) => {
+    const handleJoinCall = async (doctorId: number, memberId: number) => {
         setCheckingStatus(true)
         try {
             // Check consultation status before joining
+            // Pass userId (logged in user) and patientId (could be family member)
             const statusResponse =
                 await ConsultationService.checkConsultationStatus(
                     doctorId,
-                    patientId,
+                    memberId, // patientId from consultation record
+                    user.userId, // logged in user's ID
+                    false, // don't auto-join since we're already in consultation
                 )
 
             if (statusResponse.success) {
@@ -489,6 +497,20 @@ const UserVDC = () => {
                 accessor: (row) => `${row.id}`,
             },
             {
+                Header: 'Patient',
+                accessor: (row) => row.patient?.name || '',
+                Cell: ({ row: { original } }) => (
+                    <div>
+                        <div className="font-bold">
+                            {original.patient?.name || 'Unknown Patient'}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                            {original.patient?.relationship || 'Self'}
+                        </div>
+                    </div>
+                ),
+            },
+            {
                 Header: 'Doctor',
                 accessor: (row) => row.doctor?.fullName || '',
                 Cell: ({ row: { original } }) => (
@@ -702,7 +724,10 @@ const UserVDC = () => {
                             variant="solid"
                             size="sm"
                             onClick={() =>
-                                handleJoinCall(Number(consultation.doctor.id))
+                                handleJoinCall(
+                                    Number(consultation.doctor.id),
+                                    consultation?.patientId,
+                                )
                             }
                             loading={checkingStatus}
                             disabled={checkingStatus}
