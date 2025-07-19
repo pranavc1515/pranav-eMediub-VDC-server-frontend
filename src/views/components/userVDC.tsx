@@ -7,6 +7,7 @@ import useDoctors from '@/hooks/useDoctors'
 import useConsultation from '@/hooks/useConsultation'
 import PaymentService from '@/services/PaymentService'
 import ConsultationService from '@/services/ConsultationService'
+import { ENV } from '@/configs/environment'
 import ReactMuiTableListView, {
     Column,
 } from '@/components/shared/ReactMuiTableListView'
@@ -302,34 +303,47 @@ const UserVDC = () => {
     const handleConsultNow = (doctor: ExtendedDoctor) => {
         const handleCreateOrder = async () => {
             try {
-                const response = await PaymentService.createOrder({
-                    amount: 1,
-                    currency: 'INR',
+                // Get consultation fee from doctor's professional details
+                const consultationFees = doctor.DoctorProfessional?.consultationFees
+                if (!consultationFees) {
+                    console.error('Consultation fees not available for this doctor')
+                    return
+                }
+
+                // Convert fee to number and then to paisa (multiply by 100 for Razorpay)
+                const feeInRupees = typeof consultationFees === 'string' 
+                    ? parseFloat(consultationFees) 
+                    : consultationFees
+                
+                const response = await PaymentService.initiatePayment({
+                    doctor_id: doctor.id,
+                    transaction_type: 'VDC',
+                    amount: feeInRupees
                 })
 
-                if (response.success && response.order) {
-                    initializeRazorpay(response.order, String(doctor.id))
+                if (response.success) {
+                    initializeRazorpay(response, String(doctor.id))
                 } else {
-                    console.error('Failed to create payment order')
+                    console.error('Failed to initiate payment')
                 }
             } catch (err) {
-                console.error('Payment order creation error:', err)
+                console.error('Payment initiation error:', err)
             }
         }
 
-        const initializeRazorpay = (order: any, doctorId: string) => {
+        const initializeRazorpay = (paymentData: any, doctorId: string) => {
             if (!(window as any).Razorpay) {
                 console.error('Razorpay SDK failed to load.')
                 return
             }
 
             const options = {
-                key: 'rzp_test_6pdNA8n5Gcoe3D',
-                amount: order.amount,
-                currency: order.currency,
-                name: 'eMediub',
+                key: ENV.RAZORPAY_KEY,
+                amount: paymentData.amount, // Amount in paisa from API
+                currency: paymentData.currency,
+                name: 'eMediHub',
                 description: 'Doctor Consultation',
-                order_id: order.id,
+                order_id: paymentData.order_id,
                 handler: function (response: any) {
                     const verifyPayment = async () => {
                         try {
