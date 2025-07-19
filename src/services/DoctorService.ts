@@ -84,6 +84,20 @@ type VDCSettingsResponse = {
                 end: string
             }
         }
+        paymentOptions: {
+            upi: {
+                enabled: boolean
+                upiId: string
+                qrCode?: string
+            }
+            bank: {
+                enabled: boolean
+                accountNumber: string
+                accountHolderName: string
+                ifscCode: string
+                bankName: string
+            }
+        }
     }
 }
 
@@ -95,6 +109,20 @@ type UpdateVDCSettingsRequest = {
         [day: string]: {
             start: string
             end: string
+        }
+    }
+    paymentOptions: {
+        upi: {
+            enabled: boolean
+            upiId: string
+            qrCode: string
+        }
+        bank: {
+            enabled: boolean
+            accountNumber: string
+            accountHolderName: string
+            ifscCode: string
+            bankName: string
         }
     }
 }
@@ -110,6 +138,20 @@ type UpdateVDCSettingsResponse = {
             [day: string]: {
                 start: string
                 end: string
+            }
+        }
+        paymentOptions: {
+            upi: {
+                enabled: boolean
+                upiId: string
+                qrCode: string
+            }
+            bank: {
+                enabled: boolean
+                accountNumber: string
+                accountHolderName: string
+                ifscCode: string
+                bankName: string
             }
         }
     }
