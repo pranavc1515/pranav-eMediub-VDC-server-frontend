@@ -214,12 +214,6 @@ src/
 - **Medical Documents**: Access patient medical reports
 - **Prescription History**: View all prescriptions issued
 
-### 6. Prescription Management
-- **Create Prescriptions**: Digital prescription creation
-- **Medicine Database**: Access to Indian medications
-- **Dosage & Instructions**: Detailed medication instructions
-- **Upload Prescriptions**: Support for scanned prescriptions
-
 ### 7. Doctor Profile Management
 **Personal Information:**
 - Basic details and contact information
@@ -235,7 +229,7 @@ src/
 ### 8. Reports & Analytics
 - **Patient Reports**: Upload and manage patient medical reports
 - **Consultation Analytics**: Track consultation metrics
-- **Report Generation**: Create medical reports for patients
+- **Report Generation**: upload medical reports for patients
 
 ### 9. Doctor Settings
 - **Language Preferences**: Interface language settings
@@ -413,11 +407,6 @@ npm run build
 - **Asset Optimization**: Image and asset compression
 - **Chunk Splitting**: Optimal bundle sizes
 
-### Deployment Options
-1. **Static Hosting**: Netlify, Vercel, GitHub Pages
-2. **CDN Integration**: CloudFront, CloudFlare
-3. **Server Deployment**: Nginx, Apache
-4. **Container Deployment**: Docker containers
 
 ### Environment Configuration
 - **Development**: `localhost:3000` API endpoints
@@ -538,29 +527,3 @@ interface Consultation {
 
 
 
-## Additional Notes
-
-### Security Considerations
-- All API communications use HTTPS
-- JWT tokens for authentication
-- Input validation and sanitization
-- HIPAA compliance considerations for medical data
-- Regular security audits recommended
-
-### Performance Monitoring
-- Monitor video call quality metrics
-- Track API response times
-- Monitor real-time connection stability
-- User experience analytics
-- Error tracking and logging
-
-### Maintenance Schedule
-- Regular dependency updates
-- Security patch applications
-- Performance optimization reviews
-- Database maintenance windows
-- Backup and recovery procedures
-
----
-
-*This document should be updated regularly as the project evolves. Last updated: [Current Date]* 
