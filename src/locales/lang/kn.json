@@ -683,6 +683,9 @@
         "reportTitle": "ವರದಿ ಶೀರ್ಷಿಕೆ",
         "uploadAndManageReports": "ನಿಮ್ಮ ರೋಗಿಗಳಿಗಾಗಿ ವೈದ್ಯಕೀಯ ವರದಿಗಳನ್ನು ಅಪ್‌ಲೋಡ್ ಮತ್ತು ನಿರ್ವಹಿಸಿ",
         "myMedicalReports": "ನನ್ನ ವೈದ್ಯಕೀಯ ವರದಿಗಳು",
-        "uploadAndManageYourReports": "ನಿಮ್ಮ ವೈದ್ಯಕೀಯ ವರದಿಗಳನ್ನು ಅಪ್‌ಲೋಡ್ ಮತ್ತು ನಿರ್ವಹಿಸಿ"
+        "uploadAndManageYourReports": "ನಿಮ್ಮ ವೈದ್ಯಕೀಯ ವರದಿಗಳನ್ನು ಅಪ್‌ಲೋಡ್ ಮತ್ತು ನಿರ್ವಹಿಸಿ",
+        "onlyPdfAllowed": "ಕೇವಲ PDF ಫೈಲ್‌ಗಳನ್ನು ಅನುಮತಿಸಲಾಗಿದೆ. ದಯವಿಟ್ಟು ಕೇವಲ PDF ಫೈಲ್‌ಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ.",
+        "reportAnalysis": "ವರದಿ ವಿಶ್ಲೇಷಣೆ",
+        "enterReportAnalysis": "ವರದಿ ವಿಶ್ಲೇಷಣೆ ನಮೂದಿಸಿ (ಐಚ್ಛಿಕ)"
     }
 } 

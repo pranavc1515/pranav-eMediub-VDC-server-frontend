@@ -30,6 +30,7 @@ const uploadReportSchema = z.object({
         required_error: 'Report date is required',
     }),
     doctor_name: z.string().min(1, 'Doctor name is required'),
+    report_analysis: z.string().optional(),
     files: z.array(z.instanceof(File)).min(1, 'At least one file is required'),
     target_user_id: z.number().optional(),
 })
@@ -65,6 +66,7 @@ const UserReports = () => {
         defaultValues: {
             report_date: new Date(),
             doctor_name: '',
+            report_analysis: '',
             files: [],
             target_user_id: undefined,
         },
@@ -137,6 +139,23 @@ const UserReports = () => {
         setValue('files', files)
     }
 
+    const validateFileType = (files: FileList | null, fileList: File[]) => {
+        if (files) {
+            for (const file of files) {
+                if (file.type !== 'application/pdf') {
+                    toast.push(
+                        <Notification type="danger" title="Error">
+                            {t('reports.onlyPdfAllowed')}
+                        </Notification>,
+                        { placement: 'top-center' }
+                    )
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
     const onSubmitUpload = async (data: UploadReportFormData) => {
         setUploading(true)
         try {
@@ -144,6 +163,7 @@ const UserReports = () => {
                 report_pdf: data.files,
                 report_date: format(data.report_date, 'yyyy-MM-dd'),
                 doctor_name: data.doctor_name,
+                report_analysis: data.report_analysis,
                 target_user_id: data.target_user_id,
             }
 
@@ -398,6 +418,25 @@ const UserReports = () => {
                             </FormItem>
                             
                             <FormItem
+                                label={t('reports.reportAnalysis')}
+                                invalid={Boolean(errors.report_analysis)}
+                                errorMessage={errors.report_analysis?.message}
+                            >
+                                <Controller
+                                    name="report_analysis"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Input 
+                                            {...field} 
+                                            placeholder={t('reports.enterReportAnalysis')} 
+                                            textArea
+                                            rows={4}
+                                        />
+                                    )}
+                                />
+                            </FormItem>
+                            
+                            <FormItem
                                 label="Upload Report Files"
                                 invalid={Boolean(errors.files)}
                                 errorMessage={errors.files?.message}
@@ -408,7 +447,8 @@ const UserReports = () => {
                                     onChange={(files) => handleUploadFiles(Array.from(files))}
                                     fileList={uploadFiles}
                                     multiple={true}
-                                    accept=".pdf,.jpg,.jpeg,.png"
+                                    accept=".pdf"
+                                    beforeUpload={validateFileType}
                                 >
                                     <div className="my-10 text-center">
                                         <div className="text-6xl mb-4 flex justify-center">
@@ -421,7 +461,7 @@ const UserReports = () => {
                                             <span className="text-blue-500">browse</span>
                                         </p>
                                         <p className="mt-1 opacity-60 dark:text-white">
-                                            Support: PDF, JPG, JPEG, PNG (Max 5 files)
+                                            Support: PDF files only (Max 5 files)
                                         </p>
                                     </div>
                                 </Upload>

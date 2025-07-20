@@ -41,6 +41,7 @@ export interface UploadReportRequest {
     report_pdf: File[]
     report_date: string
     doctor_name: string
+    report_analysis?: string
     target_user_id?: number
     doctor_id?: number
 }
@@ -51,6 +52,7 @@ export interface EditReportRequest {
     report_type?: string
     report_date?: string
     doctor_name?: string
+    report_analysis?: string
     target_user_id?: number
     doctor_id?: number
 }
@@ -71,6 +73,10 @@ const ReportsService = {
         // Append other form data
         formData.append('report_date', data.report_date)
         formData.append('doctor_name', data.doctor_name)
+        
+        if (data.report_analysis) {
+            formData.append('report_analysis', data.report_analysis)
+        }
         
         if (data.target_user_id) {
             formData.append('target_user_id', data.target_user_id.toString())
@@ -120,6 +126,7 @@ const ReportsService = {
         if (data.report_type) formData.append('report_type', data.report_type)
         if (data.report_date) formData.append('report_date', data.report_date)
         if (data.doctor_name) formData.append('doctor_name', data.doctor_name)
+        if (data.report_analysis) formData.append('report_analysis', data.report_analysis)
         if (data.target_user_id) formData.append('target_user_id', data.target_user_id.toString())
         if (data.doctor_id) formData.append('doctor_id', data.doctor_id.toString())
 

@@ -42,6 +42,7 @@ const uploadReportSchema = z.object({
         required_error: 'Report date is required',
     }),
     doctor_name: z.string().min(1, 'Doctor name is required'),
+    report_analysis: z.string().optional(),
     files: z.array(z.instanceof(File)).min(1, 'At least one file is required'),
 })
 
@@ -98,6 +99,7 @@ const DoctorReports = () => {
             target_user_id: undefined as unknown as number,
             report_date: new Date(),
             doctor_name: '',
+            report_analysis: '',
             files: [],
         },
     })
@@ -200,6 +202,23 @@ const DoctorReports = () => {
         setValue('files', files)
     }
 
+    const validateFileType = (files: FileList | null, fileList: File[]) => {
+        if (files) {
+            for (const file of files) {
+                if (file.type !== 'application/pdf') {
+                    toast.push(
+                        <Notification type="danger" title="Error">
+                            {t('reports.onlyPdfAllowed')}
+                        </Notification>,
+                        { placement: 'top-center' }
+                    )
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
     const onSubmitUpload = async (data: UploadReportFormData) => {
         setUploading(true)
         try {
@@ -207,6 +226,7 @@ const DoctorReports = () => {
                 report_pdf: data.files,
                 report_date: format(data.report_date, 'yyyy-MM-dd'),
                 doctor_name: data.doctor_name,
+                report_analysis: data.report_analysis,
                 target_user_id: data.target_user_id,
                 doctor_id: user.userId ? parseInt(user.userId.toString()) : undefined, // Auto-populate doctor_id from localStorage
             }
@@ -530,17 +550,37 @@ const DoctorReports = () => {
                             </FormItem>
 
                             <FormItem
+                                label={t('reports.reportAnalysis')}
+                                invalid={!!errors.report_analysis}
+                                errorMessage={errors.report_analysis?.message}
+                            >
+                                <Controller
+                                    name="report_analysis"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Input 
+                                            {...field} 
+                                            placeholder={t('reports.enterReportAnalysis')} 
+                                            textArea
+                                            rows={4}
+                                        />
+                                    )}
+                                />
+                            </FormItem>
+
+                            <FormItem
                                 label="Report Files"
                                 invalid={!!errors.files}
                                 errorMessage={errors.files?.message}
                             >
                                 <Upload
-                                    accept="application/pdf"
+                                    accept=".pdf"
                                     multiple
                                     draggable
                                     onChange={handleUploadFiles}
                                     fileList={uploadFiles}
                                     uploadLimit={5}
+                                    beforeUpload={validateFileType}
                                 >
                                     <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-lg">
                                         <HiOutlineCloudUpload className="text-4xl text-gray-400 mb-2" />

@@ -657,6 +657,9 @@
         "reportTitle": "रिपोर्ट शीर्षक",
         "uploadAndManageReports": "अपने रोगियों के लिए चिकित्सा रिपोर्ट अपलोड और प्रबंधित करें",
         "myMedicalReports": "मेरी चिकित्सा रिपोर्ट",
-        "uploadAndManageYourReports": "अपनी चिकित्सा रिपोर्ट अपलोड और प्रबंधित करें"
+        "uploadAndManageYourReports": "अपनी चिकित्सा रिपोर्ट अपलोड और प्रबंधित करें",
+        "onlyPdfAllowed": "केवल PDF फाइलें अनुमत हैं। कृपया केवल PDF फाइलें चुनें।",
+        "reportAnalysis": "रिपोर्ट विश्लेषण",
+        "enterReportAnalysis": "रिपोर्ट विश्लेषण दर्ज करें (वैकल्पिक)"
     }
 } 
