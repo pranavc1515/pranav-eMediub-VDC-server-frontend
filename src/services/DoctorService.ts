@@ -157,6 +157,49 @@ type UpdateVDCSettingsResponse = {
     }
 }
 
+type EmailVerificationStatusResponse = {
+    success: boolean
+    data: {
+        doctorId: number
+        email: string
+        emailVerified: boolean
+        hasPendingVerification: boolean | null
+        otpExpiresAt: string | null
+    }
+}
+
+type SendEmailOTPResponse = {
+    success: boolean
+    message: string
+    data: {
+        email?: string
+        otpSent?: boolean
+        expiresAt?: string
+        emailVerified?: boolean
+    }
+}
+
+type VerifyEmailOTPResponse = {
+    success: boolean
+    message: string
+    data: {
+        doctorId: number
+        email: string
+        emailVerified: boolean
+        verifiedAt: string
+    }
+}
+
+type ResendEmailOTPResponse = {
+    success: boolean
+    message: string
+    data: {
+        email: string
+        otpSent: boolean
+        expiresAt: string
+    }
+}
+
 const DoctorService = {
     getProfile(doctorId?: number) {
         return ApiService.fetchDataWithAxios<{
@@ -393,6 +436,60 @@ const DoctorService = {
     },
 
     /**
+     * Get email verification status for doctor
+     * @param doctorId The doctor's ID
+     * @returns Promise with email verification status
+     */
+    getEmailVerificationStatus(doctorId: number) {
+        return ApiService.fetchDataWithAxios<EmailVerificationStatusResponse>({
+            url: `/api/doctors/email-verification-status/${doctorId}`,
+            method: 'GET',
+        })
+    },
+
+    /**
+     * Send email OTP for verification
+     * @param email The email to verify
+     * @param doctorId The doctor's ID
+     * @returns Promise with OTP send result
+     */
+    sendEmailOTP(email: string, doctorId: number) {
+        return ApiService.fetchDataWithAxios<SendEmailOTPResponse>({
+            url: '/api/doctors/send-email-otp',
+            method: 'POST',
+            data: { email, doctorId },
+        })
+    },
+
+    /**
+     * Verify email OTP
+     * @param email The email being verified
+     * @param otp The OTP code
+     * @param doctorId The doctor's ID
+     * @returns Promise with verification result
+     */
+    verifyEmailOTP(email: string, otp: string, doctorId: number) {
+        return ApiService.fetchDataWithAxios<VerifyEmailOTPResponse>({
+            url: '/api/doctors/verify-email-otp',
+            method: 'POST',
+            data: { email, otp, doctorId },
+        })
+    },
+
+    /**
+     * Resend email OTP
+     * @param doctorId The doctor's ID
+     * @returns Promise with resend result
+     */
+    resendEmailOTP(doctorId: number) {
+        return ApiService.fetchDataWithAxios<ResendEmailOTPResponse>({
+            url: '/api/doctors/resend-email-otp',
+            method: 'POST',
+            data: { doctorId },
+        })
+    },
+
+    /**
      * Delete doctor account
      * @returns Promise with deletion result
      */
@@ -416,5 +513,9 @@ export type {
     VDCSettingsResponse,
     UpdateVDCSettingsRequest,
     UpdateVDCSettingsResponse,
+    EmailVerificationStatusResponse,
+    SendEmailOTPResponse,
+    VerifyEmailOTPResponse,
+    ResendEmailOTPResponse,
 }
 export default DoctorService

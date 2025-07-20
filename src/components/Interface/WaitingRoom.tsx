@@ -211,7 +211,7 @@ const WaitingRoom = ({ queueStatus, onExitQueue, onBackToPatientSelection }: Wai
                 </p>
 
                 <div className="flex space-x-3 mt-4">
-                    {onBackToPatientSelection && (
+                    {/* {onBackToPatientSelection && (
                         <Button
                             variant="default"
                             className="bg-gray-500 hover:bg-gray-600"
@@ -219,7 +219,7 @@ const WaitingRoom = ({ queueStatus, onExitQueue, onBackToPatientSelection }: Wai
                         >
                             ← Back to Patient Selection
                         </Button>
-                    )}
+                    )} */}
                     <Button
                         variant="solid"
                         className="bg-red-500 hover:bg-red-600"

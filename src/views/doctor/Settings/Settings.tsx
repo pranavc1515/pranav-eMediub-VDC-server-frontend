@@ -9,7 +9,8 @@ import {
     FormItem
 } from '@/components/ui'
 import Container from '@/components/shared/Container'
-import { HiOutlineGlobeAlt, HiOutlineTrash } from 'react-icons/hi'
+import EmailVerificationDrawer from '@/components/shared/EmailVerificationDrawer'
+import { HiOutlineGlobeAlt, HiOutlineTrash, HiOutlineMail, HiOutlineCheckCircle, HiOutlineExclamationCircle } from 'react-icons/hi'
 import { useAuth } from '@/auth'
 import { useLocaleStore } from '@/store/localeStore'
 import { useTranslation } from '@/utils/hooks/useTranslation'
@@ -33,8 +34,14 @@ const DoctorSettings = () => {
     const [deleteLoading, setDeleteLoading] = useState(false)
     const [languageLoading, setLanguageLoading] = useState(false)
     const [currentDoctorLanguage, setCurrentDoctorLanguage] = useState('en')
+    const [emailVerificationDrawerOpen, setEmailVerificationDrawerOpen] = useState(false)
+    const [emailVerificationStatus, setEmailVerificationStatus] = useState({
+        isVerified: false,
+        email: '',
+        loading: true
+    })
 
-    // Load current language preference from server
+    // Load current language preference and email verification status from server
     useEffect(() => {
         const loadDoctorLanguage = async () => {
             try {
@@ -51,8 +58,117 @@ const DoctorSettings = () => {
             }
         }
 
+        const loadEmailVerificationStatus = async () => {
+            // Try to get user ID from multiple sources
+            let userId = user?.id
+            
+            // If user.id is not available, try to get it from localStorage
+            if (!userId) {
+                const storedUser = localStorage.getItem('user')
+                if (storedUser) {
+                    try {
+                        const parsedUser = JSON.parse(storedUser)
+                        userId = parsedUser.id || parsedUser.userId
+                    } catch (e) {
+                        console.error('Error parsing stored user:', e)
+                    }
+                }
+            }
+            
+            // If still no user ID, try to get it from the auth token
+            if (!userId) {
+                const token = localStorage.getItem('token')
+                if (token) {
+                    try {
+                        const payload = JSON.parse(atob(token.split('.')[1]))
+                        userId = payload.id
+                    } catch (e) {
+                        console.error('Error parsing token:', e)
+                    }
+                }
+            }
+            
+            if (!userId) {
+                console.log('No user ID found from any source')
+                return
+            }
+            
+            console.log('Loading email verification status for user:', userId)
+            
+            try {
+                setEmailVerificationStatus(prev => ({ ...prev, loading: true }))
+                
+                // Get the doctor's profile to get their email
+                const profileResponse = await DoctorService.getProfile(Number(userId))
+                let doctorEmail = ''
+                
+                console.log('Profile response:', profileResponse)
+                
+                // Get email and verification status from profile response
+                if (profileResponse.success && profileResponse.data) {
+                    doctorEmail = profileResponse.data.email || ''
+                    const isEmailVerified = profileResponse.data.emailVerified || false
+                    
+                    console.log('Found email in profile:', doctorEmail)
+                    console.log('Email verification status:', isEmailVerified)
+                    
+                    setEmailVerificationStatus({
+                        isVerified: isEmailVerified,
+                        email: doctorEmail,
+                        loading: false
+                    })
+                    
+                    console.log('Set verification status from profile:', {
+                        isVerified: isEmailVerified,
+                        email: doctorEmail
+                    })
+                } else {
+                    // If profile doesn't have email, try other sources
+                    if (!doctorEmail && user?.email) {
+                        doctorEmail = user.email
+                        console.log('Found email in user object:', doctorEmail)
+                    }
+                    
+                    if (!doctorEmail) {
+                        const storedUser = localStorage.getItem('user')
+                        if (storedUser) {
+                            try {
+                                const parsedUser = JSON.parse(storedUser)
+                                if (parsedUser.email) {
+                                    doctorEmail = parsedUser.email
+                                    console.log('Found email in localStorage:', doctorEmail)
+                                }
+                            } catch (e) {
+                                console.error('Error parsing stored user:', e)
+                            }
+                        }
+                    }
+                    
+                    setEmailVerificationStatus({
+                        isVerified: false,
+                        email: doctorEmail || `${user?.fullName || 'doctor'}@example.com`,
+                        loading: false
+                    })
+                    
+                    console.log('Set fallback verification status:', {
+                        isVerified: false,
+                        email: doctorEmail
+                    })
+                }
+            } catch (err) {
+                console.error('Error loading email verification status:', err)
+                            // Set a default state if everything fails
+            setEmailVerificationStatus({
+                isVerified: false,
+                email: `${user?.fullName || 'doctor'}@example.com`, // Default email for testing
+                loading: false
+            })
+            }
+        }
+
         loadDoctorLanguage()
-    }, [currentLang, setLang])
+        loadEmailVerificationStatus()
+    }, [currentLang, setLang, user?.id])
 
     const handleLanguageChange = async (selectedOption: any) => {
         if (!selectedOption) return
@@ -100,6 +216,26 @@ const DoctorSettings = () => {
             setDeleteLoading(false)
         }
     }
+
+    const handleEmailVerificationSuccess = () => {
+        // Reload email verification status
+        if (user?.id) {
+            DoctorService.getEmailVerificationStatus(Number(user.id))
+                .then(response => {
+                    if (response.success) {
+                        setEmailVerificationStatus({
+                            isVerified: response.data.emailVerified,
+                            email: response.data.email,
+                            loading: false
+                        })
+                        setSuccess(t('settings.emailVerifiedSuccess'))
+                    }
+                })
+                .catch(err => {
+                    console.error('Error reloading email verification status:', err)
+                })
+        }
+    }
     
     return (
         <Container className="py-6">
@@ -132,7 +268,72 @@ const DoctorSettings = () => {
                         
                         <Tabs.TabContent value="account">
                             <div className="mt-6">
-                                
+                                {/* Email Verification Section */}
+                                <div className="mb-8">
+                                    <h4 className="mb-4 flex items-center">
+                                        <HiOutlineMail className="text-lg mr-2" />
+                                        {t('settings.emailVerification')}
+                                    </h4>
+                                    <p className="mb-6 text-gray-600">
+                                        {t('settings.emailVerificationDesc')}
+                                    </p>
+
+                                    {emailVerificationStatus.loading ? (
+                                        <div className="animate-pulse">
+                                            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                                            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+                                        </div>
+                                    ) : emailVerificationStatus.email ? (
+                                        <div className="flex items-center justify-between p-4 border rounded-lg">
+                                            <div className="flex items-center gap-3">
+                                                <div className="text-sm font-medium text-gray-700">
+                                                    {emailVerificationStatus.email}
+                                                </div>
+                                                <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                                                    emailVerificationStatus.isVerified 
+                                                        ? 'bg-green-100 text-green-800' 
+                                                        : 'bg-yellow-100 text-yellow-800'
+                                                }`}>
+                                                    {emailVerificationStatus.isVerified ? (
+                                                        <>
+                                                            <HiOutlineCheckCircle className="h-3 w-3" />
+                                                            {t('settings.emailVerified')}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <HiOutlineExclamationCircle className="h-3 w-3" />
+                                                            {t('settings.emailNotVerified')}
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {!emailVerificationStatus.isVerified ? (
+                                                <Button
+                                                    size="sm"
+                                                    variant="solid"
+                                                    onClick={() => setEmailVerificationDrawerOpen(true)}
+                                                    icon={<HiOutlineMail />}
+                                                >
+                                                    {t('settings.verifyEmail')}
+                                                </Button>
+                                            ) : (
+                                                <div className="text-sm text-green-600 font-medium">
+                                                    {t('settings.emailVerified')}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="p-4 border rounded-lg bg-gray-50">
+                                            <div className="text-center">
+                                                <HiOutlineMail className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                                                <p className="text-gray-500 mb-3">No email address found</p>
+                                                <p className="text-sm text-gray-400">
+                                                    Please update your profile with an email address to enable verification.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
 
                                 {/* Delete Account Section */}
                                 <div className="mt-8 pt-4 border-t">
@@ -221,6 +422,15 @@ const DoctorSettings = () => {
                     </div>
                 </div>
             </Dialog>
+
+            {/* Email Verification Drawer */}
+            <EmailVerificationDrawer
+                isOpen={emailVerificationDrawerOpen}
+                onClose={() => setEmailVerificationDrawerOpen(false)}
+                onVerificationSuccess={handleEmailVerificationSuccess}
+                doctorEmail={emailVerificationStatus.email}
+                isEmailVerified={emailVerificationStatus.isVerified}
+            />
         </Container>
     )
 }
