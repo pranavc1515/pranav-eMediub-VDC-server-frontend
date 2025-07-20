@@ -77,7 +77,20 @@ const SignInForm = ({
         resolver: zodResolver(otpSchema),
     })
 
-    const formatPhone = (phone: string) => `+91${phone}`
+    const formatPhone = (phone: string) => {
+        // Remove non-digit characters first
+        const clean = phone.replace(/[^\d]/g, '')
+
+        // Extract country code and local number
+        const country = clean.length > 10 ? clean.slice(0, clean.length - 10) : '91'
+        const local = clean.slice(-10)
+
+        // For doctors, return without space, for users return with space
+        return userType === 'doctor' 
+            ? `+${country}${local}`
+            : `+${country} ${local}`
+    }
+
 
     const handleTermsCheckboxChange = (checked: boolean) => {
         if (checked) {
@@ -391,11 +404,16 @@ const SignInForm = ({
                             render={({ field }) => (
                                 <PhoneInput
                                     value={field.value}
-                                    onChange={field.onChange}
-                                    placeholder={t('auth.mobilePlaceholder')}
+                                    onChange={(value: string) => {
+                                        const match = value.match(/^(\+\d{1,4})(\d{6,})$/);
+                                        const formatted = match ? `${match[1]} ${match[2]}` : value;
+                                        field.onChange(formatted);
+                                    }}
+                                    placeholder="Mobile number"
                                 />
                             )}
                         />
+
                     </FormItem>
                     
                     <FormItem className="mb-6">
