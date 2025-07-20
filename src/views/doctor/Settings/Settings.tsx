@@ -10,6 +10,8 @@ import {
 } from '@/components/ui'
 import Container from '@/components/shared/Container'
 import EmailVerificationDrawer from '@/components/shared/EmailVerificationDrawer'
+import EmailVerificationDebug from '@/components/shared/EmailVerificationDebug'
+import AuthDebug from '@/components/shared/AuthDebug'
 import { HiOutlineGlobeAlt, HiOutlineTrash, HiOutlineMail, HiOutlineCheckCircle, HiOutlineExclamationCircle } from 'react-icons/hi'
 import { useAuth } from '@/auth'
 import { useLocaleStore } from '@/store/localeStore'
@@ -60,7 +62,7 @@ const DoctorSettings = () => {
 
         const loadEmailVerificationStatus = async () => {
             // Try to get user ID from multiple sources
-            let userId = user?.id
+            let userId = user?.id || user?.userId
             
             // If user.id is not available, try to get it from localStorage
             if (!userId) {
@@ -89,7 +91,12 @@ const DoctorSettings = () => {
             }
             
             if (!userId) {
-                console.log('No user ID found from any source')
+                console.error('No user ID found from any source')
+                setEmailVerificationStatus({
+                    isVerified: false,
+                    email: '',
+                    loading: false
+                })
                 return
             }
             
@@ -98,7 +105,28 @@ const DoctorSettings = () => {
             try {
                 setEmailVerificationStatus(prev => ({ ...prev, loading: true }))
                 
-                // Get the doctor's profile to get their email
+                // First try to get email verification status directly
+                try {
+                    const verificationResponse = await DoctorService.getEmailVerificationStatus(Number(userId))
+                    console.log('Direct verification status response:', verificationResponse)
+                    
+                    if (verificationResponse.success) {
+                        setEmailVerificationStatus({
+                            isVerified: verificationResponse.data.emailVerified,
+                            email: verificationResponse.data.email,
+                            loading: false
+                        })
+                        console.log('Set verification status from direct API:', {
+                            isVerified: verificationResponse.data.emailVerified,
+                            email: verificationResponse.data.email
+                        })
+                        return
+                    }
+                } catch (verificationErr) {
+                    console.error('Error getting direct verification status:', verificationErr)
+                }
+                
+                // Fallback: Get the doctor's profile to get their email
                 const profileResponse = await DoctorService.getProfile(Number(userId))
                 let doctorEmail = ''
                 
@@ -146,7 +174,7 @@ const DoctorSettings = () => {
                     
                     setEmailVerificationStatus({
                         isVerified: false,
-                        email: doctorEmail || `${user?.fullName || 'doctor'}@example.com`,
+                        email: doctorEmail || '',
                         loading: false
                     })
                     
@@ -157,12 +185,12 @@ const DoctorSettings = () => {
                 }
             } catch (err) {
                 console.error('Error loading email verification status:', err)
-                            // Set a default state if everything fails
-            setEmailVerificationStatus({
-                isVerified: false,
-                email: `${user?.fullName || 'doctor'}@example.com`, // Default email for testing
-                loading: false
-            })
+                // Set a default state if everything fails
+                setEmailVerificationStatus({
+                    isVerified: false,
+                    email: '',
+                    loading: false
+                })
             }
         }
 
@@ -219,9 +247,12 @@ const DoctorSettings = () => {
 
     const handleEmailVerificationSuccess = () => {
         // Reload email verification status
-        if (user?.id) {
-            DoctorService.getEmailVerificationStatus(Number(user.id))
+        const userId = user?.id || user?.userId
+        if (userId) {
+            console.log('Reloading email verification status after success')
+            DoctorService.getEmailVerificationStatus(Number(userId))
                 .then(response => {
+                    console.log('Reload verification status response:', response)
                     if (response.success) {
                         setEmailVerificationStatus({
                             isVerified: response.data.emailVerified,
@@ -229,11 +260,21 @@ const DoctorSettings = () => {
                             loading: false
                         })
                         setSuccess(t('settings.emailVerifiedSuccess'))
+                        console.log('Updated verification status after success:', {
+                            isVerified: response.data.emailVerified,
+                            email: response.data.email
+                        })
+                    } else {
+                        console.error('Failed to reload verification status:', response)
+                        setError('Failed to update verification status')
                     }
                 })
                 .catch(err => {
                     console.error('Error reloading email verification status:', err)
+                    setError('Failed to update verification status')
                 })
+        } else {
+            console.error('No user ID available for reloading verification status')
         }
     }
     
@@ -334,6 +375,8 @@ const DoctorSettings = () => {
                                         </div>
                                     )}
                                 </div>
+
+                                
 
                                 {/* Delete Account Section */}
                                 <div className="mt-8 pt-4 border-t">

@@ -73,25 +73,57 @@ const EmailVerificationDrawer = ({
     }, [resendTimer])
 
     const loadVerificationStatus = async () => {
-        if (!user?.id) return
+        const userId = user?.id || user?.userId
+        if (!userId) {
+            console.error('No user ID available for email verification')
+            return
+        }
         
         try {
-            const response = await DoctorService.getEmailVerificationStatus(Number(user.id))
+            console.log('Loading email verification status for user:', userId)
+            const response = await DoctorService.getEmailVerificationStatus(Number(userId))
+            console.log('Email verification status response:', response)
+            
             if (response.success) {
                 setVerificationStatus({
                     isVerified: response.data.emailVerified,
                     email: response.data.email
                 })
                 setEmail(response.data.email)
+                console.log('Updated verification status:', {
+                    isVerified: response.data.emailVerified,
+                    email: response.data.email
+                })
+            } else {
+                console.error('Failed to load verification status:', response)
+                setError('Failed to load email verification status')
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error loading verification status:', err)
+            const errorMessage = err.response?.data?.message || err.message || 'Failed to load verification status'
+            setError(errorMessage)
         }
     }
 
+    const validateEmail = (email: string): boolean => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        return emailRegex.test(email)
+    }
+
     const handleSendOTP = async () => {
-        if (!email.trim() || !user?.id) {
-            setError(t('auth.email'))
+        if (!email.trim()) {
+            setError('Please enter a valid email address')
+            return
+        }
+
+        if (!validateEmail(email)) {
+            setError('Please enter a valid email address')
+            return
+        }
+
+        const userId = user?.id || user?.userId
+        if (!userId) {
+            setError('User authentication required')
             return
         }
 
@@ -100,7 +132,10 @@ const EmailVerificationDrawer = ({
         setSuccess('')
 
         try {
-            const response = await DoctorService.sendEmailOTP(email, Number(user.id))
+            console.log('Sending email OTP for:', email, 'User ID:', userId)
+            const response = await DoctorService.sendEmailOTP(email, Number(userId))
+            console.log('Send OTP response:', response)
+            
             if (response.success) {
                 if (response.data.emailVerified) {
                     setSuccess(t('settings.emailAlreadyVerified'))
@@ -114,18 +149,33 @@ const EmailVerificationDrawer = ({
                     setSuccess(t('settings.codeSentTo') + ' ' + email)
                 }
             } else {
-                setError(response.message || t('settings.emailVerificationError'))
+                const errorMsg = response.message || t('settings.emailVerificationError')
+                setError(errorMsg)
+                console.error('Send OTP failed:', errorMsg)
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || t('settings.emailVerificationError'))
+            console.error('Send OTP error:', err)
+            const errorMessage = err.response?.data?.message || err.message || t('settings.emailVerificationError')
+            setError(errorMessage)
         } finally {
             setLoading(false)
         }
     }
 
     const handleVerifyOTP = async () => {
-        if (!otp.trim() || !email.trim() || !user?.id) {
-            setError(t('auth.enterOtp'))
+        if (!otp.trim()) {
+            setError('Please enter the verification code')
+            return
+        }
+
+        if (otp.length !== 6) {
+            setError('Please enter a 6-digit verification code')
+            return
+        }
+
+        const userId = user?.id || user?.userId
+        if (!email.trim() || !userId) {
+            setError('Invalid email or user authentication required')
             return
         }
 
@@ -134,7 +184,10 @@ const EmailVerificationDrawer = ({
         setSuccess('')
 
         try {
-            const response = await DoctorService.verifyEmailOTP(email, otp, Number(user.id))
+            console.log('Verifying OTP:', otp, 'for email:', email, 'User ID:', userId)
+            const response = await DoctorService.verifyEmailOTP(email, otp, Number(userId))
+            console.log('Verify OTP response:', response)
+            
             if (response.success) {
                 setSuccess(t('settings.emailVerifiedSuccess'))
                 setVerificationStatus({
@@ -148,13 +201,16 @@ const EmailVerificationDrawer = ({
                     onClose()
                 }, 1500)
             } else {
-                setError(response.message || t('settings.invalidVerificationCode'))
+                const errorMsg = response.message || t('settings.invalidVerificationCode')
+                setError(errorMsg)
+                console.error('Verify OTP failed:', errorMsg)
             }
         } catch (err: any) {
-            const errorMessage = err.response?.data?.message
+            console.error('Verify OTP error:', err)
+            const errorMessage = err.response?.data?.message || err.message
             if (errorMessage?.includes('expired')) {
                 setError(t('settings.verificationCodeExpired'))
-            } else if (errorMessage?.includes('Invalid')) {
+            } else if (errorMessage?.includes('Invalid') || errorMessage?.includes('invalid')) {
                 setError(t('settings.invalidVerificationCode'))
             } else {
                 setError(errorMessage || t('settings.emailVerificationError'))
@@ -165,22 +221,33 @@ const EmailVerificationDrawer = ({
     }
 
     const handleResendOTP = async () => {
-        if (!user?.id) return
+        const userId = user?.id || user?.userId
+        if (!userId) {
+            setError('User authentication required')
+            return
+        }
 
         setLoading(true)
         setError('')
         setSuccess('')
 
         try {
-            const response = await DoctorService.resendEmailOTP(Number(user.id))
+            console.log('Resending email OTP for user:', userId)
+            const response = await DoctorService.resendEmailOTP(Number(userId))
+            console.log('Resend OTP response:', response)
+            
             if (response.success) {
                 setResendTimer(60)
                 setSuccess(t('settings.codeResent'))
             } else {
-                setError(response.message || t('settings.emailVerificationError'))
+                const errorMsg = response.message || t('settings.emailVerificationError')
+                setError(errorMsg)
+                console.error('Resend OTP failed:', errorMsg)
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || t('settings.emailVerificationError'))
+            console.error('Resend OTP error:', err)
+            const errorMessage = err.response?.data?.message || err.message || t('settings.emailVerificationError')
+            setError(errorMessage)
         } finally {
             setLoading(false)
         }
@@ -314,7 +381,7 @@ const EmailVerificationDrawer = ({
                                         variant="solid"
                                         onClick={handleSendOTP}
                                         loading={loading}
-                                        disabled={!email.trim()}
+                                        disabled={!email.trim() || !validateEmail(email)}
                                         className="flex-1"
                                     >
                                         {loading ? t('settings.sendingCode') : t('settings.sendVerificationCode')}
