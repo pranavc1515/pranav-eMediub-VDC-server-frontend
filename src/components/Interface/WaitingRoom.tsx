@@ -16,7 +16,11 @@ interface WaitingRoomProps {
     onBackToPatientSelection?: () => void
 }
 
-const WaitingRoom = ({ queueStatus, onExitQueue, onBackToPatientSelection }: WaitingRoomProps) => {
+const WaitingRoom = ({
+    queueStatus,
+    onExitQueue,
+    onBackToPatientSelection,
+}: WaitingRoomProps) => {
     const previousPositionRef = useRef<number | null>(null)
     const hasShownNearTurnNotification = useRef(false)
     const navigate = useNavigate()
@@ -103,7 +107,7 @@ const WaitingRoom = ({ queueStatus, onExitQueue, onBackToPatientSelection }: Wai
     const handleExitQueue = () => {
         // Clear patient selection when leaving queue
         clearSelectedPatient()
-        
+
         // Show confirmation before leaving
         toast.push(
             <Notification type="warning" title="Leaving Queue">
@@ -111,7 +115,7 @@ const WaitingRoom = ({ queueStatus, onExitQueue, onBackToPatientSelection }: Wai
             </Notification>,
         )
         onExitQueue()
-        
+
         // Navigate to /vdc after leaving queue
         navigate('/vdc')
     }
@@ -119,14 +123,14 @@ const WaitingRoom = ({ queueStatus, onExitQueue, onBackToPatientSelection }: Wai
     const handleBackToPatientSelection = () => {
         // Clear patient selection and go back to selection
         clearSelectedPatient()
-        
+
         // Show info message
         toast.push(
             <Notification type="info" title="Patient Selection">
                 Please choose a patient for consultation
             </Notification>,
         )
-        
+
         if (onBackToPatientSelection) {
             onBackToPatientSelection()
         }
@@ -210,16 +214,7 @@ const WaitingRoom = ({ queueStatus, onExitQueue, onBackToPatientSelection }: Wai
                     turn.
                 </p>
 
-                <div className="flex space-x-3 mt-4">
-                    {/* {onBackToPatientSelection && (
-                        <Button
-                            variant="default"
-                            className="bg-gray-500 hover:bg-gray-600"
-                            onClick={handleBackToPatientSelection}
-                        >
-                            ← Back to Patient Selection
-                        </Button>
-                    )} */}
+                <div className="flex justify-center mt-4">
                     <Button
                         variant="solid"
                         className="bg-red-500 hover:bg-red-600"
