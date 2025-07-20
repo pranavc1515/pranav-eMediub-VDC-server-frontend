@@ -141,7 +141,8 @@
         "ipcDescription": "Manage your in-person consultations and appointments, providing traditional face-to-face medical care at your clinic.",
         "serviceDescription": "Service description",
         "tipForDoctors": "Tip for Doctors",
-        "doctorTipText": "Remember to take short breaks between consultations. Studies show that brief breaks can help maintain focus and prevent burnout during long shifts."
+        "doctorTipText": "Remember to take short breaks between consultations. Studies show that brief breaks can help maintain focus and prevent burnout during long shifts.",
+        "ongoingConsultations": "Ongoing Consultations"
     },
     "profile": {
         "personalDetails": "Personal Details",
@@ -611,7 +612,7 @@
         "reportTitle": "Report Title",
         "uploadReport": "Upload Report",
         "uploadAndManageReports": "Upload and manage medical reports for your patients",
-        "myMedicalReports": "My Medical Reports",
+        "myMedicalReports": "My Reports",
         "uploadAndManageYourReports": "Upload and manage your medical reports",
         "onlyPdfAllowed": "Only PDF files are allowed. Please select PDF files only.",
         "reportAnalysis": "Report Analysis",
