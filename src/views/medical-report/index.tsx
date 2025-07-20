@@ -16,6 +16,7 @@ import Container from '@/components/shared/Container'
 import RichTextEditor from '@/components/shared/RichTextEditor'
 import DoubleSidedImage from '@/components/shared/DoubleSidedImage'
 import type { JSONContent } from '@tiptap/react'
+import { useTranslation } from 'react-i18next'
 
 const patientList = [
     {
@@ -84,6 +85,7 @@ interface PatientOption {
 }
 
 const MedicalReport = () => {
+    const { t } = useTranslation()
     const [selectedPatient, setSelectedPatient] = useState<string | null>(null)
     const [reportContent, setReportContent] = useState('')
     const [submitting, setSubmitting] = useState(false)
@@ -96,8 +98,8 @@ const MedicalReport = () => {
         setTimeout(() => {
             setSubmitting(false)
             toast.push(
-                <Notification title="Report Submitted" type="success">
-                    Medical report has been assigned to the patient
+                <Notification title={t('medicalReport.reportSubmitted')} type="success">
+                    {t('medicalReport.reportAssignedMessage')}
                 </Notification>
             )
             
@@ -133,8 +135,8 @@ const MedicalReport = () => {
         <Container>
             <div className="mb-8 flex justify-between items-center">
                 <div>
-                    <h3 className="mb-2">Medical Report Management</h3>
-                    <p className="text-gray-500">Create and manage medical reports for your patients</p>
+                    <h3 className="mb-2">{t('medicalReport.title')}</h3>
+                    <p className="text-gray-500">{t('medicalReport.subtitle')}</p>
                 </div>
                 <DoubleSidedImage 
                     src="/img/others/medical-report.png"
@@ -149,19 +151,19 @@ const MedicalReport = () => {
                     <Tabs.TabNav value="newReport">
                         <span className="flex items-center">
                             <span className="icon-file-plus text-lg mr-2"></span>
-                            New Report
+                            {t('medicalReport.newReport')}
                         </span>
                     </Tabs.TabNav>
                     <Tabs.TabNav value="history">
                         <span className="flex items-center">
                             <span className="icon-history text-lg mr-2"></span>
-                            Report History
+                            {t('medicalReport.reportHistory')}
                         </span>
                     </Tabs.TabNav>
                     <Tabs.TabNav value="templates">
                         <span className="flex items-center">
                             <span className="icon-template text-lg mr-2"></span>
-                            Templates
+                            {t('medicalReport.templates')}
                         </span>
                     </Tabs.TabNav>
                 </Tabs.TabList>
@@ -170,7 +172,7 @@ const MedicalReport = () => {
                         <div className="border-b border-gray-200 pb-4 mb-4">
                             <h5 className="flex items-center">
                                 <span className="icon-stethoscope text-xl text-primary-500 mr-2"></span>
-                                Create New Medical Report
+                                {t('medicalReport.createNewReport')}
                             </h5>
                         </div>
                         
@@ -178,18 +180,18 @@ const MedicalReport = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                 <div>
                                     <FormItem
-                                        label="Select Patient"
+                                        label={t('medicalReport.selectPatient')}
                                         extra={
                                             <div className="flex items-center">
                                                 <span className="icon-user text-lg text-primary-500 mr-2"></span>
-                                                <span>Select Patient</span>
+                                                <span>{t('medicalReport.selectPatient')}</span>
                                             </div>
                                         }
                                         invalid={!selectedPatient}
-                                        errorMessage={!selectedPatient ? "Please select a patient" : ""}
+                                        errorMessage={!selectedPatient ? t('medicalReport.pleaseSelectPatient') : ""}
                                     >
                                         <Select<PatientOption>
-                                            placeholder="Select a patient" 
+                                            placeholder={t('medicalReport.selectPatientPlaceholder')} 
                                             options={patientOptions}
                                             onChange={handlePatientChange}
                                         />
@@ -197,17 +199,17 @@ const MedicalReport = () => {
                                 </div>
                                 <div>
                                     <FormItem
-                                        label="Report Type"
+                                        label={t('medicalReport.reportType')}
                                         extra={
                                             <div className="flex items-center">
                                                 <span className="icon-file-text text-lg text-primary-500 mr-2"></span>
-                                                <span>Report Type</span>
+                                                <span>{t('medicalReport.reportType')}</span>
                                             </div>
                                         }
                                         invalid={false}
                                     >
                                         <Select<{ value: string; label: string }>
-                                            placeholder="Select report type" 
+                                            placeholder={t('medicalReport.selectReportTypePlaceholder')} 
                                             options={reportTypes}
                                         />
                                     </FormItem>
@@ -228,20 +230,20 @@ const MedicalReport = () => {
                                                         {getPatientById(selectedPatient)?.name}
                                                     </h5>
                                                     <p className="text-sm mb-1">
-                                                        <span className="font-medium">Age:</span> {getPatientById(selectedPatient)?.age} | 
-                                                        <span className="font-medium ml-2">Gender:</span> {getPatientById(selectedPatient)?.gender}
+                                                        <span className="font-medium">{t('medicalReport.age')}:</span> {getPatientById(selectedPatient)?.age} | 
+                                                        <span className="font-medium ml-2">{t('medicalReport.gender')}:</span> {getPatientById(selectedPatient)?.gender}
                                                     </p>
                                                     <p className="text-sm">
-                                                        <span className="font-medium">Last visit:</span> {getPatientById(selectedPatient)?.lastVisit}
+                                                        <span className="font-medium">{t('medicalReport.lastVisit')}:</span> {getPatientById(selectedPatient)?.lastVisit}
                                                     </p>
                                                 </div>
                                             </div>
                                             <div className="md:ml-6 mt-2 md:mt-0">
                                                 <p className="text-sm">
-                                                    <span className="font-medium">Medical History:</span> {getPatientById(selectedPatient)?.medicalHistory}
+                                                    <span className="font-medium">{t('medicalReport.medicalHistory')}:</span> {getPatientById(selectedPatient)?.medicalHistory}
                                                 </p>
                                                 <p className="text-sm">
-                                                    <span className="font-medium">Allergies:</span> {getPatientById(selectedPatient)?.allergies}
+                                                    <span className="font-medium">{t('medicalReport.allergies')}:</span> {getPatientById(selectedPatient)?.allergies}
                                                 </p>
                                             </div>
                                         </div>
@@ -252,11 +254,11 @@ const MedicalReport = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                 <div>
                                     <FormItem
-                                        label="Date of Consultation"
+                                        label={t('medicalReport.dateOfConsultation')}
                                         extra={
                                             <div className="flex items-center">
                                                 <span className="icon-calendar text-lg text-primary-500 mr-2"></span>
-                                                <span>Date of Consultation</span>
+                                                <span>{t('medicalReport.dateOfConsultation')}</span>
                                             </div>
                                         }
                                         invalid={false}
@@ -266,19 +268,19 @@ const MedicalReport = () => {
                                 </div>
                                 <div>
                                     <FormItem
-                                        label="Follow-up Required"
+                                        label={t('medicalReport.followUpRequired')}
                                         extra={
                                             <div className="flex items-center">
                                                 <span className="icon-check-circle text-lg text-primary-500 mr-2"></span>
-                                                <span>Follow-up Required</span>
+                                                <span>{t('medicalReport.followUpRequired')}</span>
                                             </div>
                                         }
                                     >
                                         <Select<{ value: string; label: string }>
-                                            placeholder="Is follow-up required?" 
+                                            placeholder={t('medicalReport.followUpRequiredPlaceholder')} 
                                             options={[
-                                                { value: 'yes', label: 'Yes' },
-                                                { value: 'no', label: 'No' }
+                                                { value: 'yes', label: t('common.yes') },
+                                                { value: 'no', label: t('common.no') }
                                             ]}
                                         />
                                     </FormItem>
@@ -289,37 +291,37 @@ const MedicalReport = () => {
                                 <div className="mb-4 border-b border-gray-200 pb-2">
                                     <h6 className="flex items-center text-primary-500">
                                         <span className="icon-clipboard-list text-lg mr-2"></span>
-                                        Consultation Details
+                                        {t('medicalReport.consultationDetails')}
                                     </h6>
                                 </div>
                                 
                                 <div className="mb-4">
                                     <FormItem
-                                        label="Symptoms"
+                                        label={t('medicalReport.symptoms')}
                                         extra={
                                             <div className="flex items-center">
                                                 <span className="icon-activity text-lg text-primary-500 mr-2"></span>
-                                                <span>Symptoms</span>
+                                                <span>{t('medicalReport.symptoms')}</span>
                                             </div>
                                         }
                                         invalid={false}
                                     >
-                                        <Input textArea rows={3} placeholder="Enter patient symptoms" />
+                                        <Input textArea rows={3} placeholder={t('medicalReport.symptomsPlaceholder')} />
                                     </FormItem>
                                 </div>
 
                                 <div className="mb-4">
                                     <FormItem
-                                        label="Diagnosis"
+                                        label={t('medicalReport.diagnosis')}
                                         extra={
                                             <div className="flex items-center">
                                                 <span className="icon-search text-lg text-primary-500 mr-2"></span>
-                                                <span>Diagnosis</span>
+                                                <span>{t('medicalReport.diagnosis')}</span>
                                             </div>
                                         }
                                         invalid={false}
                                     >
-                                        <Input textArea rows={3} placeholder="Enter diagnosis" />
+                                        <Input textArea rows={3} placeholder={t('medicalReport.diagnosisPlaceholder')} />
                                     </FormItem>
                                 </div>
                             </Card>
@@ -328,7 +330,7 @@ const MedicalReport = () => {
                                 <div className="mb-4 border-b border-gray-200 pb-2">
                                     <h6 className="flex items-center text-primary-500">
                                         <span className="icon-clipboard-check text-lg mr-2"></span>
-                                        Treatment Plan
+                                        {t('medicalReport.treatmentPlan')}
                                     </h6>
                                 </div>
                                 
@@ -337,43 +339,43 @@ const MedicalReport = () => {
                                         <RichTextEditor
                                             value={reportContent}
                                             onChange={handleRichTextChange}
-                                            placeholder="Enter detailed treatment plan and recommendations..."
+                                            placeholder={t('medicalReport.treatmentPlanPlaceholder')}
                                         />
                                     </FormItem>
                                 </div>
                                 
                                 <div className="mb-4">
                                     <FormItem
-                                        label="Prescription"
+                                        label={t('medicalReport.prescription')}
                                         extra={
                                             <div className="flex items-center">
                                                 <span className="icon-medicine text-lg text-primary-500 mr-2"></span>
-                                                <span>Prescription</span>
+                                                <span>{t('medicalReport.prescription')}</span>
                                             </div>
                                         }
                                     >
                                         <Input 
                                             textArea
                                             rows={3} 
-                                            placeholder="Enter medications, dosage and instructions" 
+                                            placeholder={t('medicalReport.prescriptionPlaceholder')} 
                                         />
                                     </FormItem>
                                 </div>
 
                                 <div className="mb-4">
                                     <FormItem
-                                        label="Additional Notes"
+                                        label={t('medicalReport.additionalNotes')}
                                         extra={
                                             <div className="flex items-center">
                                                 <span className="icon-file-plus text-lg text-primary-500 mr-2"></span>
-                                                <span>Additional Notes</span>
+                                                <span>{t('medicalReport.additionalNotes')}</span>
                                             </div>
                                         }
                                     >
                                         <Input 
                                             textArea
                                             rows={3} 
-                                            placeholder="Any additional notes or instructions for the patient" 
+                                            placeholder={t('medicalReport.additionalNotesPlaceholder')} 
                                         />
                                     </FormItem>
                                 </div>
@@ -386,7 +388,7 @@ const MedicalReport = () => {
                                     type="button"
                                     icon={<span className="icon-x"></span>}
                                 >
-                                    Cancel
+                                    {t('common.cancel')}
                                 </Button>
                                 <Button 
                                     variant="solid" 
@@ -394,7 +396,7 @@ const MedicalReport = () => {
                                     loading={submitting}
                                     icon={<span className="icon-check"></span>}
                                 >
-                                    Submit Report
+                                    {t('medicalReport.submitReport')}
                                 </Button>
                             </div>
                         </Form>
@@ -406,9 +408,9 @@ const MedicalReport = () => {
                             <div className="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
                                 <span className="icon-history text-gray-400 text-3xl"></span>
                             </div>
-                            <h5 className="mb-2">Report History</h5>
-                            <p className="text-gray-500 mb-4">This feature will be available in the next update</p>
-                            <Button variant="solid">Check Back Soon</Button>
+                            <h5 className="mb-2">{t('medicalReport.reportHistory')}</h5>
+                            <p className="text-gray-500 mb-4">{t('medicalReport.reportHistoryMessage')}</p>
+                            <Button variant="solid">{t('medicalReport.checkBackSoon')}</Button>
                         </div>
                     </Card>
                 </Tabs.TabContent>
@@ -418,9 +420,9 @@ const MedicalReport = () => {
                             <div className="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
                                 <span className="icon-template text-gray-400 text-3xl"></span>
                             </div>
-                            <h5 className="mb-2">Report Templates</h5>
-                            <p className="text-gray-500 mb-4">Save time with report templates. Coming soon!</p>
-                            <Button variant="solid">Check Back Soon</Button>
+                            <h5 className="mb-2">{t('medicalReport.reportTemplates')}</h5>
+                            <p className="text-gray-500 mb-4">{t('medicalReport.reportTemplatesMessage')}</p>
+                            <Button variant="solid">{t('medicalReport.checkBackSoon')}</Button>
                         </div>
                     </Card>
                 </Tabs.TabContent>

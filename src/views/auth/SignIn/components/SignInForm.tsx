@@ -17,6 +17,7 @@ import appConfig from '@/configs/app.config'
 import TermsAndConditionsModal from '@/components/shared/TermsAndConditionsModal'
 import { saveUserToStorage, updateUserData, type UserStorageData } from '@/utils/userStorage'
 import UserService from '@/services/UserService'
+import { useTranslation } from '@/utils/hooks/useTranslation'
 
 import type { ReactNode } from 'react'
 import type { CommonProps } from '@/@types/common'
@@ -27,23 +28,6 @@ interface SignInFormProps extends CommonProps {
     setMessage?: (message: string) => void
     userType: 'user' | 'doctor'
 }
-
-const phoneSchema = z.object({
-    phone: z
-        .string()
-        .min(1, 'Please enter your phone number')
-        .refine((phone) => {
-            const cleanPhone = phone.replace(/[^\d]/g, '')
-            return cleanPhone.length === 10 && /^[6-9]/.test(cleanPhone)
-        }, 'Please enter a valid 10-digit phone number starting with 6, 7, 8, or 9'),
-})
-
-const otpSchema = z.object({
-    otp: z
-        .string()
-        .length(6, 'Please enter a valid 6-digit OTP')
-        .nonempty('Please enter OTP'),
-})
 
 const SignInForm = ({
     disableSubmit = false,
@@ -61,10 +45,28 @@ const SignInForm = ({
     const [showTermsModal, setShowTermsModal] = useState(false)
     const [resendTimer, setResendTimer] = useState(0)
     const [isResending, setIsResending] = useState(false)
+    const { t } = useTranslation()
 
     const navigate = useNavigate()
     const { signIn } = useAuth()
     const { setToken } = useToken()
+
+    const phoneSchema = z.object({
+        phone: z
+            .string()
+            .min(1, t('auth.enterPhoneNumber'))
+            .refine((phone) => {
+                const cleanPhone = phone.replace(/[^\d]/g, '')
+                return cleanPhone.length === 10 && /^[6-9]/.test(cleanPhone)
+            }, t('auth.validPhoneNumber')),
+    })
+
+    const otpSchema = z.object({
+        otp: z
+            .string()
+            .length(6, t('auth.validOtp'))
+            .nonempty(t('auth.enterOtp')),
+    })
 
     const phoneForm = useForm({
         defaultValues: { phone: '' },
@@ -131,7 +133,7 @@ const SignInForm = ({
             }
         } catch (error) {
             console.error('Send OTP error:', error)
-            setMessage?.('An error occurred while sending OTP.')
+            setMessage?.(t('auth.otpSendError'))
         } finally {
             setSubmitting(false)
         }
@@ -202,11 +204,11 @@ const SignInForm = ({
             if ((response as any)?.status || (response as any)?.success) {
                 await processOtpSuccess(response)
             } else {
-                setMessage?.('Invalid OTP')
+                setMessage?.(t('auth.invalidOtp'))
             }
         } catch (error) {
             console.error('OTP verification error:', error)
-            setMessage?.('An error occurred during OTP verification.')
+            setMessage?.(t('auth.otpVerificationError'))
         } finally {
             setSubmitting(false)
         }
@@ -216,7 +218,7 @@ const SignInForm = ({
         if (resendTimer > 0 || isResending) return
 
         setIsResending(true)
-        setMessage?.('Resending OTP...')
+        setMessage?.(t('auth.resending'))
 
         try {
             const endpoint =
@@ -228,13 +230,13 @@ const SignInForm = ({
                 setOtpValue('')
                 otpForm.reset()
                 setResendTimer(30) // Reset timer to 30 seconds
-                setMessage?.('OTP resent successfully!')
+                setMessage?.(t('auth.otpResentSuccess'))
             } else {
                 setMessage?.(endpoint.message)
             }
         } catch (error) {
             console.error('Resend OTP error:', error)
-            setMessage?.('An error occurred while resending OTP.')
+            setMessage?.(t('auth.otpResendError'))
         } finally {
             setIsResending(false)
         }
@@ -243,7 +245,7 @@ const SignInForm = ({
     const processOtpSuccess = async (response: any) => {
         const data = userType === 'doctor' ? response.data : response
         const token = data.token
-        if (!token) return setMessage?.('No token received.')
+        if (!token) return setMessage?.(t('auth.noTokenReceived'))
 
         setToken(token)
         localStorage.setItem('token', token)
@@ -284,7 +286,7 @@ const SignInForm = ({
 
             navigate(redirectPath)
         } else {
-            setMessage?.(result.message || 'Authentication failed')
+            setMessage?.(result.message || t('auth.authenticationFailed'))
         }
     }
 
@@ -379,7 +381,7 @@ const SignInForm = ({
             {!showOtpVerification ? (
                 <Form onSubmit={phoneForm.handleSubmit(handleSendOtp)}>
                     <FormItem
-                        label="Phone Number"
+                        label={t('auth.phoneNumber')}
                         invalid={!!phoneForm.formState.errors.phone}
                         errorMessage={phoneForm.formState.errors.phone?.message}
                     >
@@ -390,7 +392,7 @@ const SignInForm = ({
                                 <PhoneInput
                                     value={field.value}
                                     onChange={field.onChange}
-                                    placeholder="Mobile number"
+                                    placeholder={t('auth.mobilePlaceholder')}
                                 />
                             )}
                         />
@@ -403,15 +405,15 @@ const SignInForm = ({
                                 onChange={handleTermsCheckboxChange}
                             />
                             <div className="text-sm leading-5">
-                                <span>I agree to the </span>
+                                <span>{t('auth.agreeToTerms')} </span>
                                 <button
                                     type="button"
                                     onClick={() => setShowTermsModal(true)}
                                     className="text-blue-600 hover:text-blue-800 underline font-medium"
                                 >
-                                    Terms and Conditions
+                                    {t('auth.termsAndConditions')}
                                 </button>
-                                <span> for {userType === 'doctor' ? 'Healthcare Providers' : 'Patients'}</span>
+                                <span> {userType === 'doctor' ? t('auth.forHealthcareProviders') : t('auth.forPatients')}</span>
                             </div>
                         </div>
                     </FormItem>
@@ -423,7 +425,7 @@ const SignInForm = ({
                         type="submit"
                         disabled={!isTermsAccepted || isSubmitting}
                     >
-                        {isSubmitting ? 'Sending OTP...' : 'Send OTP'}
+                        {isSubmitting ? t('auth.sendingOtp') : t('auth.sendOtp')}
                     </Button>
                 </Form>
             ) : (
@@ -456,13 +458,13 @@ const SignInForm = ({
                             variant="solid"
                             type="submit"
                         >
-                            {isSubmitting ? 'Verifying...' : 'Verify OTP'}
+                            {isSubmitting ? t('auth.verifying') : t('auth.verifyOtp')}
                         </Button>
                     </div>
                     
                     <div className="text-center">
                         <div className="text-sm text-gray-600 mb-2">
-                            Didn't receive the OTP?
+                            {t('auth.didntReceiveOtp')}
                         </div>
                         <Button
                             type="button"
@@ -474,10 +476,10 @@ const SignInForm = ({
                             className="text-blue-600 hover:text-blue-800 disabled:text-gray-400"
                         >
                             {isResending 
-                                ? 'Resending...' 
+                                ? t('auth.resending')
                                 : resendTimer > 0 
-                                    ? `Resend OTP in ${resendTimer}s` 
-                                    : 'Resend OTP'
+                                    ? `${t('auth.resendOtpIn')} ${resendTimer}${t('auth.seconds')}` 
+                                    : t('auth.resendOtp')
                             }
                         </Button>
                     </div>

@@ -13,6 +13,7 @@ import ReactMuiTableListView, {
 } from '@/components/shared/ReactMuiTableListView'
 import { HiVideoCamera, HiDownload } from 'react-icons/hi'
 import type { ConsultationRecord } from '@/services/ConsultationService'
+import { useTranslation } from '@/utils/hooks/useTranslation'
 
 interface ExtendedDoctor extends Record<string, unknown> {
     id: number
@@ -61,25 +62,26 @@ type ConsultationWithDoctor = ConsultationRecord & {
     }
 }
 
-const problemCategories = [
-    { value: 'general', label: 'General Health Concerns' },
-    { value: 'cardiology', label: 'Heart & Cardiovascular Issues' },
-    { value: 'pediatrics', label: "Children's Health" },
-    { value: 'dermatology', label: 'Skin Problems & Disorders' },
-    { value: 'orthopedics', label: 'Bone, Joint & Muscle Pain' },
-    { value: 'mental', label: 'Mental Health & Well-being' },
-    { value: 'neurology', label: 'Neurological Disorders' },
-    { value: 'endodontics', label: 'Dental & Root Canal Problems' },
-    { value: 'gynecology', label: "Women's Health" },
-    { value: 'urology', label: 'Urological Issues' },
-    { value: 'ophthalmology', label: 'Eye Problems & Vision' },
-    { value: 'ent', label: 'Ear, Nose & Throat Issues' },
-    { value: 'pulmonology', label: 'Respiratory Problems' },
-    { value: 'gastroenterology', label: 'Digestive System Issues' },
-    { value: 'other', label: 'Other Health Concerns' },
-]
-
 const UserVDC = () => {
+    const { t } = useTranslation()
+    
+    const problemCategories = [
+        { value: 'general', label: t('videoCall.problemCategories.general') },
+        { value: 'cardiology', label: t('videoCall.problemCategories.cardiology') },
+        { value: 'pediatrics', label: t('videoCall.problemCategories.pediatrics') },
+        { value: 'dermatology', label: t('videoCall.problemCategories.dermatology') },
+        { value: 'orthopedics', label: t('videoCall.problemCategories.orthopedics') },
+        { value: 'mental', label: t('videoCall.problemCategories.mental') },
+        { value: 'neurology', label: t('videoCall.problemCategories.neurology') },
+        { value: 'endodontics', label: t('videoCall.problemCategories.endodontics') },
+        { value: 'gynecology', label: t('videoCall.problemCategories.gynecology') },
+        { value: 'urology', label: t('videoCall.problemCategories.urology') },
+        { value: 'ophthalmology', label: t('videoCall.problemCategories.ophthalmology') },
+        { value: 'ent', label: t('videoCall.problemCategories.ent') },
+        { value: 'pulmonology', label: t('videoCall.problemCategories.pulmonology') },
+        { value: 'gastroenterology', label: t('videoCall.problemCategories.gastroenterology') },
+        { value: 'other', label: t('videoCall.problemCategories.other') },
+    ]
     const [selectedCategory, setSelectedCategory] = useState('all')
     const [searchTerm, setSearchTerm] = useState('')
     const [showOnlyAvailable, setShowOnlyAvailable] = useState(true)
@@ -747,7 +749,7 @@ const UserVDC = () => {
                             disabled={checkingStatus}
                         >
                             <span className="icon-video mr-1"></span>
-                            {checkingStatus ? 'Checking...' : 'Join Call'}
+                            {checkingStatus ? t('videoCall.checkingStatus') : t('videoCall.joinCall')}
                         </Button>
                     </div>
                 </div>
@@ -759,8 +761,8 @@ const UserVDC = () => {
     return (
         <Container className="h-full">
             <div className="mb-8">
-                <h3 className="mb-2">Video Doctor Consultation</h3>
-                <p className="text-gray-500">Welcome back, {user.userName}</p>
+                <h3 className="mb-2">{t('videoCall.videoDoctorConsultation')}</h3>
+                <p className="text-gray-500">{t('dashboard.welcomeBack')}, {user.userName}</p>
             </div>
 
             {/* Stats Cards */}
@@ -795,7 +797,7 @@ const UserVDC = () => {
             {ongoingConsultations.length > 0 && (
                 <div className="mb-6">
                     <h4 className="mb-4 text-lg font-semibold">
-                        Ongoing Consultations
+                        {t('dashboard.ongoingConsultations')}
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {ongoingConsultations.map((consultation, index) => (
@@ -814,11 +816,11 @@ const UserVDC = () => {
                 <div className="flex flex-col gap-4 w-full">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                         <h6 className="text-sm text-gray-500 mb-2 md:mb-0">
-                            Select your health concern:
+                            {t('videoCall.selectHealthConcern')}:
                         </h6>
                         <div className="flex items-center">
                             <span className="text-sm mr-2">
-                                Show only available doctors
+                                {t('videoCall.showOnlyAvailable')}
                             </span>
                             <Switcher
                                 checked={showOnlyAvailable}
@@ -835,7 +837,7 @@ const UserVDC = () => {
                             onClick={() => handleCategoryChange('all')}
                             size="sm"
                         >
-                            All
+                            {t('videoCall.problemCategories.all')}
                         </Button>
                         {problemCategories.map((category) => (
                             <Button
@@ -860,7 +862,7 @@ const UserVDC = () => {
 
             {/* Doctors List View */}
             <ReactMuiTableListView
-                tableTitle="eMedihub Doctor's Team"
+                tableTitle={t('videoCall.emedihubDoctorsTeam')}
                 columns={doctorColumns}
                 data={doctors.map((doctor) => ({
                     ...doctor,
@@ -886,7 +888,7 @@ const UserVDC = () => {
             {completedConsultations.length > 0 && (
                 <div className="mt-8">
                     <ReactMuiTableListView
-                        tableTitle="Consultation History"
+                        tableTitle={t('videoCall.consultationHistory')}
                         columns={consultationColumns}
                         data={
                             completedConsultations as ConsultationWithDoctor[]

@@ -37,7 +37,8 @@ const VerticalMenuContent = (props: VerticalMenuContentProps) => {
         userAuthority,
     } = props
 
-    const { t } = useTranslation(!translationSetup)
+    const { t, i18n } = useTranslation(!translationSetup)
+    const currentLanguage = typeof i18n === 'object' ? i18n.language : 'en'
 
     const [defaulExpandKey, setDefaulExpandKey] = useState<string[]>([])
 
@@ -126,6 +127,7 @@ const VerticalMenuContent = (props: VerticalMenuContentProps) => {
 
     return (
         <Menu
+            key={currentLanguage}
             className="px-4 pb-4"
             sideCollapsed={collapsed}
             defaultActiveKeys={activedRoute?.key ? [activedRoute.key] : []}

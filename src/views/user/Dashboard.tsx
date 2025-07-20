@@ -15,11 +15,12 @@ import {
     HiOutlineUserGroup,
 } from 'react-icons/hi'
 import UserService from '@/services/UserService'
+import { useTranslation } from '@/utils/hooks/useTranslation'
 
 interface ServiceCard {
     id: string
-    title: string
-    description: string
+    titleKey: string
+    descriptionKey: string
     icon: React.ComponentType<any>
     route: string
     color: string
@@ -31,6 +32,7 @@ const UserDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('')
     const navigate = useNavigate()
     const [name, setName] = useState('')
+    const { t } = useTranslation()
 
     useEffect(() => {
         UserService.getProfileDetails().then(res => {
@@ -41,8 +43,8 @@ const UserDashboard = () => {
     const services: ServiceCard[] = [
         {
             id: 'virtual-consultation',
-            title: 'Virtual Doctor Consultation',
-            description: 'Connect with doctors online',
+            titleKey: 'dashboard.virtualConsultation',
+            descriptionKey: 'dashboard.virtualConsultationDesc',
             icon: HiOutlineVideoCamera,
             route: '/vdc',
             color: 'text-blue-600',
@@ -51,8 +53,8 @@ const UserDashboard = () => {
         },
         {
             id: 'appointment',
-            title: 'Book Appointment',
-            description: 'Coming Soon',
+            titleKey: 'dashboard.bookAppointment',
+            descriptionKey: 'dashboard.comingSoon',
             icon: HiOutlineCalendar,
             route: '/user/appointments',
             color: 'text-purple-600',
@@ -61,8 +63,8 @@ const UserDashboard = () => {
         },
         {
             id: 'wellness',
-            title: 'Wellness Programs',
-            description: 'Coming Soon',
+            titleKey: 'dashboard.wellnessPrograms',
+            descriptionKey: 'dashboard.comingSoon',
             icon: HiOutlineHeart,
             route: '/user/wellness',
             color: 'text-green-600',
@@ -71,8 +73,8 @@ const UserDashboard = () => {
         },
         {
             id: 'medicines',
-            title: 'Order Medicines',
-            description: 'Coming Soon',
+            titleKey: 'dashboard.orderMedicines',
+            descriptionKey: 'dashboard.comingSoon',
             icon: HiOutlineCube,
             route: '/user/medicines',
             color: 'text-orange-600',
@@ -81,8 +83,8 @@ const UserDashboard = () => {
         },
         {
             id: 'lab-test',
-            title: 'Book Lab Test',
-            description: 'Coming Soon',
+            titleKey: 'dashboard.bookLabTest',
+            descriptionKey: 'dashboard.comingSoon',
             icon: HiOutlineBeaker,
             route: '/user/lab-tests',
             color: 'text-pink-600',
@@ -91,8 +93,8 @@ const UserDashboard = () => {
         },
         {
             id: 'insurance',
-            title: 'Health Insurance',
-            description: 'Coming Soon',
+            titleKey: 'dashboard.healthInsurance',
+            descriptionKey: 'dashboard.comingSoon',
             icon: HiOutlineShieldCheck,
             route: '/user/insurance',
             color: 'text-indigo-600',
@@ -104,14 +106,14 @@ const UserDashboard = () => {
     const quickActions = [
         {
             id: 'prescriptions',
-            title: 'My Prescriptions',
+            titleKey: 'dashboard.myPrescriptions',
             icon: HiOutlineDocumentText,
             route: '/user/prescriptions',
             color: 'text-teal-600',
         },
         {
             id: 'profile',
-            title: 'Profile Settings',
+            titleKey: 'dashboard.profileSettings',
             icon: HiOutlineCog,
             route: '/user/profile',
             color: 'text-gray-600',
@@ -133,9 +135,9 @@ const UserDashboard = () => {
 
     const getGreeting = () => {
         const hour = new Date().getHours()
-        if (hour < 12) return 'Hi there!'
-        if (hour < 17) return 'Hi there!'
-        return 'Hi there!'
+        if (hour < 12) return t('dashboard.goodMorning')
+        if (hour < 17) return t('dashboard.goodAfternoon')
+        return t('dashboard.goodEvening')
     }
 
     return (
@@ -149,9 +151,9 @@ const UserDashboard = () => {
                         className="ring-2 ring-blue-100"
                     />
                     <div>
-                        <p className="text-gray-600 text-sm">Hi there!</p>
+                        <p className="text-gray-600 text-sm">{getGreeting()}</p>
                         <h2 className="text-xl font-semibold text-gray-900">
-                            {name || 'User'}
+                            {name || t('common.user')}
                         </h2>
                     </div>
                 </div>
@@ -159,7 +161,7 @@ const UserDashboard = () => {
                 {/* Search Bar */}
                 <div className="relative">
                     <Input
-                        placeholder="Search doctors, specialists or clinics..."
+                        placeholder={t('dashboard.searchPlaceholder')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -170,7 +172,7 @@ const UserDashboard = () => {
                         className="absolute right-1 top-1 h-8 px-3"
                         onClick={handleSearch}
                     >
-                        Search
+                        {t('dashboard.search')}
                     </Button>
                 </div>
             </div>
@@ -180,7 +182,7 @@ const UserDashboard = () => {
             {/* Main Services */}
             <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Our Services
+                    {t('dashboard.services')}
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                     {services.map((service) => (
@@ -203,14 +205,14 @@ const UserDashboard = () => {
                                     />
                                 </div>
                                 <h4 className="font-semibold text-gray-900 text-sm mb-1">
-                                    {service.title}
+                                    {t(service.titleKey)}
                                 </h4>
                                 <p className="text-gray-500 text-xs">
-                                    {service.description}
+                                    {t(service.descriptionKey)}
                                 </p>
                                 {service.disabled && (
                                     <span className="inline-block mt-2 px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded-full">
-                                        Coming Soon
+                                        {t('dashboard.comingSoon')}
                                     </span>
                                 )}
                             </div>
@@ -223,12 +225,10 @@ const UserDashboard = () => {
             <Card className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50">
                 <div className="p-4">
                     <h4 className="font-semibold text-gray-900 mb-2">
-                        💡 Health Tip of the Day
+                        💡 {t('dashboard.healthTipOfTheDay')}
                     </h4>
                     <p className="text-gray-600 text-sm">
-                        Stay hydrated! Drinking enough water helps maintain your
-                        body temperature, lubricates joints, and helps transport
-                        nutrients to cells.
+                        {t('dashboard.healthTipText')}
                     </p>
                 </div>
             </Card>

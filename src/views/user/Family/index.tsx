@@ -20,8 +20,10 @@ import FamilyService, {
 import AddFamilyMemberForm from './components/AddFamilyMemberForm'
 import EditFamilyMemberForm from './components/EditFamilyMemberForm'
 import FamilyTreeCard from './components/FamilyTreeCard'
+import { useTranslation } from '@/utils/hooks/useTranslation'
 
 const Family = () => {
+    const { t } = useTranslation()
     const { user } = useSessionUser()
     const [familyData, setFamilyData] = useState<FamilyTreeResponse | null>(
         null,
@@ -48,15 +50,15 @@ const Family = () => {
             // Show success notification only if there are family members
             if (data?.data?.familyTree?.length > 0) {
                 toast.push(
-                    <Notification type="success" title="Family Tree Loaded">
-                        Successfully loaded {data.data.familyTree.length} family member{data.data.familyTree.length !== 1 ? 's' : ''}
+                    <Notification type="success" title={t('family.familyTreeLoaded')}>
+                        {t('family.familyTreeLoadedMessage', { count: data.data.familyTree.length })}
                     </Notification>,
                 )
             }
         } catch (error) {
             toast.push(
-                <Notification type="danger" title="Loading Error">
-                    Failed to load family tree. Please try again.
+                <Notification type="danger" title={t('family.loadingError')}>
+                    {t('family.loadingErrorMessage')}
                 </Notification>,
             )
         } finally {
@@ -68,16 +70,16 @@ const Family = () => {
         try {
             await FamilyService.addFamilyMember(memberData)
             toast.push(
-                <Notification type="success" title="Success">
-                    Family member added successfully
+                <Notification type="success" title={t('common.success')}>
+                    {t('family.familyMemberAdded')}
                 </Notification>,
             )
             setAddDrawerOpen(false)
             fetchFamilyTree()
         } catch (error) {
             toast.push(
-                <Notification type="danger" title="Error">
-                    Failed to add family member
+                <Notification type="danger" title={t('common.error')}>
+                    {t('family.familyMemberError')}
                 </Notification>,
             )
         }
@@ -94,8 +96,8 @@ const Family = () => {
                 memberData,
             )
             toast.push(
-                <Notification type="success" title="Success">
-                    Family member updated successfully
+                <Notification type="success" title={t('common.success')}>
+                    {t('family.familyMemberUpdated')}
                 </Notification>,
             )
             setEditDrawerOpen(false)
@@ -103,8 +105,8 @@ const Family = () => {
             fetchFamilyTree()
         } catch (error) {
             toast.push(
-                <Notification type="danger" title="Error">
-                    Failed to update family member
+                <Notification type="danger" title={t('common.error')}>
+                    {t('family.familyMemberUpdateError')}
                 </Notification>,
             )
         }
@@ -117,15 +119,15 @@ const Family = () => {
             }
             await FamilyService.removeFamilyMember(relatedUserId, requestData)
             toast.push(
-                <Notification type="success" title="Success">
-                    Family member removed successfully
+                <Notification type="success" title={t('common.success')}>
+                    {t('family.familyMemberRemoved')}
                 </Notification>,
             )
             fetchFamilyTree()
         } catch (error) {
             toast.push(
-                <Notification type="danger" title="Error">
-                    Failed to remove family member
+                <Notification type="danger" title={t('common.error')}>
+                    {t('family.familyMemberDeleteError')}
                 </Notification>,
             )
         }
@@ -153,8 +155,8 @@ const Family = () => {
 
         if (!finalNodeUserId) {
             toast.push(
-                <Notification type="danger" title="Authentication Required">
-                    Please log in to add family members.
+                <Notification type="danger" title={t('family.authenticationRequired')}>
+                    {t('family.loginRequiredMessage')}
                 </Notification>,
             )
             return
@@ -204,41 +206,41 @@ const Family = () => {
                     </div>
                     <div className="flex flex-col gap-2">
                         <div className="flex gap-2">
-                            <Button
-                                size="sm"
-                                variant="plain"
-                                icon={<HiEye />}
-                                onClick={() => openViewDrawer(member)}
-                                className="text-blue-600 hover:bg-blue-50"
-                            >
-                                View
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant="plain"
-                                icon={<HiPencil />}
-                                onClick={() => openEditDrawer(member)}
-                                className="text-amber-600 hover:bg-amber-50"
-                            >
-                                Edit
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant="plain"
-                                icon={<HiTrash />}
-                                onClick={() => {
-                                    if (
-                                        confirm(
-                                            'Are you sure you want to remove this family member?',
-                                        )
-                                    ) {
-                                        handleRemoveMember(member.id)
-                                    }
-                                }}
-                                className="text-red-600 hover:bg-red-50"
-                            >
-                                Remove
-                            </Button>
+                                                            <Button
+                                    size="sm"
+                                    variant="plain"
+                                    icon={<HiEye />}
+                                    onClick={() => openViewDrawer(member)}
+                                    className="text-blue-600 hover:bg-blue-50"
+                                >
+                                    {t('common.view')}
+                                </Button>
+                                                            <Button
+                                    size="sm"
+                                    variant="plain"
+                                    icon={<HiPencil />}
+                                    onClick={() => openEditDrawer(member)}
+                                    className="text-amber-600 hover:bg-amber-50"
+                                >
+                                    {t('common.edit')}
+                                </Button>
+                                                            <Button
+                                    size="sm"
+                                    variant="plain"
+                                    icon={<HiTrash />}
+                                    onClick={() => {
+                                        if (
+                                            confirm(
+                                                t('family.confirmRemoveMember'),
+                                            )
+                                        ) {
+                                            handleRemoveMember(member.id)
+                                        }
+                                    }}
+                                    className="text-red-600 hover:bg-red-50"
+                                >
+                                    {t('common.remove')}
+                                </Button>
                         </div>
                     </div>
                 </div>
@@ -257,7 +259,7 @@ const Family = () => {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <div className="text-lg">Loading family tree...</div>
+                <div className="text-lg">{t('family.loadingFamilyTree')}</div>
             </div>
         )
     }
@@ -268,10 +270,10 @@ const Family = () => {
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                        Family Tree
+                        {t('family.familyTree')}
                     </h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
-                        Manage your family members and relationships
+                        {t('family.manageFamilyMembers')}
                     </p>
                 </div>
                 <Button
@@ -280,7 +282,7 @@ const Family = () => {
                     onClick={() => openAddDrawer()}
                     className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                    Add Family Member
+                    {t('family.addFamilyMember')}
                 </Button>
             </div>
 
@@ -292,7 +294,7 @@ const Family = () => {
                             <HiUsers className="text-2xl text-blue-600 mr-3" />
                             <div>
                                 <h3 className="text-lg font-semibold">
-                                    Total Members
+                                    {t('family.totalMembers')}
                                 </h3>
                                 <p className="text-2xl font-bold text-blue-600">
                                     {familyData.data.familyTree?.length || 0}
@@ -305,7 +307,7 @@ const Family = () => {
 
             {/* Family Tree */}
             <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Family Members</h2>
+                                        <h2 className="text-xl font-semibold mb-4">{t('family.familyMembers')}</h2>
                 {familyData?.data.familyTree &&
                 familyData.data.familyTree.length > 0 ? (
                     <div className="space-y-4">
@@ -317,10 +319,10 @@ const Family = () => {
                     <div className="text-center py-8">
                         <HiUsers className="mx-auto h-12 w-12 text-gray-400" />
                         <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-                            No family members
+                            {t('family.noFamilyMembers')}
                         </h3>
                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Get started by adding your first family member.
+                            {t('family.getStartedMessage')}
                         </p>
                         <div className="mt-6">
                             <Button
@@ -329,7 +331,7 @@ const Family = () => {
                                 onClick={() => openAddDrawer()}
                                 className="bg-blue-600 hover:bg-blue-700 text-white"
                             >
-                                Add Family Member
+                                {t('family.addFamilyMember')}
                             </Button>
                         </div>
                     </div>
@@ -340,7 +342,7 @@ const Family = () => {
             <Drawer
                 isOpen={addDrawerOpen}
                 onClose={() => setAddDrawerOpen(false)}
-                title="Add Family Member"
+                title={t('family.addFamilyMember')}
                 width={600}
                 placement="right"
                 closable
@@ -356,7 +358,7 @@ const Family = () => {
             <Drawer
                 isOpen={editDrawerOpen}
                 onClose={() => setEditDrawerOpen(false)}
-                title="Edit Family Member"
+                title={t('family.editFamilyMember')}
                 width={600}
                 placement="right"
                 closable
@@ -374,7 +376,7 @@ const Family = () => {
             <Drawer
                 isOpen={viewDrawerOpen}
                 onClose={() => setViewDrawerOpen(false)}
-                title="Family Member Details"
+                title={t('family.familyMemberDetails')}
                 width={600}
                 placement="right"
                 closable

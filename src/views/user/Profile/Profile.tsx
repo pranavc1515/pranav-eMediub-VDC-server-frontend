@@ -34,6 +34,7 @@ import {
 import AddFamilyMemberForm from '@/views/user/Family/components/AddFamilyMemberForm'
 import EditFamilyMemberForm from '@/views/user/Family/components/EditFamilyMemberForm'
 import FamilyTreeCard from '@/views/user/Family/components/FamilyTreeCard'
+import { useTranslation } from '@/utils/hooks/useTranslation'
 
 // Helper function to calculate age from date of birth
 const calculateAge = (dob: string): string => {
@@ -73,6 +74,7 @@ const Profile = () => {
     const { user } = useAuth()
     const setUser = useSessionUser((state) => state.setUser)
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const { t } = useTranslation()
     const [profileData, setProfileData] = useState<UserProfileDetailsResponse | null>(null)
     const [loading, setLoading] = useState(true)
     const [formVisible, setFormVisible] = useState(false)
@@ -249,7 +251,7 @@ const Profile = () => {
             }
         } catch (error) {
             console.error('Error fetching profile data:', error)
-            setError('Failed to load profile data')
+            setError(t('profile.profileLoadError'))
         } finally {
             setLoading(false)
         }
@@ -343,7 +345,7 @@ const Profile = () => {
             
             if (response.status) {
                 // Show success message inside the drawer first
-                setSuccess(response.message || 'Profile updated successfully!')
+                setSuccess(response.message || t('profile.profileUpdateSuccess'))
                 
                 // Update auth store immediately with the submitted data
                 setUser({
@@ -361,11 +363,11 @@ const Profile = () => {
                     toggleDrawer(false)
                 }, 1500)
             } else {
-                setError(response.message || 'Failed to update profile. Please try again.')
+                setError(response.message || t('profile.profileUpdateFailed'))
             }
         } catch (error) {
             console.error('Error updating profile:', error)
-            setError('An error occurred while updating your profile. Please try again.')
+            setError(t('profile.profileLoadFailed'))
         } finally {
             setSubmitting(false)
         }
@@ -575,13 +577,13 @@ const Profile = () => {
             <Card className="max-w-4xl mx-auto mb-6">
                 <div className="p-6">
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-2xl font-bold">Profile Information</h1>
+                        <h1 className="text-2xl font-bold">{t('profile.profileInformation')}</h1>
                         <Button 
                             variant="solid"
                             icon={<HiOutlinePencilAlt />} 
                             onClick={() => toggleDrawer(true)}
                         >
-                            Edit Profile
+                            {t('profile.editProfile')}
                         </Button>
                     </div>
                     
@@ -600,55 +602,55 @@ const Profile = () => {
                         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <p className="text-gray-500 text-sm">Name</p>
-                                <p className="font-medium text-lg">{profileInfo?.name || 'Not provided'}</p>
+                                <p className="font-medium text-lg">{profileInfo?.name || t('profile.notProvided')}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500 text-sm">Email</p>
-                                <p className="font-medium">{profileInfo?.email || 'Not provided'}</p>
+                                <p className="font-medium">{profileInfo?.email || t('profile.notProvided')}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500 text-sm">Phone</p>
                                 <p className="font-medium">
                                     {profileInfo?.phone ? (profileInfo.phone.startsWith('+') ? 
                                         `+${profileInfo.phone.substring(1, 3)} ${profileInfo.phone.substring(3)}` : 
-                                        `+${profileInfo.phone.substring(0, 2)} ${profileInfo.phone.substring(2)}`) : 'Not provided'}
+                                        `+${profileInfo.phone.substring(0, 2)} ${profileInfo.phone.substring(2)}`) : t('profile.notProvided')}
                                 </p>
                             </div>
                             <div>
                                 <p className="text-gray-500 text-sm">Age</p>
-                                <p className="font-medium">{profileInfo?.age || 'Not provided'}</p>
+                                <p className="font-medium">{profileInfo?.age || t('profile.notProvided')}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500 text-sm">Date of Birth</p>
                                 <p className="font-medium">
                                     {profileInfo?.dob 
                                         ? new Date(profileInfo.dob).toLocaleDateString() 
-                                        : 'Not provided'}
+                                        : t('profile.notProvided')}
                                 </p>
                             </div>
                             <div>
                                 <p className="text-gray-500 text-sm">Gender</p>
-                                <p className="font-medium">{profileInfo?.gender || 'Not provided'}</p>
+                                <p className="font-medium">{profileInfo?.gender || t('profile.notProvided')}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500 text-sm">Marital Status</p>
-                                <p className="font-medium">{profileInfo?.marital_status || 'Not provided'}</p>
+                                <p className="font-medium">{profileInfo?.marital_status || t('profile.notProvided')}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500 text-sm">Height</p>
-                                <p className="font-medium">{profileInfo?.height ? `${profileInfo.height} cm` : 'Not provided'}</p>
+                                <p className="font-medium">{profileInfo?.height ? `${profileInfo.height} cm` : t('profile.notProvided')}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500 text-sm">Weight</p>
-                                <p className="font-medium">{profileInfo?.weight ? `${profileInfo.weight} kg` : 'Not provided'}</p>
+                                <p className="font-medium">{profileInfo?.weight ? `${profileInfo.weight} kg` : t('profile.notProvided')}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500 text-sm">Diet</p>
-                                <p className="font-medium">{profileInfo?.diet || 'Not provided'}</p>
+                                <p className="font-medium">{profileInfo?.diet || t('profile.notProvided')}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500 text-sm">Profession</p>
-                                <p className="font-medium">{profileInfo?.profession || 'Not provided'}</p>
+                                <p className="font-medium">{profileInfo?.profession || t('profile.notProvided')}</p>
                             </div>
                         </div>
                     </div>
@@ -722,13 +724,13 @@ const Profile = () => {
             <Card className="max-w-4xl mx-auto mb-6">
                 <div className="p-6">
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-2xl font-bold">Family Information</h1>
+                        <h1 className="text-2xl font-bold">{t('profile.familyInformation')}</h1>
                         <Button 
                             variant="solid"
                             icon={<HiPlus />} 
                             onClick={() => openAddFamilyDrawer()}
                         >
-                            Add Family Member
+                            {t('family.addFamilyMember')}
                         </Button>
                     </div>
                     
@@ -740,7 +742,7 @@ const Profile = () => {
                                     <div className="flex items-center">
                                         <HiUsers className="text-2xl text-blue-600 mr-3" />
                                         <div>
-                                            <h3 className="text-lg font-semibold">Total Members</h3>
+                                            <h3 className="text-lg font-semibold">{t('family.totalMembers')}</h3>
                                             <p className="text-2xl font-bold text-blue-600">
                                                 {familyData.data.familyTree.length}
                                             </p>
@@ -792,7 +794,7 @@ const Profile = () => {
                                                     onClick={() => openViewFamilyDrawer(member)}
                                                     className="text-blue-600 hover:bg-blue-50"
                                                 >
-                                                    View
+                                                    {t('common.view')}
                                                 </Button>
                                                 <Button
                                                     size="sm"
@@ -801,20 +803,20 @@ const Profile = () => {
                                                     onClick={() => openEditFamilyDrawer(member)}
                                                     className="text-amber-600 hover:bg-amber-50"
                                                 >
-                                                    Edit
+                                                    {t('common.edit')}
                                                 </Button>
                                                 <Button
                                                     size="sm"
                                                     variant="plain"
                                                     icon={<HiTrash />}
                                                     onClick={() => {
-                                                        if (confirm('Are you sure you want to remove this family member?')) {
+                                                        if (confirm(t('family.confirmRemoveMember'))) {
                                                             handleRemoveFamilyMember(member.id)
                                                         }
                                                     }}
                                                     className="text-red-600 hover:bg-red-50"
                                                 >
-                                                    Remove
+                                                    {t('common.remove')}
                                                 </Button>
                                             </div>
                                         </div>
@@ -825,15 +827,15 @@ const Profile = () => {
                     ) : (
                         <div className="text-center py-8">
                             <HiUsers className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                            <p className="text-gray-500 mb-4">No family members added yet</p>
-                            <p className="text-sm text-gray-400">Add your family members to keep track of their medical information</p>
+                            <p className="text-gray-500 mb-4">{t('family.noFamilyMembers')}</p>
+                            <p className="text-sm text-gray-400">{t('family.getStartedMessage')}</p>
                         </div>
                     )}
                 </div>
             </Card>
 
             <Drawer
-                title="Edit Profile"
+                                    title={t('profile.editProfile')}
                 isOpen={formVisible}
                 onClose={() => toggleDrawer(false)}
                 onRequestClose={() => toggleDrawer(false)}
@@ -883,7 +885,7 @@ const Profile = () => {
                         </div>
                         <div className="text-center mb-4">
                             <small className="text-gray-500">
-                                Click the camera icon to upload a profile photo
+                                {t('profile.clickCameraIcon')}
                             </small>
                         </div>
                         

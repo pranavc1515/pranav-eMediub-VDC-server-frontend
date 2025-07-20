@@ -7,6 +7,7 @@ import { useThemeStore } from '@/store/themeStore'
 import { useState } from 'react'
 import { Segment } from '@/components/ui/Segment'
 import type { SegmentValue } from '@/components/ui/Segment/context'
+import { useTranslation } from '@/utils/hooks/useTranslation'
 
 type SignInProps = {
     signUpUrl?: string
@@ -23,6 +24,7 @@ export const SignInBase = ({
 }: SignInProps) => {
     const [message, setMessage] = useTimeOutMessage()
     const [userType, setUserType] = useState<UserType>('user')
+    const { t } = useTranslation()
 
     const mode = useThemeStore((state) => state.mode)
 
@@ -43,16 +45,16 @@ export const SignInBase = ({
                 />
             </div>
             <div className="mb-8">
-                <h2 className="mb-2">Welcome back!</h2>
+                <h2 className="mb-2">{t('auth.welcomeBack')}</h2>
                 <p className="font-semibold heading-text">
-                    Please enter your credentials to sign in!
+                    {t('auth.enterCredentials')}
                 </p>
             </div>
             <div className="mb-8">
                 <Segment value={userType} onChange={handleSegmentChange}>
-                    <Segment.Item value="user">User</Segment.Item>
+                    <Segment.Item value="user">{t('auth.user')}</Segment.Item>
                     <Segment.Item value="doctor">
-                        Doctor
+                        {t('auth.doctor')}
                     </Segment.Item>
                 </Segment>
             </div>
@@ -80,20 +82,20 @@ export const SignInBase = ({
                             className="font-semibold heading-text mt-2 underline"
                             themeColor={false}
                         >
-                            Forgot password
+                            {t('auth.forgotPassword')}
                         </ActionLink>
                     </div>
                 }
             />
             {/* <div>
                 <div className="mt-6 text-center">
-                    <span>{`Don't have an account yet?`} </span>
+                    <span>{t('auth.dontHaveAccount')} </span>
                     <ActionLink
                         to={`${signUpUrl}?type=${userType}`}
                         className="heading-text font-bold"
                         themeColor={false}
                     >
-                        Sign up
+                        {t('auth.signUp')}
                     </ActionLink>
                 </div>
             </div> */}

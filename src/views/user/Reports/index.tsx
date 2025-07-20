@@ -22,6 +22,7 @@ import { format } from 'date-fns'
 import { useForm, Controller } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslation } from '@/utils/hooks/useTranslation'
 
 // Validation schema
 const uploadReportSchema = z.object({
@@ -42,6 +43,7 @@ interface FamilyMemberOption {
 }
 
 const UserReports = () => {
+    const { t } = useTranslation()
     const [reports, setReports] = useState<ReportData[]>([])
     const [loading, setLoading] = useState(false)
     const [showUploadModal, setShowUploadModal] = useState(false)
@@ -219,8 +221,8 @@ const UserReports = () => {
         <div className="p-6">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">My Medical Reports</h1>
-                    <p className="text-gray-600 mt-1">Upload and manage your medical reports</p>
+                    <h1 className="text-2xl font-bold text-gray-900">{t('reports.myMedicalReports')}</h1>
+                    <p className="text-gray-600 mt-1">{t('reports.uploadAndManageYourReports')}</p>
                 </div>
                 <Button
                     variant="solid"
@@ -228,7 +230,7 @@ const UserReports = () => {
                     className="flex items-center gap-2"
                 >
                     <HiOutlinePlus />
-                    Upload Report
+                    {t('reports.uploadReport')}
                 </Button>
             </div>
 

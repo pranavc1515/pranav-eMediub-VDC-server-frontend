@@ -24,6 +24,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useSessionUser } from '@/store/authStore'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from '@/utils/hooks/useTranslation'
 
 // Select option interface
 interface SelectOption {
@@ -47,6 +48,7 @@ const uploadReportSchema = z.object({
 type UploadReportFormData = z.infer<typeof uploadReportSchema>
 
 const DoctorReports = () => {
+    const { t } = useTranslation()
     const user = useSessionUser((state) => state.user)
     const [searchParams, setSearchParams] = useSearchParams()
     const [reports, setReports] = useState<ReportData[]>([])
@@ -281,12 +283,12 @@ const DoctorReports = () => {
         <div className="p-6">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Patient Reports</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">{t('reports.patientReports')}</h1>
                     <div className="flex items-center gap-2 mt-1">
-                        <p className="text-gray-600">Upload and manage medical reports for your patients</p>
+                        <p className="text-gray-600">{t('reports.uploadAndManageReports')}</p>
                         {filteredReports.length > 0 && (
                             <Badge className="bg-blue-100 text-blue-800">
-                                {filteredReports.length} {filteredReports.length === 1 ? 'report' : 'reports'}
+                                {filteredReports.length} {filteredReports.length === 1 ? t('common.report') : t('common.reports')}
                                 {filterStatus !== 'all' && ` (${filterStatus})`}
                             </Badge>
                         )}
@@ -302,7 +304,7 @@ const DoctorReports = () => {
                     className="flex items-center gap-2"
                 >
                     <HiOutlinePlus />
-                    Upload Report
+                    {t('reports.uploadReport')}
                 </Button>
             </div>
 

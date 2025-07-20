@@ -17,6 +17,7 @@ import ReactMuiTableListView, {
 import { HiVideoCamera, HiDownload, HiPlus } from 'react-icons/hi'
 import type { ConsultationRecord } from '@/services/ConsultationService'
 import type { PatientQueueEntry } from '@/services/PatientQueue'
+import { useTranslation } from '@/utils/hooks/useTranslation'
 
 interface QueueData extends PatientQueueEntry {
     roomName: string
@@ -61,6 +62,7 @@ function debounce<T extends (...args: unknown[]) => void>(
 }
 
 const DoctorVDC = () => {
+    const { t } = useTranslation()
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(15)
     const [consultationCurrentPage, setConsultationCurrentPage] = useState(1)
@@ -136,9 +138,8 @@ const DoctorVDC = () => {
             newPatients.forEach((patient) => {
                 console.log('New patient notification:', patient)
                 toast.push(
-                    <Notification type="info" title="New Patient in Queue">
-                        {patient.patient?.name || 'A patient'} has joined your
-                        consultation queue at position #{patient.position}
+                    <Notification type="info" title={t('videoCall.newPatientInQueue')}>
+                        {patient.patient?.name || t('videoCall.aPatient')} {t('videoCall.patientJoinedQueue')} #{patient.position}
                     </Notification>,
                 )
             })
@@ -147,9 +148,8 @@ const DoctorVDC = () => {
             leftPatients.forEach((patient) => {
                 console.log('Patient left notification:', patient)
                 toast.push(
-                    <Notification type="warning" title="Patient Left Queue">
-                        {patient.patient?.name || 'A patient'} has left your
-                        consultation queue
+                    <Notification type="warning" title={t('videoCall.patientLeftQueue')}>
+                        {patient.patient?.name || t('videoCall.aPatient')} {t('videoCall.patientLeftQueueMessage')}
                     </Notification>,
                 )
             })
@@ -521,7 +521,7 @@ const DoctorVDC = () => {
     const patientQueueColumns = useMemo<Array<Column<QueueData>>>(
         () => [
             {
-                Header: 'Position',
+                Header: t('videoCall.position'),
                 accessor: (row) => row.position,
                 Cell: ({ value }) => (
                     <div className="text-center">
@@ -530,7 +530,7 @@ const DoctorVDC = () => {
                 ),
             },
             {
-                Header: 'User',
+                Header: t('common.user'),
                 accessor: (row) => row.patient?.name || '',
                 Cell: ({ row: { original } }) => {
                     const patient = original.patient
@@ -545,7 +545,7 @@ const DoctorVDC = () => {
                 },
             },
             {
-                Header: 'Joined At',
+                Header: t('videoCall.joinedAt'),
                 accessor: (row) => row.joinedAt,
                 Cell: ({ value }) => {
                     const date = new Date(String(value))
@@ -560,7 +560,7 @@ const DoctorVDC = () => {
                 },
             },
             {
-                Header: 'Room',
+                Header: t('videoCall.room'),
                 accessor: (row) => row.roomName,
                 Cell: ({ value }) => (
                     <div className="text-center">
@@ -571,7 +571,7 @@ const DoctorVDC = () => {
                 ),
             },
             {
-                Header: 'Status',
+                Header: t('common.status'),
                 accessor: (row) => row.status,
                 Cell: ({ value }) => (
                     <div className="flex justify-center">
@@ -590,7 +590,7 @@ const DoctorVDC = () => {
                 ),
             },
             {
-                Header: 'Action',
+                Header: t('common.action'),
                 accessor: (row) => row.id,
                 Cell: ({ row: { original } }) => {
                     return (
@@ -607,7 +607,7 @@ const DoctorVDC = () => {
                                         )
                                     }
                                 >
-                                    Start Consultation
+                                    {t('videoCall.startConsultation')}
                                 </Button>
                             )}
                             {original.status === 'in_consultation' && (
@@ -622,8 +622,8 @@ const DoctorVDC = () => {
                                     disabled={checkingStatus}
                                 >
                                     {checkingStatus
-                                        ? 'Checking...'
-                                        : 'Join Call'}
+                                        ? t('videoCall.checkingStatus')
+                                        : t('videoCall.joinCall')}
                                 </Button>
                             )}
                         </div>
@@ -637,15 +637,15 @@ const DoctorVDC = () => {
     const consultationColumns = useMemo<Array<Column<Record<string, unknown>>>>(
         () => [
             {
-                Header: 'Consultation ID',
+                Header: t('videoCall.consultationId'),
                 accessor: 'id',
             },
             {
-                Header: 'Patient ID',
+                Header: t('videoCall.patientId'),
                 accessor: 'patientId',
             },
             {
-                Header: 'Patient',
+                Header: t('common.patient'),
                 accessor: (row) =>
                     (row as ConsultationWithPatient).patient?.name || '',
                 Cell: ({ row: { original } }) => {
@@ -661,7 +661,7 @@ const DoctorVDC = () => {
                 },
             },
             {
-                Header: 'Date & Time',
+                Header: t('videoCall.dateAndTime'),
                 accessor: (row) =>
                     (row as ConsultationWithPatient).scheduledDate,
                 Cell: ({ row: { original } }) => {
@@ -677,7 +677,7 @@ const DoctorVDC = () => {
                 },
             },
             {
-                Header: 'Actions',
+                Header: t('common.actions'),
                 accessor: 'id',
                 Cell: ({ row: { original } }) => {
                     const data = original as ConsultationWithPatient
@@ -695,7 +695,7 @@ const DoctorVDC = () => {
                                             )
                                         }
                                     >
-                                        Download
+                                        {t('common.download')}
                                     </Button>
                                     <Button
                                         size="sm"
@@ -863,14 +863,14 @@ const DoctorVDC = () => {
         <Container className="h-full">
             <div className="mb-8 flex justify-between items-center">
                 <div>
-                    <h3 className="mb-2">Video Doctor Consultation</h3>
+                    <h3 className="mb-2">{t('videoCall.videoDoctorConsultation')}</h3>
                     <p className="text-gray-500">
-                        Welcome back, {user.userName}
+                        {t('dashboard.welcomeBack')}, {user.userName}
                     </p>
                 </div>
                 <div className="flex flex-col items-center">
                     <span className="text-sm font-medium text-gray-700 mb-1">
-                        {isAvailable ? 'Available' : 'Unavailable'}
+                        {isAvailable ? t('videoCall.available') : t('videoCall.unavailable')}
                     </span>
                     <input
                         type="checkbox"
@@ -903,7 +903,7 @@ const DoctorVDC = () => {
                         </div>
                         <div>
                             <h5 className="font-semibold text-sm">
-                                Patients in Queue
+                                {t('dashboard.patientsInQueue')}
                             </h5>
                             <div className="text-xl font-bold">
                                 {
@@ -941,7 +941,7 @@ const DoctorVDC = () => {
                         </div>
                         <div>
                             <h5 className="font-semibold text-sm">
-                                Ongoing Consultations
+                                {t('dashboard.ongoingConsultations')}
                             </h5>
                             <div className="text-xl font-bold">
                                 {ongoingConsultations.length}
@@ -985,7 +985,7 @@ const DoctorVDC = () => {
             {/* Patient Queue */}
             <Card className="mb-6">
                 <ReactMuiTableListView<QueueData>
-                    tableTitle="Patients Queue"
+                    tableTitle={t('videoCall.patientsQueue')}
                     columns={patientQueueColumns}
                     data={patientQueueData.map(
                         (queue) =>
@@ -1021,7 +1021,7 @@ const DoctorVDC = () => {
             {completedConsultations.length > 0 && (
                 <div className="mt-8">
                     <ReactMuiTableListView
-                        tableTitle="Consultation History"
+                        tableTitle={t('videoCall.consultationHistory')}
                         columns={consultationColumns}
                         data={
                             completedConsultations as unknown as Record<

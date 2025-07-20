@@ -132,20 +132,7 @@ const DoctorSettings = () => {
                         
                         <Tabs.TabContent value="account">
                             <div className="mt-6">
-                                {/* Account Information */}
-                                <div className="mb-8">
-                                    <h4 className="mb-4 text-lg font-medium">Doctor Information</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
-                                        <div>
-                                            <p className="text-gray-600 text-sm">Name</p>
-                                            <p className="font-medium">{user?.userName || 'Not provided'}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-gray-600 text-sm">Email</p>
-                                            <p className="font-medium">{user?.email || 'Not provided'}</p>
-                                        </div>
-                                    </div>
-                                </div>
+                                
 
                                 {/* Delete Account Section */}
                                 <div className="mt-8 pt-4 border-t">

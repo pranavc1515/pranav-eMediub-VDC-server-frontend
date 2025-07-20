@@ -17,6 +17,7 @@ import { getTodayDateString } from '@/utils/dateUtils'
 import SPECIALIZATIONS from '@/constants/specializations.constant'
 import { INDIAN_STATES } from '@/constants/indianStates.constant'
 import { HiOutlineCamera } from 'react-icons/hi'
+import { useTranslation } from '@/utils/hooks/useTranslation'
 
 // Common languages in India
 const languageOptions = [
@@ -36,6 +37,7 @@ const languageOptions = [
 ]
 
 const Profile = () => {
+    const { t } = useTranslation()
     const [profile, setProfile] = useState<DoctorProfile | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -72,7 +74,7 @@ const Profile = () => {
                     setProfile(response.data)
                 }
             } catch (err) {
-                setError('Failed to load profile')
+                setError(t('profile.profileLoadError'))
             } finally {
                 setLoading(false)
             }
@@ -159,7 +161,7 @@ const Profile = () => {
     if (!profile) {
         return (
             <Container className="h-full flex items-center justify-center">
-                <div>No profile data available</div>
+                <div>{t('profile.noProfileData')}</div>
             </Container>
         )
     }
@@ -175,13 +177,13 @@ const Profile = () => {
                     setSelectedFiles([])
                 }}
                 >
-                    Edit Professional Details
+                    {t('profile.editProfessionalDetails')}
                 </Button>
                 <Button
                     variant="solid"
                     onClick={() => setPersonalDrawerOpen(true)}
                 >
-                    Edit Personal Details
+                    {t('profile.editPersonalDetails')}
                 </Button>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
