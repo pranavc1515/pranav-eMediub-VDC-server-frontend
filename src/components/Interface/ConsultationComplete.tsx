@@ -52,11 +52,11 @@ const ConsultationComplete: React.FC<ConsultationCompleteProps> = ({
                             We hope you feel better soon!
                         </span>
                     </div>
-                    <p className="text-sm text-gray-600">
+                    {/* <p className="text-sm text-gray-600">
                         Your consultation has been successfully completed. The
                         doctor may have provided prescriptions or
                         recommendations for you.
-                    </p>
+                    </p> */}
                 </div>
 
                 {/* Action Buttons */}

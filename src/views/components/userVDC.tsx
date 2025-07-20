@@ -64,22 +64,52 @@ type ConsultationWithDoctor = ConsultationRecord & {
 
 const UserVDC = () => {
     const { t } = useTranslation()
-    
+
     const problemCategories = [
         { value: 'general', label: t('videoCall.problemCategories.general') },
-        { value: 'cardiology', label: t('videoCall.problemCategories.cardiology') },
-        { value: 'pediatrics', label: t('videoCall.problemCategories.pediatrics') },
-        { value: 'dermatology', label: t('videoCall.problemCategories.dermatology') },
-        { value: 'orthopedics', label: t('videoCall.problemCategories.orthopedics') },
+        {
+            value: 'cardiology',
+            label: t('videoCall.problemCategories.cardiology'),
+        },
+        {
+            value: 'pediatrics',
+            label: t('videoCall.problemCategories.pediatrics'),
+        },
+        {
+            value: 'dermatology',
+            label: t('videoCall.problemCategories.dermatology'),
+        },
+        {
+            value: 'orthopedics',
+            label: t('videoCall.problemCategories.orthopedics'),
+        },
         { value: 'mental', label: t('videoCall.problemCategories.mental') },
-        { value: 'neurology', label: t('videoCall.problemCategories.neurology') },
-        { value: 'endodontics', label: t('videoCall.problemCategories.endodontics') },
-        { value: 'gynecology', label: t('videoCall.problemCategories.gynecology') },
+        {
+            value: 'neurology',
+            label: t('videoCall.problemCategories.neurology'),
+        },
+        {
+            value: 'endodontics',
+            label: t('videoCall.problemCategories.endodontics'),
+        },
+        {
+            value: 'gynecology',
+            label: t('videoCall.problemCategories.gynecology'),
+        },
         { value: 'urology', label: t('videoCall.problemCategories.urology') },
-        { value: 'ophthalmology', label: t('videoCall.problemCategories.ophthalmology') },
+        {
+            value: 'ophthalmology',
+            label: t('videoCall.problemCategories.ophthalmology'),
+        },
         { value: 'ent', label: t('videoCall.problemCategories.ent') },
-        { value: 'pulmonology', label: t('videoCall.problemCategories.pulmonology') },
-        { value: 'gastroenterology', label: t('videoCall.problemCategories.gastroenterology') },
+        {
+            value: 'pulmonology',
+            label: t('videoCall.problemCategories.pulmonology'),
+        },
+        {
+            value: 'gastroenterology',
+            label: t('videoCall.problemCategories.gastroenterology'),
+        },
         { value: 'other', label: t('videoCall.problemCategories.other') },
     ]
     const [selectedCategory, setSelectedCategory] = useState('all')
@@ -314,21 +344,25 @@ const UserVDC = () => {
         const handleCreateOrder = async () => {
             try {
                 // Get consultation fee from doctor's professional details
-                const consultationFees = doctor.DoctorProfessional?.consultationFees
+                const consultationFees =
+                    doctor.DoctorProfessional?.consultationFees
                 if (!consultationFees) {
-                    console.error('Consultation fees not available for this doctor')
+                    console.error(
+                        'Consultation fees not available for this doctor',
+                    )
                     return
                 }
 
                 // Convert fee to number and then to paisa (multiply by 100 for Razorpay)
-                const feeInRupees = typeof consultationFees === 'string' 
-                    ? parseFloat(consultationFees) 
-                    : consultationFees
-                
+                const feeInRupees =
+                    typeof consultationFees === 'string'
+                        ? parseFloat(consultationFees)
+                        : consultationFees
+
                 const response = await PaymentService.initiatePayment({
                     doctor_id: doctor.id,
                     transaction_type: 'VDC',
-                    amount: feeInRupees
+                    amount: feeInRupees,
                 })
 
                 if (response.success) {
@@ -749,7 +783,9 @@ const UserVDC = () => {
                             disabled={checkingStatus}
                         >
                             <span className="icon-video mr-1"></span>
-                            {checkingStatus ? t('videoCall.checkingStatus') : t('videoCall.joinCall')}
+                            {checkingStatus
+                                ? t('videoCall.checkingStatus')
+                                : t('videoCall.joinCall')}
                         </Button>
                     </div>
                 </div>
@@ -761,7 +797,9 @@ const UserVDC = () => {
     return (
         <Container className="h-full">
             <div className="mb-8">
-                <h3 className="mb-2">{t('videoCall.videoDoctorConsultation')}</h3>
+                <h3 className="mb-2">
+                    {t('videoCall.videoDoctorConsultation')}
+                </h3>
                 {/* <p className="text-gray-500">{t('dashboard.welcomeBack')}, {user.userName}</p> */}
             </div>
 
