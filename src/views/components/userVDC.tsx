@@ -762,7 +762,7 @@ const UserVDC = () => {
         <Container className="h-full">
             <div className="mb-8">
                 <h3 className="mb-2">{t('videoCall.videoDoctorConsultation')}</h3>
-                <p className="text-gray-500">{t('dashboard.welcomeBack')}, {user.userName}</p>
+                {/* <p className="text-gray-500">{t('dashboard.welcomeBack')}, {user.userName}</p> */}
             </div>
 
             {/* Stats Cards */}

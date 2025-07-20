@@ -864,9 +864,9 @@ const DoctorVDC = () => {
             <div className="mb-8 flex justify-between items-center">
                 <div>
                     <h3 className="mb-2">{t('videoCall.videoDoctorConsultation')}</h3>
-                    <p className="text-gray-500">
+                    {/* <p className="text-gray-500">
                         {t('dashboard.welcomeBack')}, {user.userName}
-                    </p>
+                    </p> */}
                 </div>
                 <div className="flex flex-col items-center">
                     <span className="text-sm font-medium text-gray-700 mb-1">
