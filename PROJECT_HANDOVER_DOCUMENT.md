@@ -12,9 +12,6 @@
 9. [Deployment Information](#deployment-information)
 10. [Key Components & Services](#key-components--services)
 11. [Database & API Integration](#database--api-integration)
-12. [Known Issues & Limitations](#known-issues--limitations)
-13. [Future Enhancements](#future-enhancements)
-14. [Contact Information](#contact-information)
 
 ---
 
@@ -25,7 +22,7 @@
 ### Key Features
 - Real-time video consultations using Twilio Video
 - Socket.IO for real-time communication and queue management
-- Prescription management and medical reports
+- Medical reports
 - Multi-language support (English, Hindi, Kannada)
 - Role-based access control
 - Responsive design for all devices
@@ -135,7 +132,6 @@ src/
 - 🔄 **Health Insurance** - Coming Soon
 
 **Quick Actions:**
-- My Prescriptions
 - Profile Settings
 
 ### 3. Video Consultation (Patient Side)
@@ -161,7 +157,6 @@ src/
 - **Upload Medical Reports**: PDF/image support with date and doctor information
 - **View Reports**: Organized by date and type
 - **Family Reports**: Access family member reports
-- **Prescription Management**: View and download prescriptions
 
 ### 6. User Settings
 - **Language Preferences**: English, Hindi, Kannada
@@ -169,11 +164,7 @@ src/
 - **Password Management**: Change account password
 - **Account Management**: Delete account option
 
-### 7. Prescription Management
-- **View Prescriptions**: Comprehensive prescription history
-- **Download**: PDF format prescriptions
-- **Search & Filter**: By doctor, date, medication
-- **Medical Details**: Dosage, frequency, duration, notes
+
 
 ---
 
@@ -204,7 +195,6 @@ src/
 ### 4. Video Consultation (Doctor Side)
 - **Patient Queue Management**: View waiting patients
 - **Start Consultation**: Initiate video calls with patients
-- **Prescription Generation**: Create digital prescriptions during consultation
 - **End Consultation**: Complete consultations with summary
 - **Participant Monitoring**: Track active participants
 
@@ -212,7 +202,6 @@ src/
 - **Patient Records**: Comprehensive patient information
 - **Consultation History**: Past consultations with each patient
 - **Medical Documents**: Access patient medical reports
-- **Prescription History**: View all prescriptions issued
 
 ### 7. Doctor Profile Management
 **Personal Information:**
@@ -258,7 +247,6 @@ src/
 2. **Queue Monitoring**: Real-time patient queue updates
 3. **Start Consultation**: Initiate video calls with waiting patients
 4. **Consultation Management**: Conduct video consultations
-5. **Prescription Creation**: Generate prescriptions during calls
 6. **End Consultation**: Complete and finalize consultations
 
 ### Socket.IO Events
@@ -280,7 +268,6 @@ src/
 ### Video Call Features
 - **Audio/Video Controls**: Mute, camera toggle
 - **Screen Sharing**: Share screen functionality
-- **Prescription Tools**: In-call prescription creation
 - **Call Quality Indicators**: Connection status monitoring
 - **Recording Support**: Consultation recording capabilities
 
@@ -436,7 +423,6 @@ npm run build
 2. **usePatientQueue**: Patient queue management
 3. **useStoredUser**: Local storage user data
 4. **useDoctors**: Doctor listing and filtering
-5. **usePrescription**: Prescription management
 
 ### Utility Functions
 1. **userStorage.ts**: Enhanced user data storage
@@ -476,9 +462,7 @@ npm run build
 - `POST /api/consultations/start` - Start consultation
 - `POST /api/consultations/end` - End consultation
 
-**Prescriptions & Reports:**
-- `GET /api/prescriptions/patient/me` - Get patient prescriptions
-- `POST /api/prescriptions/create` - Create prescription
+**Reports:**
 - `GET /api/reports` - Get medical reports
 - `POST /api/reports/upload` - Upload medical report
 
