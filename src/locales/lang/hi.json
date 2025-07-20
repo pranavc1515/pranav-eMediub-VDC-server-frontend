@@ -625,7 +625,8 @@
         "actions": "कार्रवाइयां",
         "patient": "मरीज",
         "report": "रिपोर्ट",
-        "reports": "रिपोर्ट"
+        "reports": "रिपोर्ट",
+        "cancel": "रद्द करें"
     },
     "notifications": {
         "notifications": "सूचनाएं",

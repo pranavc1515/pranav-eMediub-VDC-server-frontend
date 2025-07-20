@@ -862,7 +862,8 @@
         "actions": "Actions",
         "patient": "Patient",
         "report": "Report",
-        "reports": "Reports"
+        "reports": "Reports",
+        "cancel": "Cancel"
     },
     "notifications": {
         "notifications": "Notifications",

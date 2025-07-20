@@ -651,7 +651,8 @@
         "actions": "ಕ್ರಿಯೆಗಳು",
         "patient": "ರೋಗಿ",
         "report": "ವರದಿ",
-        "reports": "ವರದಿಗಳು"
+        "reports": "ವರದಿಗಳು",
+        "cancel": "ರದ್ದುಮಾಡಿ"
     },
     "notifications": {
         "notifications": "ಸೂಚನೆಗಳು",
