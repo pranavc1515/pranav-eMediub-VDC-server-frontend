@@ -25,29 +25,27 @@ const FooterSection = () => {
                     <div className="flex gap-10 md:gap-16 text-sm h-full mt-10">
                         <div className="flex flex-col space-y-6  text-[20px] text-[#E1E1E1] font-semibold pt-[20px]">
                             <a href="#" className="hover:text-gray-400">
-                                Abouts
+                                About Us
                             </a>
                             <a href="#" className="hover:text-gray-400">
-                                Articles
+                            News & Articles
                             </a>
                             <a href="#" className="hover:text-gray-400">
                                 Careers
                             </a>
+                           
                             <a href="#" className="hover:text-gray-400">
-                                Press
-                            </a>
-                            <a href="#" className="hover:text-gray-400">
-                                Contacts
+                                Contact Us
                             </a>
                         </div>
-                        <div className="flex flex-col space-y-6 text-[20px] text-[#E1E1E1] font-semibold pt-[20px]">
+                        {/* <div className="flex flex-col space-y-6 text-[20px] text-[#E1E1E1] font-semibold pt-[20px]">
                             <a href="#" className="hover:text-gray-400">
                                 Help
                             </a>
                             <a href="#" className="hover:text-gray-400">
                                 Developers
                             </a>
-                        </div>
+                        </div> */}
                     </div>
                     <div className="flex  space-x-6 mt-[50px] ">
                         <a href="#" className="">
