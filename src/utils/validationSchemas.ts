@@ -338,6 +338,7 @@ export const UserPersonalDetailsSchema = z.object({
     .refine((value) => !value || value.length <= 100, ValidationMessages.maximumLength(100)),
   age: z.string().optional(),
   image: z.string().optional(),
+  profilePhoto: ProfilePhotoValidation.optional(),
 })
 
 // Prescription schemas

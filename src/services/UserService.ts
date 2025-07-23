@@ -36,6 +36,7 @@ type UserPersonalDetails = {
     diet: string
     profession: string
     image: string
+    profilePhoto?: File
 }
 
 type UserUpdateResponse = {
@@ -88,10 +89,51 @@ const UserService = {
      * @returns Promise with update result
      */
     updatePersonalDetails(data: UserPersonalDetails) {
+        // Check if we need to send as multipart/form-data (when profilePhoto is included)
+        if (data.profilePhoto) {
+            const formData = new FormData()
+            formData.append('name', data.name)
+            formData.append('email', data.email)
+            formData.append('phone', data.phone)
+            formData.append('dob', data.dob)
+            formData.append('gender', data.gender)
+            formData.append('marital_status', data.marital_status)
+            formData.append('height', data.height)
+            formData.append('weight', data.weight)
+            formData.append('diet', data.diet)
+            formData.append('profession', data.profession)
+            if (data.image) {
+                formData.append('image', data.image)
+            }
+            formData.append('profilePhoto', data.profilePhoto)
+
+            return ApiService.fetchDataWithAxios<UserUpdateResponse>({
+                url: '/api/patients/record-personal-details',
+                method: 'PUT',
+                data: formData as unknown as Record<string, unknown>,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            })
+        }
+
+        // Send as regular JSON if no profilePhoto
         return ApiService.fetchDataWithAxios<UserUpdateResponse>({
             url: '/api/patients/record-personal-details',
             method: 'PUT',
-            data,
+            data: {
+                name: data.name,
+                email: data.email,
+                phone: data.phone,
+                dob: data.dob,
+                gender: data.gender,
+                marital_status: data.marital_status,
+                height: data.height,
+                weight: data.weight,
+                diet: data.diet,
+                profession: data.profession,
+                image: data.image,
+            },
         })
     },
     

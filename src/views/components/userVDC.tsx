@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { Card, Button, Badge, Avatar, Switcher } from '@/components/ui'
 import Container from '@/components/shared/Container'
 import { useNavigate } from 'react-router-dom'
@@ -7,6 +7,7 @@ import useDoctors from '@/hooks/useDoctors'
 import useConsultation from '@/hooks/useConsultation'
 import PaymentService from '@/services/PaymentService'
 import ConsultationService from '@/services/ConsultationService'
+import DoctorService from '@/services/DoctorService'
 import { ENV } from '@/configs/environment'
 import ReactMuiTableListView, {
     Column,
@@ -121,6 +122,8 @@ const UserVDC = () => {
     const [consultationPageSize, setConsultationPageSize] = useState(15)
     const [consultationSearchTerm, setConsultationSearchTerm] = useState('')
     const [checkingStatus, setCheckingStatus] = useState(false)
+    const [lastRefreshTime, setLastRefreshTime] = useState<number>(Date.now())
+    const [doctorsList, setDoctorsList] = useState([]);
 
     const navigate = useNavigate()
     const user = useSessionUser((state) => state.user)
@@ -132,13 +135,56 @@ const UserVDC = () => {
         [selectedCategory],
     )
 
-    const { doctors, count, loading, changePage, search } = useDoctors({
+    const { doctors, count, loading, changePage, search, fetchDoctors } = useDoctors({
         specialization,
         autoFetch: true,
         showOnlyAvailable,
         initialPage: currentPage,
         pageSize,
     })
+
+    // Direct API call function that bypasses useDoctors hook restrictions
+    const forceRefreshDoctors = useCallback(async () => {
+        try {
+            console.log('🔄 Force refreshing doctors data...')
+            const response = await DoctorService.getDoctors({
+                specialization,
+                page: currentPage,
+                limit: pageSize,
+                search: searchTerm,
+                onlyAvailable: showOnlyAvailable,
+            })
+            
+            console.log('📡 API Response:', response)
+            
+            if (response.success) {
+                setDoctorsList(response.data); // Always update, even if empty
+            } else {
+                setDoctorsList([]); // On error, show empty
+            }
+        } catch (error) {
+            console.error('❌ Error in force refresh:', error)
+            setDoctorsList([]); // On error, show empty
+        }
+    }, [specialization, currentPage, pageSize, searchTerm, showOnlyAvailable]);
+
+    // Simple auto-refresh every 3 seconds
+    const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+    useEffect(() => {
+        // Set up interval to call API every 3 seconds
+        refreshIntervalRef.current = setInterval(() => {
+            forceRefreshDoctors()
+        }, 3000)
+
+        // Cleanup on unmount
+        return () => {
+            if (refreshIntervalRef.current) {
+                clearInterval(refreshIntervalRef.current)
+                refreshIntervalRef.current = null
+            }
+        }
+    }, [forceRefreshDoctors])
 
     const { consultationHistory, pagination, isLoading, getPatientHistory } =
         useConsultation({
@@ -902,10 +948,7 @@ const UserVDC = () => {
             <ReactMuiTableListView
                 tableTitle={t('videoCall.emedihubDoctorsTeam')}
                 columns={doctorColumns}
-                data={doctors.map((doctor) => ({
-                    ...doctor,
-                    isOnline: doctor.isOnline || 'offline',
-                }))}
+                data={doctorsList}
                 loading={loading}
                 enablePagination={true}
                 currentPage={currentPage}

@@ -60,6 +60,9 @@ const Profile = () => {
     const [selectedSpecialization, setSelectedSpecialization] = useState<string>(
         profile?.DoctorProfessional?.specialization || ''
     )
+    const [selectedRegistrationState, setSelectedRegistrationState] = useState<string>(
+        profile?.DoctorProfessional?.registrationState || ''
+    )
 
     // Profile photo upload state
     const [selectedProfilePhoto, setSelectedProfilePhoto] = useState<File | null>(null)
@@ -98,6 +101,10 @@ const Profile = () => {
         // Initialize selected specialization from profile data
         if (profile?.DoctorProfessional?.specialization) {
             setSelectedSpecialization(profile.DoctorProfessional.specialization)
+        }
+        // Initialize selected registration state from profile data
+        if (profile?.DoctorProfessional?.registrationState) {
+            setSelectedRegistrationState(profile.DoctorProfessional.registrationState)
         }
     }, [profile])
 
@@ -320,6 +327,15 @@ const Profile = () => {
                                     <p>
                                         {profile.DoctorProfessional
                                             .qualification || 'Not provided'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-600">
+                                        Specialization
+                                    </p>
+                                    <p>
+                                        {profile.DoctorProfessional
+                                            .specialization || 'Not provided'}
                                     </p>
                                 </div>
                                 <div>
@@ -617,10 +633,10 @@ const Profile = () => {
                                 placeholder="Select registration state"
                                 options={INDIAN_STATES}
                                 value={INDIAN_STATES.find(option => 
-                                    option.value === profile?.DoctorProfessional?.registrationState
+                                    option.value === selectedRegistrationState
                                 )}
                                 onChange={(selectedOption) => {
-                                    // Handle state change if needed
+                                    setSelectedRegistrationState(selectedOption?.value || '')
                                 }}
                             />
                         </FormItem>
@@ -862,11 +878,7 @@ const Profile = () => {
                                                 'registrationNumber',
                                             ) as HTMLInputElement
                                         ).value,
-                                        registrationState: (
-                                            document.getElementById(
-                                                'registrationState',
-                                            ) as HTMLInputElement
-                                        ).value,
+                                        registrationState: selectedRegistrationState,
                                         expiryDate: (
                                             document.getElementById(
                                                 'expiryDate',

@@ -203,14 +203,13 @@ const VDCConfigurationDrawer = ({
     }
 
     const handleClose = () => {
-        if (!isSubmitting) {
-            onClose()
-        }
+        onClose()
     }
 
     return (
         <Drawer
             isOpen={isOpen}
+            onClose={handleClose}
             onRequestClose={handleClose}
             title={isEditMode ? "Update VDC Settings" : "Setup Virtual Doctor Consultation (VDC)"}
             width={600}

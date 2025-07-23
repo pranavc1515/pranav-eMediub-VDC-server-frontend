@@ -267,7 +267,7 @@ const DoctorDashboard = () => {
                                                         <Button
                                                             size="xs"
                                                             variant="solid"
-                                                            className="bg-green-600 hover:bg-green-700"
+                                                            className="bg-green-600 hover:bg-green-700 flex items-center"
                                                             onClick={handleVdcSettingsClick}
                                                         >
                                                             <HiOutlineCog className="h-3 w-3 mr-1" />

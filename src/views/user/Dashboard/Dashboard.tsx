@@ -141,7 +141,7 @@ const UserDashboard = <T extends Meta>(props: T): JSX.Element => {
                     />
                     <div>
                         <p className="text-gray-600 text-sm">
-                            {getGreeting()}!
+                            {getGreeting()}! 
                         </p>
                         <h2 className="text-xl font-semibold text-gray-900">
                             {user.userName || 'User'}
