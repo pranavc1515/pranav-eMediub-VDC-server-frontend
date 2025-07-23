@@ -74,9 +74,13 @@ const UserReports = () => {
 
     // Fetch reports on component mount
     useEffect(() => {
-        fetchReports()
-        fetchFamilyMembers()
-    }, [])
+        fetchReports();
+        fetchFamilyMembers();
+        const interval = setInterval(() => {
+            fetchReports();
+        }, 8000);
+        return () => clearInterval(interval);
+    }, []);
 
     const fetchReports = async () => {
         setLoading(true)
