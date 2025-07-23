@@ -32,11 +32,13 @@ const UserDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('')
     const navigate = useNavigate()
     const [name, setName] = useState('')
+    const [userImage, setUserImage] = useState('')
     const { t } = useTranslation()
 
     useEffect(() => {
         UserService.getProfileDetails().then(res => {
             setName(res?.data?.name || '')
+            setUserImage(res?.data?.image || '')
         })
     }, [])
 
@@ -147,9 +149,11 @@ const UserDashboard = () => {
                 <div className="flex items-center gap-3 mb-4">
                     <Avatar
                         size={50}
-                        src={''} // You can fetch and use image if needed
+                        src={userImage}
                         className="ring-2 ring-blue-100"
-                    />
+                    >
+                        {name ? name.charAt(0).toUpperCase() : 'U'}
+                    </Avatar>
                     <div>
                         <p className="text-gray-600 text-sm">{getGreeting()}</p>
                         <h2 className="text-xl font-semibold text-gray-900">

@@ -17,6 +17,7 @@ import {
 } from '@/components/ui'
 import toast from '@/components/ui/toast'
 import ReportsService, { ReportData, UploadReportRequest } from '@/services/ReportsService'
+import DoctorService from '@/services/DoctorService'
 import { HiOutlineCloudUpload, HiOutlineEye, HiOutlineTrash, HiOutlineDocument, HiOutlinePlus, HiOutlineSearch } from 'react-icons/hi'
 import { format } from 'date-fns'
 import { useForm, Controller } from 'react-hook-form'
@@ -62,6 +63,7 @@ const DoctorReports = () => {
     const [uploading, setUploading] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [filterStatus, setFilterStatus] = useState<string>('all')
+    const [doctorProfile, setDoctorProfile] = useState<{ fullName: string } | null>(null)
 
     // Select options with counts
     const getFilterOptions = (): SelectOption[] => {
@@ -104,11 +106,28 @@ const DoctorReports = () => {
         },
     })
 
-    // Auto-populate doctor information when component mounts or user changes
+    // Fetch doctor profile and auto-populate doctor information
     useEffect(() => {
-        if (user.userName) {
-            setValue('doctor_name', user.userName)
+        const fetchDoctorProfile = async () => {
+            try {
+                const response = await DoctorService.getProfile()
+                if (response.success && response.data) {
+                    setDoctorProfile(response.data)
+                    // Remove "Dr." prefix if it exists to avoid duplication
+                    const cleanDoctorName = response.data.fullName.replace(/^Dr\.\s*/i, '')
+                    setValue('doctor_name', cleanDoctorName)
+                }
+            } catch (error) {
+                console.error('Failed to fetch doctor profile:', error)
+                // Fallback to user session data
+                if (user.userName) {
+                    const cleanDoctorName = user.userName.replace(/^Dr\.\s*/i, '')
+                    setValue('doctor_name', cleanDoctorName)
+                }
+            }
         }
+
+        fetchDoctorProfile()
     }, [user.userName, setValue])
 
   
@@ -122,8 +141,14 @@ const DoctorReports = () => {
                 // Set the patient ID in the form
                 setValue('target_user_id', patientIdNumber)
                 // Set doctor name if available
-                if (user.userName) {
-                    setValue('doctor_name', user.userName)
+                if (doctorProfile?.fullName) {
+                    // Remove "Dr." prefix if it exists to avoid duplication
+                    const cleanDoctorName = doctorProfile.fullName.replace(/^Dr\.\s*/i, '')
+                    setValue('doctor_name', cleanDoctorName)
+                } else if (user.userName) {
+                    // Fallback to user session data
+                    const cleanDoctorName = user.userName.replace(/^Dr\.\s*/i, '')
+                    setValue('doctor_name', cleanDoctorName)
                 }
                 // Open the upload modal
                 setShowUploadModal(true)
@@ -247,7 +272,13 @@ const DoctorReports = () => {
                 setShowUploadModal(false)
                 
                 // Refresh the default doctor name after reset
-                setValue('doctor_name', user.userName)
+                if (doctorProfile?.fullName) {
+                    const cleanDoctorName = doctorProfile.fullName.replace(/^Dr\.\s*/i, '')
+                    setValue('doctor_name', cleanDoctorName)
+                } else if (user.userName) {
+                    const cleanDoctorName = user.userName.replace(/^Dr\.\s*/i, '')
+                    setValue('doctor_name', cleanDoctorName)
+                }
                 
                 // Refresh reports list
                
@@ -318,8 +349,14 @@ const DoctorReports = () => {
                     variant="solid"
                     onClick={() => {
                         setShowUploadModal(true)
-                        // Ensure doctor name is populated when opening modal
-                        setValue('doctor_name', user.userName)
+                                            // Ensure doctor name is populated when opening modal
+                    if (doctorProfile?.fullName) {
+                        const cleanDoctorName = doctorProfile.fullName.replace(/^Dr\.\s*/i, '')
+                        setValue('doctor_name', cleanDoctorName)
+                    } else if (user.userName) {
+                        const cleanDoctorName = user.userName.replace(/^Dr\.\s*/i, '')
+                        setValue('doctor_name', cleanDoctorName)
+                    }
                     }}
                     className="flex items-center gap-2"
                 >
@@ -404,7 +441,7 @@ const DoctorReports = () => {
                                         </Badge>
                                     </div>
                                     <p className="text-sm text-gray-600 mb-1">
-                                        Dr. {report.doctor_name}
+                                        {report.doctor_name ? (report.doctor_name.startsWith('Dr.') ? report.doctor_name : `Dr. ${report.doctor_name}`) : 'Dr. Not specified'}
                                     </p>
                                     <p className="text-sm text-gray-500">
                                         {format(new Date(report.report_date), 'MMM dd, yyyy')}
@@ -642,7 +679,9 @@ const DoctorReports = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-sm font-medium text-gray-700">Doctor Name</p>
-                                    <p className="text-sm text-gray-900">{selectedReport.doctor_name}</p>
+                                    <p className="text-sm text-gray-900">
+                                        {selectedReport.doctor_name ? (selectedReport.doctor_name.startsWith('Dr.') ? selectedReport.doctor_name : `Dr. ${selectedReport.doctor_name}`) : 'Dr. Not specified'}
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-gray-700">Report Date</p>
