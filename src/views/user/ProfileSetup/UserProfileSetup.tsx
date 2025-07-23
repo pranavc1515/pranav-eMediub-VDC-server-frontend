@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Container from '@/components/shared/Container'
 import Card from '@/components/shared/Card'
@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import { Form, FormItem } from '@/components/ui/Form'
 import Input from '@/components/ui/Input'
 import Alert from '@/components/ui/Alert'
+import Avatar from '@/components/shared/Avatar'
 import UserService from '@/services/UserService'
 import type { UserPersonalDetails } from '@/services/UserService'
 import { useToken, useSessionUser } from '@/store/authStore'
@@ -18,6 +19,7 @@ import {
     type UserPersonalDetailsFormData
 } from '@/utils/validationSchemas'
 import { getTodayDateString } from '@/utils/dateUtils'
+import { HiOutlineCamera } from 'react-icons/hi'
 
 // Helper function to calculate age from date of birth
 const calculateAge = (dob: string): string => {
@@ -63,6 +65,11 @@ const UserProfileSetup = () => {
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
     const [userPhone, setUserPhone] = useState<string>('')
+
+    // Profile photo upload state
+    const [selectedProfilePhoto, setSelectedProfilePhoto] = useState<File | null>(null)
+    const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null)
+    const profilePhotoInputRef = useRef<HTMLInputElement>(null)
 
     // React Hook Form setup
     const form = useForm<UserPersonalDetailsFormData>({
@@ -181,6 +188,47 @@ const UserProfileSetup = () => {
         }
     }, [watchedDob, form])
 
+    // Profile photo handling functions
+    const handleProfilePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0]
+        if (file) {
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
+            if (!allowedTypes.includes(file.type)) {
+                setError('Profile photo must be JPG, JPEG, or PNG format')
+                return
+            }
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                setError('Profile photo must be less than 5MB')
+                return
+            }
+
+            setSelectedProfilePhoto(file)
+            setError('')
+
+            // Create preview URL
+            const reader = new FileReader()
+            reader.onload = (e) => {
+                setProfilePhotoPreview(e.target?.result as string)
+            }
+            reader.readAsDataURL(file)
+        }
+    }
+
+    const triggerProfilePhotoUpload = () => {
+        profilePhotoInputRef.current?.click()
+    }
+
+    const removeProfilePhoto = () => {
+        setSelectedProfilePhoto(null)
+        setProfilePhotoPreview(null)
+        if (profilePhotoInputRef.current) {
+            profilePhotoInputRef.current.value = ''
+        }
+    }
+
     const handleFormSubmit = async (data: UserPersonalDetailsFormData) => {
         setSubmitting(true)
         setError('')
@@ -204,6 +252,7 @@ const UserProfileSetup = () => {
                 diet: data.diet || 'Vegetarian',
                 profession: data.profession || '',
                 image: data.image || '',
+                profilePhoto: selectedProfilePhoto || undefined,
             }
 
             const response = await UserService.updatePersonalDetails(transformedData)
@@ -265,6 +314,51 @@ const UserProfileSetup = () => {
 
                     <Form onSubmit={form.handleSubmit(handleFormSubmit)}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Profile Photo Upload */}
+                            <FormItem label="Profile Photo" className="md:col-span-2">
+                                <div className="flex flex-col items-center space-y-4">
+                                    <div className="relative">
+                                        <Avatar
+                                            size={100}
+                                            shape="circle"
+                                            src={profilePhotoPreview || form.watch('image') || ''}
+                                            icon={<span>👤</span>}
+                                        />
+                                        <Button
+                                            type="button"
+                                            className="absolute -bottom-2 -right-2"
+                                            size="sm"
+                                            variant="solid"
+                                            shape="circle"
+                                            icon={<HiOutlineCamera />}
+                                            onClick={triggerProfilePhotoUpload}
+                                        />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        {selectedProfilePhoto && (
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="default"
+                                                onClick={removeProfilePhoto}
+                                            >
+                                                Remove Photo
+                                            </Button>
+                                        )}
+                                    </div>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        ref={profilePhotoInputRef}
+                                        className="hidden"
+                                        onChange={handleProfilePhotoUpload}
+                                    />
+                                    <p className="text-sm text-gray-500 text-center">
+                                        JPG, JPEG, or PNG. Max size: 5MB
+                                    </p>
+                                </div>
+                            </FormItem>
+
                             <FormItem
                                 label="Full Name"
                                 asterisk={true}
