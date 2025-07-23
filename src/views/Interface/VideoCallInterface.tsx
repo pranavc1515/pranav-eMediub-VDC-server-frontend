@@ -167,8 +167,8 @@ const VideoCallInterfaceInner = ({ onCallEnd }: VideoCallInterfaceProps) => {
               : selectedPatient.id
           : contextPatientId || userId
 
-    const [isMicOn, setIsMicOn] = useState(true)
-    const [isVideoOn, setIsVideoOn] = useState(true)
+    const [isMicOn, setIsMicOn] = useState(false)
+    const [isVideoOn, setIsVideoOn] = useState(false)
     const [room, setRoom] = useState<Room | null>(null)
     const [localTracks, setLocalTracks] = useState<LocalTracks>({
         video: null,
